@@ -1,0 +1,18 @@
+{
+  "name": "coffee-house-comics",
+  "version": "1.0.0",
+  "description": "Main server",
+  "main": "index.js",
+  "scripts": {
+    "start": "bash startup.sh",
+    "stop": "bash shutdown.sh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Team Cafe Au Lait",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.1",
+    "express": "^4.17.2"
+  }
+}
