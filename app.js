@@ -10,6 +10,6 @@ process.title = "myApp";
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use(express.static(path.join(__dirname, 'static')));
+app.use(express.static(path.join(__dirname, 'Static')));
 
 module.exports = app;

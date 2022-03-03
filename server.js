@@ -10,4 +10,4 @@ app.post('/', function (req, res, next) {
     res.status(200).send("Hello!");
 });
 
-app.listen(port, () => console.log(`Warmup app listening on port ${port}!`))
+app.listen(port, () => console.log(`Warmup app listening on port ${port}!`));
