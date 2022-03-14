@@ -1,66 +1,45 @@
 const express = require('express')
 const router = express.Router()
-const AuthController = require('../Controllers/comicController')
+const ComicController = require('../Controllers/comicController')
 
-router.get('/explore', ComicController.xxx);
-router.get('/subscriptions', ComicController.xxx);
+router.get('/explore', ComicController.explore);
+router.get('/subscriptions', ComicController.subscriptions);
 
-router.get('/profileById', ComicController.xxx);
-router.get('/profileByUserName', ComicController.aaa);
+router.get('/profileById', ComicController.profileById);
+router.get('/profileByUserName', ComicController.profileByUserName);
 
 // Need Authentication ------------------------------------------------
 
 // Creating
-router.post('/create', ComicController.bbb);
-router.post('/create/forum', ComicController.ccc);
+router.post('/create', ComicController.create);
+router.post('/create/forum', ComicController.create_forum);
 
 // Publishing
-router.post('/publish', ComicController.yyy);
+router.post('/publish', ComicController.publish);
 
 // Deleting
-router.delete('/', ComicController.ppp);
-router.delete('/comment', ComicController.zzz);
-router.delete('/forumPost', ComicController.yyy);
+router.delete('/', ComicController.delete);
+router.delete('/comment', ComicController.delete_comment);
+router.delete('/forumPost', ComicController.delete_forumPost);
 
 // User related Content
-router.get('/user/saved', ComicController.xxx);
-router.post('/user/toggleForum', ComicController.XXX);
+router.get('/user/saved', ComicController.user_saved);
+router.post('/user/toggleForum', ComicController.user_toggleForum);
 
 // Comic metadata editing (Cover photo, Title, Bio, Series)
-router.post('/metadata/update', ComicController.xxx);
+router.post('/metadata/update', ComicController.metadata_update);
 
 // Comic content editing
-router.post('/content/save', ComicController.xxx);
-router.post('/content/saveSticker', ComicController.qqq);
+router.post('/content/save', ComicController.content_save);
+router.post('/content/saveSticker', ComicController.content_saveSticker);
 
 // Commenting
-router.post('/comment/', ComicController.ddd);
-router.post('/comment/forum', ComicController.ddd);
+router.post('/comment/', ComicController.comment);
+router.post('/comment/forum', ComicController.comment_forum);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
-router.post('/vote', ComicController.ggg);
-router.post('/vote/forumPost', ComicController.eee);
-router.post('/vote/comment', ComicController.fff);
-
-
-
-
-
-
-
-
-
-
-
-
-
-router.get('/postById', ComicController.xxx);
-
-
-// Returns an array of s
-// Make helper function
-router.get('/seriesByIds', AuthController.xxx);
-
-
+router.post('/vote', ComicController.vote);
+router.post('/vote/forumPost', ComicController.vote_forumPost);
+router.post('/vote/comment', ComicController.vote_comment);
 
 module.exports = router
