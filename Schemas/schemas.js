@@ -145,8 +145,8 @@ const AccountSchema = new Schema({
 
         comic: {
             beans: Number,
-            posts: [ComicPostSchema],
-            series: [SeriesSchema],
+            posts: [ObjectId],
+            series: [ObjectId],
 
             savedStickers: [JSON],
 
@@ -173,7 +173,6 @@ const AccountSchema = new Schema({
 
 // Create the Models for all schemas
 const Account = model('Account', AccountSchema);
-const User = model('User', UserSchema);
 
 const ComicPost = model('ComicPost', ComicPostSchema);
 const ComicPubPage = model('ComicPubPage', ComicPubPageSchema);
@@ -192,7 +191,6 @@ const Subscription = model('Subscription', SubscriptionSchema);
 
 export default {
     Account,
-    User,
     ComicPost,
     ComicPubPage,
     ComicUnPubPage,

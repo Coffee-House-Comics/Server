@@ -92,5 +92,4 @@ ComicController.vote_comment  = async function (req, res) {
 }
 
 
-
 module.export = ComicController;
