@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import { Schema, model, connect, ObjectId } from 'mongoose';
+import { Schema, model } from 'mongoose';
+const ObjectId = Schema.Types.ObjectId;
 
 // Schemas
 
@@ -151,9 +151,9 @@ const UserSchema = new Schema({
 
     subscriptions: [SubscriptionSchema],
 
-    likedPosts: [String], // ids
-    dislikedPosts: [String], // ids
-    savedPosts: [String], // ids
+    likedPosts: [ObjectId],
+    dislikedPosts: [ObjectId],
+    savedPosts: [ObjectId],
 
     // If the forum is not active these are just null
     comicForum: ForumSchema,
@@ -173,23 +173,23 @@ const AccountSchema = new Schema({
 // ---------------------------------------------------
 
 // Create the Models for all schemas
-const Account = mongoose.model('Account', AccountSchema);
-const User = mongoose.model('User', UserSchema);
+const Account = model('Account', AccountSchema);
+const User = model('User', UserSchema);
 
-const ComicPost = mongoose.model('ComicPost', ComicPostSchema);
-const ComicPubPage = mongoose.model('ComicPubPage', ComicPubPageSchema);
-const ComicUnPubPage = mongoose.model('ComicUnPubPage', ComicUnPubPageSchema);
+const ComicPost = model('ComicPost', ComicPostSchema);
+const ComicPubPage = model('ComicPubPage', ComicPubPageSchema);
+const ComicUnPubPage = model('ComicUnPubPage', ComicUnPubPageSchema);
 
-const StoryPost = mongoose.model('StoryPost', StoryPostSchema);
-const StoryPage = mongoose.model('StoryPage', StoryPageSchema);
+const StoryPost = model('StoryPost', StoryPostSchema);
+const StoryPage = model('StoryPage', StoryPageSchema);
 
-const Series = mongoose.model('Series', SeriesSchema);
+const Series = model('Series', SeriesSchema);
 
-const Forum = mongoose.model('Forum', ForumSchema);
-const ForumPost = mongoose.model('ForumPost', ForumPostSchema);
-const Comment = mongoose.model('Comment', CommentSchema);
+const Forum = model('Forum', ForumSchema);
+const ForumPost = model('ForumPost', ForumPostSchema);
+const Comment = model('Comment', CommentSchema);
 
-const Subscription = mongoose.model('Subscription', SubscriptionSchema);
+const Subscription = model('Subscription', SubscriptionSchema);
 
 export default {
     Account,
