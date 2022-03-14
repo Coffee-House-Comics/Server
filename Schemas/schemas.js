@@ -117,49 +117,6 @@ const SubscriptionSchema = new Schema({
 
 // ---------------------------------------------------
 
-const UserSchema = new Schema({
-    userName: String,
-    bio: String,
-    profileImage: Image,
-
-    totalBeans: Number,
-
-    story: {
-        beans: Number,
-        posts: [StoryPostSchema],
-        series: [SeriesSchema],
-
-        liked: [ObjectId],
-        disliked: [ObjectId],
-        saved: [ObjectId],
-        forum: ForumSchema
-    },
-
-    comic: {
-        beans: Number,
-        posts: [ComicPostSchema],
-        series: [SeriesSchema],
-
-        savedStickers: [JSON],
-
-        liked: [ObjectId],
-        disliked: [ObjectId],
-        saved: [ObjectId],
-        forum: ForumSchema
-    },
-
-
-    subscriptions: [SubscriptionSchema],
-
-    likedPosts: [ObjectId],
-    dislikedPosts: [ObjectId],
-    savedPosts: [ObjectId],
-
-    // If the forum is not active these are just null
-    comicForum: ForumSchema,
-    storyForum: ForumSchema,
-});
-
 const AccountSchema = new Schema({
     name: String,
     email: String,
@@ -167,7 +124,49 @@ const AccountSchema = new Schema({
     isLoggedIn: Boolean,
     isverified: Boolean,
     verificationCode: String,
-    user: UserSchema,
+
+    user: {
+        userName: String,
+        bio: String,
+        profileImage: Image,
+
+        totalBeans: Number,
+
+        story: {
+            beans: Number,
+            posts: [StoryPostSchema],
+            series: [SeriesSchema],
+
+            liked: [ObjectId],
+            disliked: [ObjectId],
+            saved: [ObjectId],
+            forum: ForumSchema
+        },
+
+        comic: {
+            beans: Number,
+            posts: [ComicPostSchema],
+            series: [SeriesSchema],
+
+            savedStickers: [JSON],
+
+            liked: [ObjectId],
+            disliked: [ObjectId],
+            saved: [ObjectId],
+            forum: ForumSchema
+        },
+
+
+        subscriptions: [SubscriptionSchema],
+
+        likedPosts: [ObjectId],
+        dislikedPosts: [ObjectId],
+        savedPosts: [ObjectId],
+
+        // If the forum is not active these are just null
+        comicForum: ForumSchema,
+        storyForum: ForumSchema,
+    }
 });
 
 // ---------------------------------------------------
