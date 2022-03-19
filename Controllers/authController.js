@@ -9,19 +9,19 @@ async function sendConfirmationEmail(Recepient, confirmationCode) {
 
 const AuthController = {};
 
-AuthController.registerUser = async function (req, res) {
+AuthController.registerUser = async function (req, res, next) {
 
 }
 
-AuthController.login = async function (req, res) {
+AuthController.login = async function (req, res, next) {
 
 }
 
-AuthController.logout = async function (req, res) {
+AuthController.logout = async function (req, res, next) {
 
 }
 
-AuthController.confirmCode = async function (req, res) {
+AuthController.confirmCode = async function (req, res, next) {
 
 }
 
