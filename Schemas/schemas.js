@@ -118,7 +118,7 @@ const SubscriptionSchema = new Schema({
 // ---------------------------------------------------
 
 const AccountSchema = new Schema({
-    name: String,
+    userName: String,
     email: String,
     passwordHash: String,
     isLoggedIn: Boolean,
@@ -126,7 +126,7 @@ const AccountSchema = new Schema({
     verificationCode: String,
 
     user: {
-        userName: String,
+        displayName: String,
         bio: String,
         profileImage: Image,
 

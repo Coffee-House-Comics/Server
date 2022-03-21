@@ -10,17 +10,30 @@ router.get('/profileByUserName', ComicController.profileByUserName);
 
 // Need Authentication ------------------------------------------------
 
+/*
+    Request body: {
+        
+    }
+*/
 // Creating
 router.post('/create', ComicController.create);
+/* Activates the forum for comics
+    Request body: {
+        
+    }
+*/
 router.post('/create/forum', ComicController.create_forum);
+
 
 // Publishing
 router.post('/publish', ComicController.publish);
 
 // Deleting
-router.delete('/', ComicController.delete);
+router.delete('/:id', ComicController.delete);
 router.delete('/comment', ComicController.delete_comment);
 router.delete('/forumPost', ComicController.delete_forumPost);
+// Deletes/Deactivates the forum the user has for their Comics page
+router.delete('/forum', ComicController.XXX);
 
 // User related Content
 router.get('/user/saved', ComicController.user_saved);
@@ -35,7 +48,7 @@ router.post('/content/saveSticker', ComicController.content_saveSticker);
 
 // Commenting
 router.post('/comment/', ComicController.comment);
-router.post('/comment/forum', ComicController.comment_forum);
+router.post('/comment/forumPost', ComicController.comment_forum);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 router.post('/vote', ComicController.vote);
