@@ -106,12 +106,17 @@ StoryController.published = async function (req, res) {
                 publishedDate: Date,
                 beans: Number,
                 comments: [CommentSchema],
+                
                 pages: [
-                    {
-                        title: String,
-                        image: Image,
-                    }
-                ]
+                    title: String,
+                    body: JSON,
+                    decisions: [
+                        {
+                            name: String,
+                            nextPageId: String
+                        }
+                    ]
+                ],    
             }
         }
     */
@@ -131,14 +136,16 @@ StoryController.unpublished = async function (req, res) {
                 authorID: ObjectId,
 
                 pages: [
-                    {
-                        title: String,
-                        konvaPage: JSON
-                    }
-                ]
-
-                prefabs: [ JSON ],
-                stickers: [ JSON ]
+                    title: String,
+                    body: JSON,
+                    decisions: [
+                        {
+                            name: String,
+                            nextPageId: String
+                        }
+                    ]
+                ],
+                ReactFlowJSON: JSON,
             }
         }
     */
