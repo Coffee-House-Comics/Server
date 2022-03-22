@@ -338,5 +338,25 @@ ComicController.bookmark = async function (req, res) {
    */
 }
 
+ComicController.subscribe_user = async function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+}
+
+ComicController.subscribe_series = async function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+}
+
 
 module.export = ComicController;

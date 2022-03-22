@@ -345,4 +345,24 @@ StoryController.bookmark = async function (req, res) {
    */
 }
 
+StoryController.subscribe_user = async function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+}
+
+StoryController.subscribe_series = async function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+}
+
 module.export = StoryController;

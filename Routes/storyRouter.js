@@ -50,4 +50,9 @@ router.post('/vote/comment', auth.verify, StoryController.vote_comment);
 // Bookmarking a post
 router.post('/bookmark/:id', auth.verify, ComicController.bookmark);
 
+// Subscribing to a user
+router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);
+// Subscribing to a series
+router.post('/subscribe/series/:id', auth.verify, StoryController.subscribe_series);
+
 module.exports = router
