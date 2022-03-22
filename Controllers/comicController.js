@@ -295,7 +295,7 @@ ComicController.comment_forumPost = async function (req, res) {
 ComicController.vote = async function (req, res) {
     /* Vote on a Comic ------------
         Request body: {
-            isUpvote: Boolean
+            type: Integer
         }
     
         Response {
@@ -307,7 +307,7 @@ ComicController.vote = async function (req, res) {
 ComicController.vote_forumPost = async function (req, res) {
     /* Vote on a Forum Post ------------
         Request body: {
-            isUpvote: Boolean
+            type: Integer
         }
     
         Response {
@@ -319,7 +319,7 @@ ComicController.vote_forumPost = async function (req, res) {
 ComicController.vote_comment = async function (req, res) {
     /* Vote on a Comment ------------
         Request body: {
-            isUpvote: Boolean
+            type: Integer
         }
     
         Response {
@@ -338,6 +338,16 @@ ComicController.bookmark = async function (req, res) {
    */
 }
 
+ComicController.deleteBookmark = async function (req, res) {
+    /* UN-Bookmark a post ------------
+       Request body: { }
+   
+       Response {
+           status: 200 OK or 500 ERROR,
+       }
+   */
+}
+
 ComicController.subscribe_user = async function (req, res) {
     /*
         Request body { }
@@ -348,7 +358,27 @@ ComicController.subscribe_user = async function (req, res) {
     */
 }
 
+ComicController.unsubscribe_user = async function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+}
+
 ComicController.subscribe_series = async function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+}
+
+ComicController.unsubscribe_series = async function (req, res) {
     /*
         Request body { }
 

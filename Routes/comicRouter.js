@@ -60,10 +60,13 @@ router.post('/vote/comment', auth.verify, ComicController.vote_comment);
 
 // Bookmarking a post
 router.post('/bookmark/:id', auth.verify, ComicController.bookmark);
+router.delete('/bookmark/:id', auth.verify, ComicController.deleteBookmark);
 
 // Subscribing to a user
-router.post('/subscribe/user/:id', auth.verify, ComicController.subscribe_user);
+router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);
+router.delete('/subscribe/user/:id', auth.verify, StoryController.unsubscribe_user);
 // Subscribing to a series
-router.post('/subscribe/series/:id', auth.verify, ComicController.subscribe_series);
+router.post('/subscribe/series/:id', auth.verify, StoryController.subscribe_series);
+router.delete('/subscribe/series/:id', auth.verify, StoryController.unsubscribe_series);
 
 module.exports = router
