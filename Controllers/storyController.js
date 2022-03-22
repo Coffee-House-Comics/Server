@@ -257,22 +257,6 @@ StoryController.content_save = async function (req, res) {
     */
 }
 
-StoryController.content_saveSticker = async function (req, res) {
-    /* Save a Sticker ------------
-        Request body: {
-            title: String,
-            bio: String
-        }
-
-        Response {
-            status: 200 OK or 500 ERROR,
-            body: {
-                id: ObjectId
-            }
-        }
-    */
-}
-
 // Commenting
 StoryController.comment = async function (req, res) {
     /* Comment on a Story ------------
