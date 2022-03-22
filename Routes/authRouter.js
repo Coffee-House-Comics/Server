@@ -139,5 +139,4 @@ router.put('/changePassword', AuthController.XXX);
 router.put('/changeUserName', AuthController.XXX);
 
 
-
 module.exports = router

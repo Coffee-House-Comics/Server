@@ -8,14 +8,14 @@ ComicController.subscriptions = async function (req, res) {
 
 }
 
-ComicController.profileById = async function (req, res) {
+ComicController.getProfile = async function (req, res) {
 
 }
 
 
-ComicController.profileByUserName = async function (req, res) {
+// ComicController.profileByUserName = async function (req, res) {
 
-}
+// }
 
 // Need Authentication ------------------------------------------------
 

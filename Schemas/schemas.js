@@ -54,7 +54,7 @@ const PostSchema = function () {
         comments: [CommentSchema],
 
         // Linking information
-        authorID: Number,
+        authorID: ObjectId,
     });
 }
 
