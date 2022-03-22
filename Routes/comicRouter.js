@@ -44,7 +44,7 @@ router.get('/subscriptions', ComicController.subscriptions);
         }
     }
 */
-router.get('/profile/:id', ComicController.getProfile);
+router.get('/profile/:id', ComicController.getProfileById);
 /* Get profile By userName ------------
     Request body: {}
 
@@ -58,7 +58,7 @@ router.get('/profile/:id', ComicController.getProfile);
         }
     }
 */
-router.get('/profile/:userName', ComicController.getProfile);
+router.get('/profile/:userName', ComicController.getProfileByUserName);
 
 
 // Creating ------------------------------------------------
@@ -132,23 +132,6 @@ router.get('/published/:id', ComicController.published);
     }
 */
 router.get('/unpublished/:id', ComicController.unpublished);
-
-
-
-
-
-/* Activates the forum for comics
-    Request body: {}
-
-    Response {
-        status: 200 OK or 500 ERROR,
-        body: {
-            
-        }
-
-    }
-*/
-router.post('/create/forum', ComicController.create_forum);
 
 
 // Publishing
@@ -277,7 +260,7 @@ router.post('/comment/:id', ComicController.comment);
         status: 200 OK or 500 ERROR,
     }
 */
-router.post('/comment/forumPost/:id', ComicController.comment_forum);
+router.post('/comment/forumPost/:id', ComicController.comment_forumPost);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 /* Vote on a Comic ------------

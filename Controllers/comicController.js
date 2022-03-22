@@ -8,7 +8,11 @@ ComicController.subscriptions = async function (req, res) {
 
 }
 
-ComicController.getProfile = async function (req, res) {
+ComicController.getProfileById = async function (req, res) {
+
+}
+
+ComicController.getProfileByUserName = async function (req, res) {
 
 }
 
@@ -24,7 +28,11 @@ ComicController.create = async function (req, res) {
 
 }
 
-ComicController.create_forum = async function (req, res) {
+ComicController.published = async function (req, res) {
+
+}
+
+ComicController.unpublished = async function (req, res) {
 
 }
 
@@ -74,12 +82,12 @@ ComicController.comment = async function (req, res) {
 
 }
 
-ComicController.comment_forum = async function (req, res) {
+ComicController.comment_forumPost = async function (req, res) {
 
 }
 
 // Voting (upvoting/downvoting AKA liking/disliking)
-ComicController.vote  = async function (req, res) {
+ComicController.vote = async function (req, res) {
 
 }
 
@@ -87,7 +95,7 @@ ComicController.vote_forumPost = async function (req, res) {
 
 }
 
-ComicController.vote_comment  = async function (req, res) {
+ComicController.vote_comment = async function (req, res) {
 
 }
 
