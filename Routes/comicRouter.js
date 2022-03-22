@@ -94,7 +94,7 @@ router.post('/create', ComicController.create);
         }
     }
 */
-router.get('published/:id', ComicController.XXX);
+router.get('/published/:id', ComicController.XXX);
 /* Get UNpublished comic by id  ------------
     Request body: {}
 
@@ -113,10 +113,13 @@ router.get('published/:id', ComicController.XXX);
                     konvaPage: JSON
                 }
             ]
+
+            prefabs: [ JSON ],
+            stickers: [ JSON ]
         }
     }
 */
-router.get('unpublished/:id', ComicController.XXX);
+router.get('/unpublished/:id', ComicController.XXX);
 
 
 
@@ -142,39 +145,158 @@ router.post('/create/forum', ComicController.create_forum);
         series: {
             isSeriesMember: Boolean,
             seriesName: String,
-            seriesID: Number
         },
 
-        
+        Response {
+            status 200 OK or 500 ERROR
+        }
     }
 */
-router.post('/publish', ComicController.publish);
+router.post('/publish/:id', ComicController.publish);
 
-// Deleting
+/* Deleting a comic ------------
+    Request body: {}
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
 router.delete('/:id', ComicController.delete);
-router.delete('/comment', ComicController.delete_comment);
-router.delete('/forumPost', ComicController.delete_forumPost);
-// Deletes/Deactivates the forum the user has for their Comics page
-router.delete('/forum', ComicController.XXX);
+/* Delete a comment------------
+    Request body: {}
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
+router.delete('/comment/:id', ComicController.delete_comment);
+/* Delete a Forum Post------------
+    Request body: {}
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
+router.delete('/forumPost/:id', ComicController.delete_forumPost);
+/* Delete a sticker ------------
+    Request body: {}
+
+    Response {
+        status: 200 OK or 500 ERROR
+    }
+*/
+router.delete('/sticker/:id', ComicController.CCC);
 
 // User related Content
+/* Get user's saved comics ------------
+    Request body: {}
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
 router.get('/user/saved', ComicController.user_saved);
+/* Toggle Forum for user ------------
+    Request body: {}
+
+    Response {
+        status: 200 OK or 500 ERROR
+    }
+*/
 router.post('/user/toggleForum', ComicController.user_toggleForum);
 
 // Comic metadata editing (Cover photo, Title, Bio, Series)
-router.post('/metadata/update', ComicController.metadata_update);
+/* Update the metadata of a comic ------------
+    Request body: {
+        title: String,
+        bio: String
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR
+    }
+*/
+router.put('/metadata/update/:id', ComicController.metadata_update);
 
 // Comic content editing
-router.post('/content/save', ComicController.content_save);
+/* Update the metadata of a comic ------------
+    Request body: {
+        title: String,
+        bio: String
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR
+    }
+*/
+router.put('/content/save', ComicController.content_save);
+/* Save a Sticker ------------
+    Request body: {
+        title: String,
+        bio: String
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR,
+        body: {
+            id: ObjectId
+        }
+    }
+*/
 router.post('/content/saveSticker', ComicController.content_saveSticker);
 
 // Commenting
-router.post('/comment/', ComicController.comment);
-router.post('/comment/forumPost', ComicController.comment_forum);
+/* Comment on a Comic ------------
+    Request body: {
+        text: String
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
+router.post('/comment/:id', ComicController.comment);
+/* Comment on a Forum Post ------------
+    Request body: {
+        text: String
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
+router.post('/comment/forumPost/:id', ComicController.comment_forum);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
-router.post('/vote', ComicController.vote);
+/* Vote on a Comic ------------
+    Request body: {
+        isUpvote: Boolean
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
+router.post('/vote/:id', ComicController.vote);
+/* Vote on a Forum Post ------------
+    Request body: {
+        isUpvote: Boolean
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
 router.post('/vote/forumPost', ComicController.vote_forumPost);
+/* Vote on a Comment ------------
+    Request body: {
+        isUpvote: Boolean
+    }
+
+    Response {
+        status: 200 OK or 500 ERROR,
+    }
+*/
 router.post('/vote/comment', ComicController.vote_comment);
 
 module.exports = router
