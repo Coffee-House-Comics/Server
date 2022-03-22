@@ -31,11 +31,8 @@ router.get('/explore', ComicController.explore);
 */
 router.get('/subscriptions', ComicController.subscriptions);
 
-/* Get profile By ID or Username ------------
-    Request body: {
-        id: String || null,
-        userName: String  || null
-    }
+/* Get profile By ID ------------
+    Request body: {}
 
     Response {
         status 200 OK or 500 ERROR
@@ -47,7 +44,22 @@ router.get('/subscriptions', ComicController.subscriptions);
         }
     }
 */
-router.get('/profile', ComicController.getProfile);
+router.get('/profile/:id', ComicController.getProfile);
+/* Get profile By userName ------------
+    Request body: {}
+
+    Response {
+        status 200 OK or 500 ERROR
+        body: {
+            id: ObjectId
+            displayName: String,
+            bio: String,
+            profileImage: Image,
+        }
+    }
+*/
+router.get('/profile/:userName', ComicController.getProfile);
+
 
 // Creating ------------------------------------------------
 /* Create a Comic (On the backend) ------------
