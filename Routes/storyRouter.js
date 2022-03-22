@@ -1,47 +1,53 @@
 const express = require('express')
 const router = express.Router()
+const auth = require('../auth')
 const StoryController = require('../Controllers/storyController')
 
-
 router.get('/explore', StoryController.explore);
-router.get('/subscriptions', StoryController.subscriptions);
+router.get('/subscriptions', auth.verify, StoryController.subscriptions);
 
-router.get('/profile/:id', StoryController.getProfileById);
+router.get('/profile/:id', auth.verify, StoryController.getProfileById);
+// Get a profiles information by userName (unauthenticated)
 router.get('/profile/:userName', StoryController.getProfileByUserName);
 
 
 // Creating ------------------------------------------------
-router.post('/create', StoryController.create);
+// Create a post
+router.post('/create', auth.verify, StoryController.create);
+
+// Get published post by ID (unauthenticated)
 router.get('/published/:id', StoryController.published);
-router.get('/unpublished/:id', StoryController.unpublished);
+// Get unpublished post 
+router.get('/unpublished/:id', auth.verify, StoryController.unpublished);
 
 // Publishing
-router.post('/publish/:id', StoryController.publish);
+router.post('/publish/:id', auth.verify, StoryController.publish);
 
 // Deleting
-router.delete('/:id', StoryController.delete);
-router.delete('/comment/:id', StoryController.delete_comment);
-router.delete('/forumPost/:id', StoryController.delete_forumPost);
-router.delete('/sticker/:id', StoryController.deleteSticker);
+router.delete('/:id', auth.verify, StoryController.delete);
+router.delete('/comment/:id', auth.verify, StoryController.delete_comment);
+router.delete('/forumPost/:id', auth.verify, StoryController.delete_forumPost);
 
 // User related Content
-router.get('/user/saved', StoryController.user_saved);
-router.post('/user/toggleForum', StoryController.user_toggleForum);
+router.get('/user/saved', auth.verify, StoryController.user_saved);
+router.post('/user/toggleForum', auth.verify, StoryController.user_toggleForum);
 
-// Comic metadata editing (Cover photo, Title, Bio, Series)
-router.put('/metadata/update/:id', StoryController.metadata_update);
+// Story metadata editing (Cover photo, Title, Bio, Series)
+router.put('/metadata/update/:id', auth.verify, StoryController.metadata_update);
 
-// Comic content editing
-router.put('/content/save', StoryController.content_save);
-router.post('/content/saveSticker', StoryController.content_saveSticker);
+// Story content editing
+router.put('/content/save', auth.verify, StoryController.content_save);
 
 // Commenting
-router.post('/comment/:id', StoryController.comment);
-router.post('/comment/forumPost/:id', StoryController.comment_forumPost);
+router.post('/comment/:id', auth.verify, StoryController.comment);
+router.post('/comment/forumPost/:id', auth.verify, StoryController.comment_forumPost);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
-router.post('/vote/:id', StoryController.vote);
-router.post('/vote/forumPost', StoryController.vote_forumPost);
-router.post('/vote/comment', StoryController.vote_comment);
+router.post('/vote/:id', auth.verify, StoryController.vote);
+router.post('/vote/forumPost', auth.verify, StoryController.vote_forumPost);
+router.post('/vote/comment', auth.verify, StoryController.vote_comment);
+
+// Bookmarking a post
+router.post('/bookmark/:id', auth.verify, ComicController.bookmark);
 
 module.exports = router

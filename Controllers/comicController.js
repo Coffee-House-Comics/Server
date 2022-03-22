@@ -328,5 +328,15 @@ ComicController.vote_comment = async function (req, res) {
     */
 }
 
+ComicController.bookmark = async function (req, res) {
+    /* Bookmark a post ------------
+       Request body: { }
+   
+       Response {
+           status: 200 OK or 500 ERROR,
+       }
+   */
+}
+
 
 module.export = ComicController;
