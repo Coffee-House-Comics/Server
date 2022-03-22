@@ -50,7 +50,7 @@ router.post('/login', AuthController.loginUser);
         status: 200 OK or 500 ERROR
     }
 */
-router.post('/forgotPassword', AuthController.AAA);
+router.post('/forgotPassword', AuthController.forgotPassword);
 /* Logout ------------
     Request body: {}
 
@@ -90,7 +90,7 @@ router.get('/confirmCode/:id', AuthController.confirmCode);
         }
     }
 */
-router.put('/updateProfile', AuthController.XXX);
+router.put('/updateProfile', AuthController.updateProfile);
 /* Change Email ------------
     Request body: {
         oldEmail: String, 
@@ -107,8 +107,8 @@ router.put('/updateProfile', AuthController.XXX);
         }
     }
 */
-router.put('/changeEmail', AuthController.XXX);
-/*
+router.put('/changeEmail', AuthController.changeEmail);
+/* Change Password ------------
     Request body: {
         oldPassword: String,
         newPassword: String,
@@ -119,8 +119,8 @@ router.put('/changeEmail', AuthController.XXX);
         status: 200 OK or 500 ERROR
     }
 */
-router.put('/changePassword', AuthController.XXX);
-/*
+router.put('/changePassword', AuthController.changePassword);
+/* Chnage Username ------------
     Request body: {
         oldUserName: String,
         newUserName: String
@@ -136,7 +136,7 @@ router.put('/changePassword', AuthController.XXX);
         }
     }
 */
-router.put('/changeUserName', AuthController.XXX);
+router.put('/changeUserName', AuthController.changeUserName);
 
 
 module.exports = router

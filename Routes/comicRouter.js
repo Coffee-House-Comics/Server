@@ -106,7 +106,7 @@ router.post('/create', ComicController.create);
         }
     }
 */
-router.get('/published/:id', ComicController.XXX);
+router.get('/published/:id', ComicController.published);
 /* Get UNpublished comic by id  ------------
     Request body: {}
 
@@ -131,7 +131,7 @@ router.get('/published/:id', ComicController.XXX);
         }
     }
 */
-router.get('/unpublished/:id', ComicController.XXX);
+router.get('/unpublished/:id', ComicController.unpublished);
 
 
 
@@ -197,7 +197,7 @@ router.delete('/forumPost/:id', ComicController.delete_forumPost);
         status: 200 OK or 500 ERROR
     }
 */
-router.delete('/sticker/:id', ComicController.CCC);
+router.delete('/sticker/:id', ComicController.sticker);
 
 // User related Content
 /* Get user's saved comics ------------
