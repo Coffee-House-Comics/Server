@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const auth = require('../auth')
+const auth = require('../Auth')
 const ComicController = require('../Controllers/comicController')
 
 // Get the explore tab
@@ -63,10 +63,10 @@ router.post('/bookmark/:id', auth.verify, ComicController.bookmark);
 router.delete('/bookmark/:id', auth.verify, ComicController.deleteBookmark);
 
 // Subscribing to a user
-router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);
-router.delete('/subscribe/user/:id', auth.verify, StoryController.unsubscribe_user);
+router.post('/subscribe/user/:id', auth.verify, ComicController.subscribe_user);
+router.delete('/subscribe/user/:id', auth.verify, ComicController.unsubscribe_user);
 // Subscribing to a series
-router.post('/subscribe/series/:id', auth.verify, StoryController.subscribe_series);
-router.delete('/subscribe/series/:id', auth.verify, StoryController.unsubscribe_series);
+router.post('/subscribe/series/:id', auth.verify, ComicController.subscribe_series);
+router.delete('/subscribe/series/:id', auth.verify, ComicController.unsubscribe_series);
 
 module.exports = router

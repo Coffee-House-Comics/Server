@@ -158,4 +158,4 @@ AuthController.changeUserName = async function (req, res) {
     */
 }
 
-module.export = AuthController;
+module.exports = AuthController;

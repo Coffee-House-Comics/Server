@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const auth = require('../auth')
+const auth = require('../Auth')
 const StoryController = require('../Controllers/storyController')
 
 router.get('/explore', StoryController.explore);
@@ -48,8 +48,8 @@ router.post('/vote/forumPost', auth.verify, StoryController.vote_forumPost);
 router.post('/vote/comment', auth.verify, StoryController.vote_comment);
 
 // Bookmarking a post
-router.post('/bookmark/:id', auth.verify, ComicController.bookmark);
-router.delete('/bookmark/:id', auth.verify, ComicController.deleteBookmark);
+router.post('/bookmark/:id', auth.verify, StoryController.bookmark);
+router.delete('/bookmark/:id', auth.verify, StoryController.deleteBookmark);
 
 // Subscribing to a user
 router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);

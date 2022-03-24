@@ -389,4 +389,4 @@ ComicController.unsubscribe_series = async function (req, res) {
 }
 
 
-module.export = ComicController;
+module.exports = ComicController;

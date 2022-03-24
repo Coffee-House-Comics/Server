@@ -36,10 +36,10 @@ app.use(function (req, res, next) {
 const authRouter = require('./Routes/authRouter');
 app.use('/auth', authRouter);
 
-const storyRouter = require('./Routes/comicRouter');
+const comicRouter = require('./Routes/comicRouter');
 app.use('/comic', comicRouter);
 
-const comicRouter = require('./Routes/storyRouter');
+const storyRouter = require('./Routes/storyRouter');
 app.use('/story', storyRouter);
 
 

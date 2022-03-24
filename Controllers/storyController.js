@@ -329,7 +329,7 @@ StoryController.bookmark = async function (req, res) {
    */
 }
 
-ComicController.deleteBookmark = async function (req, res) {
+StoryController.deleteBookmark = async function (req, res) {
     /* UN-Bookmark a post ------------
        Request body: { }
    
@@ -349,7 +349,7 @@ StoryController.subscribe_user = async function (req, res) {
     */
 }
 
-ComicController.unsubscribe_user = async function (req, res) {
+StoryController.unsubscribe_user = async function (req, res) {
     /*
         Request body { }
 
@@ -369,7 +369,7 @@ StoryController.subscribe_series = async function (req, res) {
     */
 }
 
-ComicController.unsubscribe_series = async function (req, res) {
+StoryController.unsubscribe_series = async function (req, res) {
     /*
         Request body { }
 
@@ -380,4 +380,4 @@ ComicController.unsubscribe_series = async function (req, res) {
 }
 
 
-module.export = StoryController;
+module.exports = StoryController;
