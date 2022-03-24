@@ -19,3 +19,4 @@ It is recommended to set /Static to be a soft link to the directory hosting the 
 2. Update the env file
 3. npm install googleapis
 4. npm install dotenv
+5. Set /etc/mongod.conf bind ip back to original eventually
