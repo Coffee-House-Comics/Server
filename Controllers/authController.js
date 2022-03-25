@@ -9,11 +9,12 @@ async function sendConfirmationEmail(Recepient, confirmationCode) {
 
 const AuthController = {};
 
-AuthController.registerUser = async function (req, res) {
+AuthController.registerUser = async function (req, res, next) {
     /* Register (POST) ------------
         Request body: {
             userName: String,
             password: String,
+            email: String,
             confirmPassword: String, 
 
             displayName: String,
@@ -30,6 +31,50 @@ AuthController.registerUser = async function (req, res) {
             }
         }
     */
+
+    // First we need to confirm all the credentials of the soon-to-be user
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500);
+    }
+
+    const userName = body.userName;
+    const password = body.password;
+    const confirmPassword = body.confirmPassword;
+    const displayName = body.displayName;
+    const bio = body.bio;
+
+    if (!userName || !password || !confirmPassword || !displayName || !bio) {
+        return res.status(500);
+    }
+
+    // Check if username is sufficient
+    if(userName.trim() === "" /* or if it already exists */) {
+        return res.status(500).json({
+            error: "Malformed Username"
+        });
+    }
+
+    // Check if password is good
+    if (password !== confirmPassword) {
+        return res.status(500).json({
+            error: "Passwords do not match"
+        });
+    }
+
+    // Confirm Display name
+    if (displayName.trim() === "") {
+        return res.status(500).json({
+            error: "Display name may not be blank"
+        });
+    }
+
+    // Bio may be blank - so don't check it
+
+    // HERE - send email to the client to confirm it
+
+    // HERE - create the user object and place it into the database
 }
 
 AuthController.loginUser = async function (req, res) {
