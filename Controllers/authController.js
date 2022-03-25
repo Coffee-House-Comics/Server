@@ -50,7 +50,7 @@ AuthController.registerUser = async function (req, res, next) {
     }
 
     // Check if username is sufficient
-    if(userName.trim() === "" /* or if it already exists */) {
+    if (userName.trim() === "" /* or if it already exists */) {
         return res.status(500).json({
             error: "Malformed Username"
         });
@@ -114,9 +114,53 @@ AuthController.logoutUser = async function (req, res) {
         Request body: {}
 
         Response {
-            status: 200 OK or 500 ERROR
+            status: 200 OK or 500 ERROR,
+            body: {
+                loggedIn: Boolean
+
+                // If 500 (Optional):
+                errorMessage: String
+            }
         }
     */
+
+    console.log("Attempting to logout.");
+
+    if(!req || !req.userId) {
+        return res.status(500);
+    }
+
+
+    try {
+        // Update the Token
+        auth.verify(req, res, async function () {
+            // Now actually do the updating
+            
+            // const loggedInUser = await User.findOne({ _id: req.userId });
+            // if (loggedInUser) {
+            //     loggedInUser.isLoggedIn = false;
+
+            //     await loggedInUser.save();
+
+            //     return res.status(200).json({
+            //         loggedIn: false,
+            //     });
+            // }
+
+            return res
+                .status(500)
+                .json({
+                    errorMessage: "This user was not logged in."
+                });
+        })
+
+
+        return res.status(200);
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500);
+    }
 }
 
 AuthController.confirmCode = async function (req, res) {
@@ -129,6 +173,18 @@ AuthController.confirmCode = async function (req, res) {
             HTML Page saying, code has been verified
         }
     */
+
+    if (!req || !req.params || !req.params.id) {
+        res.status(500).send("<script></script> Failure to approve the code.");
+        return;
+    }
+
+    // The code is stored within the request url
+    const code = req.params.id;
+
+    console.log("Trying to verify the code:", code);
+
+
 }
 
 AuthController.updateProfile = async function (req, res) {
