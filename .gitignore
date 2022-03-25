@@ -1,4 +1,4 @@
 /Static
 /node_modules
 .env
-output.log
+*.log
