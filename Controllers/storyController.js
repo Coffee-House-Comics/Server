@@ -1,3 +1,9 @@
+/** REMINDER **
+    - Every response in the controllers must be one of these 2 to actually send the data:
+        1. res.status(CODE).send(DATA || EMPTY)
+        2. res.status(CODE).json({})
+*/
+
 const StoryController = {};
 
 StoryController.explore = async function (req, res) {

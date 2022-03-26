@@ -1,3 +1,11 @@
+/** REMINDER **
+    - Every response in the controllers must be one of these 2 to actually send the data:
+        1. res.status(CODE).send(DATA || EMPTY)
+        2. res.status(CODE).json({})
+*/
+
+const emailController = require("../Mailer");
+
 // Helper functions ----------------------------------------------
 
 async function sendConfirmationEmail(Recepient, confirmationCode) {
@@ -75,6 +83,8 @@ AuthController.registerUser = async function (req, res, next) {
     // HERE - send email to the client to confirm it
 
     // HERE - create the user object and place it into the database
+
+    return res.status(200).json({});
 }
 
 AuthController.loginUser = async function (req, res) {
@@ -94,6 +104,10 @@ AuthController.loginUser = async function (req, res) {
             }
         }
     */
+
+    console.log("Attempting to login...");
+
+    return res.status(200).json({});
 }
 
 AuthController.forgotPassword = async function (req, res) {
@@ -107,6 +121,16 @@ AuthController.forgotPassword = async function (req, res) {
             status: 200 OK or 500 ERROR
         }
     */
+
+    console.log("Entering forgot password");
+
+    
+    
+    const email = emailController.generateMail("shaan10901@gmail.com", "TESTING");
+    emailController.sendMail(email);
+
+
+    return res.status(200).json({});
 }
 
 AuthController.logoutUser = async function (req, res) {
@@ -126,7 +150,7 @@ AuthController.logoutUser = async function (req, res) {
 
     console.log("Attempting to logout.");
 
-    if(!req || !req.userId) {
+    if (!req || !req.userId) {
         return res.status(500);
     }
 
@@ -135,7 +159,7 @@ AuthController.logoutUser = async function (req, res) {
         // Update the Token
         auth.verify(req, res, async function () {
             // Now actually do the updating
-            
+
             // const loggedInUser = await User.findOne({ _id: req.userId });
             // if (loggedInUser) {
             //     loggedInUser.isLoggedIn = false;
@@ -175,7 +199,7 @@ AuthController.confirmCode = async function (req, res) {
     */
 
     if (!req || !req.params || !req.params.id) {
-        res.status(500).send("<script></script> Failure to approve the code.");
+        res.status(500).send("Failure to approve the code.");
         return;
     }
 
@@ -184,7 +208,7 @@ AuthController.confirmCode = async function (req, res) {
 
     console.log("Trying to verify the code:", code);
 
-
+    return res.status(200).send("<h4>Thank you for confirming your email!  You may login now.</h4>");
 }
 
 AuthController.updateProfile = async function (req, res) {
