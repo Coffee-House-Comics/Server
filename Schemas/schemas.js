@@ -1,104 +1,108 @@
-import { Schema, model } from 'mongoose';
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const model = mongoose.model;
 const ObjectId = Schema.Types.ObjectId;
 
 // Schemas
 
 // ---------------------------------------------------
 
-const CommentSchema = new Schema({
+const Comment = ({
     user: String,
     date: Date,
     text: String,
     beans: Number
 });
 
-const ForumPostSchema = new Schema({
+const ForumPost = ({
     title: String,
     body: String,
     user: String,
     date: Date,
     beans: Number,
-    comments: [CommentSchema]
-});
-
-const ForumSchema = new Schema({
-    active: Boolean,
-    posts: [ForumPostSchema]
+    comments: [Comment]
 });
 
 // ---------------------------------------------------
 
-// Allow Inheritance like in: https://stackoverflow.com/questions/35361297/inheriting-mongoose-schemas
-const PostSchema = function () {
-    // Call Super
-    Schema.apply(this, arguments);
-    // Add the generic Post metadata
-    this.add({
-        // Metadata of the post
-        name: String,
-        description: String,
-        author: String,
+const PostMetadata = ({
+    // Metadata of the post
+    name: String,
+    description: String,
+    author: String,
 
-        type: PostType,
+    // Use the postType to do the assigning
+    type: Number,
 
-        isPublished: Boolean,
-        publishedDate: Date,
-        beans: Number,
+    isPublished: Boolean,
+    publishedDate: Date,
+    beans: Number,
 
-        series: {
-            isSeriesMember: Boolean,
-            seriesName: String,
-            seriesID: Number
-        },
+    series: {
+        isSeriesMember: Boolean,
+        seriesName: String,
+        seriesID: Number
+    },
 
-        comments: [CommentSchema],
+    comments: [Comment],
 
-        // Linking information
-        authorID: ObjectId,
-    });
-}
-
-const ComicPubPageSchema = new Schema({
-    title: String,
-    image: Image,
+    // Linking information
+    authorID: ObjectId,
 });
 
-const ComicUnPubPageSchema = new Schema({
-    title: String,
-    konvaPage: JSON
-});
+const ComicPostSchema = new Schema({
+    ...PostMetadata,
 
-const ComicPostSchema = new PostSchema();
-ComicPostSchema.add({
     // Unpublished storing
-    unpublished: [ComicUnPubPageSchema],
+    unpublished: [
+        {
+            title: String,
+            konvaPage: JSON
+        }
+    ],
 
     // Published storing
-    published: [ComicPubPageSchema],
-});
-
-const StoryPageSchema = new Schema({
-    title: String,
-    body: JSON,
-    decisions: [
+    published: [
         {
-            name: String,
-            nextPageId: String
+            title: String,
+            image: Buffer,
         }
-    ]
+    ],
 });
 
-const StoryPostSchema = new PostSchema();
-StoryPostSchema.add({
+const StoryPostSchema = new Schema({
+    ...PostMetadata,
     // Unpublished storing
     unpublished: {
-        pages: [StoryPageSchema],
+        pages: [
+            {
+                title: String,
+                body: JSON,
+                decisions: [
+                    {
+                        name: String,
+                        nextPageId: String
+                    }
+                ]
+            }
+        ],
         ReactFlowJSON: JSON,
     },
 
     // Published storing
     published: {
-        pages: [StoryPageSchema],
+        pages: [
+            {
+                title: String,
+                body: JSON,
+                decisions: [
+                    {
+                        name: String,
+                        nextPageId: String
+                    }
+                ]
+            }
+        ],
     }
 });
 
@@ -107,15 +111,32 @@ StoryPostSchema.add({
 const SeriesSchema = new Schema({
     name: String,
     beans: Number,
-    members: [PostSchema]
-});
-
-const SubscriptionSchema = new Schema({
-    type: SubscriptionType, // Type is an enum in interfaces.ts
-    id: Number  // Id of what is subscribed to
+    members: [StoryPostSchema || ComicPostSchema]
 });
 
 // ---------------------------------------------------
+
+const appMetadata = ({
+    beans: Number,
+    posts: [StoryPostSchema],
+    series: [SeriesSchema],
+
+    liked: [ObjectId],
+    disliked: [ObjectId],
+    saved: [ObjectId],
+
+    subscriptions: [
+        {
+            type: Number, // Type is an enum in interfaces
+            id: Number  // Id of what is subscribed to
+        }
+    ],
+
+    forum: {
+        active: Boolean,
+        posts: [ForumPost]
+    }
+});
 
 const AccountSchema = new Schema({
     userName: String,
@@ -128,44 +149,18 @@ const AccountSchema = new Schema({
     user: {
         displayName: String,
         bio: String,
-        profileImage: Image,
+        profileImage: Buffer,
 
         totalBeans: Number,
 
         story: {
-            beans: Number,
-            posts: [StoryPostSchema],
-            series: [SeriesSchema],
-
-            liked: [ObjectId],
-            disliked: [ObjectId],
-            saved: [ObjectId],
-            forum: ForumSchema
+            ...appMetadata
         },
 
         comic: {
-            beans: Number,
-            posts: [ObjectId],
-            series: [ObjectId],
-
+            ...appMetadata,
             savedStickers: [JSON],
-
-            liked: [ObjectId],
-            disliked: [ObjectId],
-            saved: [ObjectId],
-            forum: ForumSchema
         },
-
-
-        subscriptions: [SubscriptionSchema],
-
-        likedPosts: [ObjectId],
-        dislikedPosts: [ObjectId],
-        savedPosts: [ObjectId],
-
-        // If the forum is not active these are just null
-        comicForum: ForumSchema,
-        storyForum: ForumSchema,
     }
 });
 
@@ -175,30 +170,14 @@ const AccountSchema = new Schema({
 const Account = model('Account', AccountSchema);
 
 const ComicPost = model('ComicPost', ComicPostSchema);
-const ComicPubPage = model('ComicPubPage', ComicPubPageSchema);
-const ComicUnPubPage = model('ComicUnPubPage', ComicUnPubPageSchema);
-
 const StoryPost = model('StoryPost', StoryPostSchema);
-const StoryPage = model('StoryPage', StoryPageSchema);
 
 const Series = model('Series', SeriesSchema);
 
-const Forum = model('Forum', ForumSchema);
-const ForumPost = model('ForumPost', ForumPostSchema);
-const Comment = model('Comment', CommentSchema);
 
-const Subscription = model('Subscription', SubscriptionSchema);
-
-export default {
+module.exports = {
     Account,
     ComicPost,
-    ComicPubPage,
-    ComicUnPubPage,
     StoryPost,
-    StoryPage,
-    Series,
-    Forum,
-    ForumPost,
-    Comment,
-    Subscription
-}
+    Series
+};
