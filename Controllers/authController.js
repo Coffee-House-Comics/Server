@@ -5,11 +5,21 @@
 */
 
 const emailController = require("../Mailer");
+import {
+    Account
+} from '../Schemas/schemas';
+const crypto = require("crypto");
+
 
 // Helper functions ----------------------------------------------
 
 async function sendConfirmationEmail(Recepient, confirmationCode) {
 
+}
+
+// Generate a random string with num bytes `len`
+function generateCode(len = 22) {
+    return crypto.randomBytes(len).toString('hex');
 }
 
 
@@ -80,9 +90,79 @@ AuthController.registerUser = async function (req, res, next) {
 
     // Bio may be blank - so don't check it
 
+    // Generate a verification code
+
+
+
+
+
+
     // HERE - send email to the client to confirm it
 
+
+
+
+
+
     // HERE - create the user object and place it into the database
+    const newAccount = new Account({
+        userName: String,
+        email: String,
+        passwordHash: String,
+        isLoggedIn: Boolean,
+        isverified: Boolean,
+        verificationCode: String,
+
+        user: {
+            displayName: String,
+            bio: String,
+            profileImage: Image,
+
+            totalBeans: Number,
+
+            story: {
+                beans: Number,
+                posts: [StoryPostSchema],
+                series: [SeriesSchema],
+
+                liked: [ObjectId],
+                disliked: [ObjectId],
+                saved: [ObjectId],
+                forum: ForumSchema
+            },
+
+            comic: {
+                beans: Number,
+                posts: [ObjectId],
+                series: [ObjectId],
+
+                savedStickers: [JSON],
+
+                liked: [ObjectId],
+                disliked: [ObjectId],
+                saved: [ObjectId],
+                forum: ForumSchema
+            },
+
+
+            subscriptions: [SubscriptionSchema],
+
+            likedPosts: [ObjectId],
+            dislikedPosts: [ObjectId],
+            savedPosts: [ObjectId],
+
+            // If the forum is not active these are just null
+            comicForum: ForumSchema,
+            storyForum: ForumSchema,
+        }
+    });
+
+
+
+
+
+
+
 
     return res.status(200).json({});
 }
@@ -124,8 +204,8 @@ AuthController.forgotPassword = async function (req, res) {
 
     console.log("Entering forgot password");
 
-    
-    
+
+
     const email = emailController.generateMail("shaan10901@gmail.com", "TESTING");
     emailController.sendMail(email);
 

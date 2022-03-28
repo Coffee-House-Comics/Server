@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 
+const json = require('../Secrets/gmail_auth_file.json');
+
 // Extract the environment variables
 dotenv.config();
 const my_email = process.env.GMAIL_ADDRESS;
@@ -11,21 +13,23 @@ const client_secret = process.env.GMAIL_OAUTH_CLIENT_SECRET;
 const refresh_token = process.env.GMAIL_OAUTH_REFRESH_TOKEN;
 let access_token = process.env.GMAIL_OAUTH_ACCESS_TOKEN;
 
+const privKey = process.env.GMAIL_IAM_PRIV_KEY;
+
 
 const mailController = {};
 
-const oauth2Client = new OAuth2(
-    client_id,
-    client_secret, // Client Secret
-);
+// const oauth2Client = new OAuth2(
+//     client_id,
+//     client_secret, // Client Secret
+// );
 
-oauth2Client.setCredentials({
-    refresh_token: refresh_token
-});
+// oauth2Client.setCredentials({
+//     refresh_token: refresh_token
+// });
 
-access_token = oauth2Client.getAccessToken(function (token) {
-    access_token = token;
-});
+// access_token = oauth2Client.getAccessToken(function (token) {
+//     access_token = token;
+// });
 
 mailController.generateMail = function (toAddress, message) {
     return (
@@ -39,7 +43,9 @@ mailController.generateMail = function (toAddress, message) {
     );
 }
 
-mailController.sendMail = function (mailObj) {
+mailController.sendMail = async function (mailObj) {
+    console.log("Sending mail...");
+
     const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 465,
@@ -47,12 +53,12 @@ mailController.sendMail = function (mailObj) {
         auth: {
             type: 'OAuth2',
             user: my_email,
-            clientId: client_id,
-            clientSecret: client_secret,
-            refreshToken: refresh_token,
-            accessToken: access_token
+            serviceClient: json.client_id,
+            privateKey: json.private_key,
         }
     });
+
+    await transporter.verify();
 
     transporter.sendMail(mailObj, function (err, info) {
         if (err) {
