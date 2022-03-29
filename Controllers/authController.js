@@ -5,10 +5,9 @@
 */
 
 const emailController = require("../Mailer");
-import {
-    Account
-} from '../Schemas/schemas';
+const schemas = require('../Schemas/schemas');
 const crypto = require("crypto");
+const bcrypt = require('bcrypt');
 
 
 // Helper functions ----------------------------------------------
@@ -41,130 +40,149 @@ AuthController.registerUser = async function (req, res, next) {
 
         Response {
             status: 200 OK or 500 ERROR
-            body: {
-                id: ObjectId
-                displayName: String,
-                bio: String,
-                profileImage: Image,
-            }
+            // body: {
+            //     id: ObjectId
+            //     displayName: String,
+            //     bio: String,
+            //     profileImage: Image,
+            // }
         }
     */
 
-    // First we need to confirm all the credentials of the soon-to-be user
-    const body = req.body;
+    try {
+        // First we need to confirm all the credentials of the soon-to-be user
+        const body = req.body;
 
-    if (!body) {
-        return res.status(500);
-    }
-
-    const userName = body.userName;
-    const password = body.password;
-    const confirmPassword = body.confirmPassword;
-    const displayName = body.displayName;
-    const bio = body.bio;
-
-    if (!userName || !password || !confirmPassword || !displayName || !bio) {
-        return res.status(500);
-    }
-
-    // Check if username is sufficient
-    if (userName.trim() === "" /* or if it already exists */) {
-        return res.status(500).json({
-            error: "Malformed Username"
-        });
-    }
-
-    // Check if password is good
-    if (password !== confirmPassword) {
-        return res.status(500).json({
-            error: "Passwords do not match"
-        });
-    }
-
-    // Confirm Display name
-    if (displayName.trim() === "") {
-        return res.status(500).json({
-            error: "Display name may not be blank"
-        });
-    }
-
-    // Bio may be blank - so don't check it
-
-    // Generate a verification code
-
-
-
-
-
-
-    // HERE - send email to the client to confirm it
-
-
-
-
-
-
-    // HERE - create the user object and place it into the database
-    const newAccount = new Account({
-        userName: String,
-        email: String,
-        passwordHash: String,
-        isLoggedIn: Boolean,
-        isverified: Boolean,
-        verificationCode: String,
-
-        user: {
-            displayName: String,
-            bio: String,
-            profileImage: Image,
-
-            totalBeans: Number,
-
-            story: {
-                beans: Number,
-                posts: [StoryPostSchema],
-                series: [SeriesSchema],
-
-                liked: [ObjectId],
-                disliked: [ObjectId],
-                saved: [ObjectId],
-                forum: ForumSchema
-            },
-
-            comic: {
-                beans: Number,
-                posts: [ObjectId],
-                series: [ObjectId],
-
-                savedStickers: [JSON],
-
-                liked: [ObjectId],
-                disliked: [ObjectId],
-                saved: [ObjectId],
-                forum: ForumSchema
-            },
-
-
-            subscriptions: [SubscriptionSchema],
-
-            likedPosts: [ObjectId],
-            dislikedPosts: [ObjectId],
-            savedPosts: [ObjectId],
-
-            // If the forum is not active these are just null
-            comicForum: ForumSchema,
-            storyForum: ForumSchema,
+        if (!body) {
+            return res.status(500);
         }
-    });
+
+        const userName = body.userName;
+        const password = body.password;
+        const confirmPassword = body.confirmPassword;
+        const email = body.email;
+        const displayName = body.displayName;
+        const bio = body.bio;
+
+        if (!userName || !password || !confirmPassword || !email || !displayName || !bio) {
+            return res.status(500);
+        }
+
+        // Check if username is sufficient
+        if (userName.trim() === "" /* or if it already exists */) {
+            return res.status(500).json({
+                error: "Malformed Username"
+            });
+        }
+
+        // Check if password is good
+        if (password.trim() === "" || password !== confirmPassword) {
+            return res.status(500).json({
+                error: "Password insufficient or Passwords do not match"
+            });
+        }
+
+        // TODO: Check if email is already registered
+
+
+        // Brief check on email
+        if (email.trim() === "") {
+            return res.status(500).json({
+                error: "Email is blank"
+            });
+        }
+
+        // Confirm Display name
+        if (displayName.trim() === "") {
+            return res.status(500).json({
+                error: "Display name may not be blank"
+            });
+        }
+
+        // Bio may be blank - so don't check it
+
+        // Generate a verification code
+        const code = generateCode();
+
+        // TODO: send email to the client to confirm it
 
 
 
+        // Generate Password Hash
+        const saltRounds = 15;
+        const salt = await bcrypt.genSalt(saltRounds);
+        const passwordHash = await bcrypt.hash(password, salt);
 
 
+        // Create the user object
+        const newAccount = new schemas.Account({
+            userName: userName,
+            email: email,
+            passwordHash: passwordHash,
+            // Wait for email to be verified
+            isLoggedIn: false,
+            isverified: false,
+            verificationCode: code,
 
+            user: {
+                displayName: displayName,
+                bio: bio,
+                profileImage: null,
 
+                totalBeans: 0,
 
-    return res.status(200).json({});
+                story: {
+                    beans: 0,
+                    posts: [],
+                    series: [],
+
+                    liked: [],
+                    disliked: [],
+                    saved: [],
+
+                    subscriptions: [],
+
+                    forum: {
+                        active: false,
+                        posts: []
+                    }
+                },
+
+                comic: {
+                    beans: 0,
+                    posts: [],
+                    series: [],
+
+                    liked: [],
+                    disliked: [],
+                    saved: [],
+
+                    subscriptions: [],
+
+                    forum: {
+                        active: false,
+                        posts: []
+                    },
+
+                    savedStickers: [],
+                },
+            }
+        });
+
+        //  ...and place it into the database
+
+        const savedAccount = await newAccount.save();
+        console.log("New Account saved: " + savedAccount._id);
+
+        // Remember we do not login the user here since the email must be confirmed first
+
+        return res.status(200).json({});
+    }
+    catch (err) {
+        console.log("Create Account Error", err);
+        return res.status(500).json({});
+    }
+
 }
 
 AuthController.loginUser = async function (req, res) {
