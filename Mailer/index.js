@@ -13,7 +13,7 @@ const client_secret = process.env.GMAIL_OAUTH_CLIENT_SECRET;
 const refresh_token = process.env.GMAIL_OAUTH_REFRESH_TOKEN;
 let access_token = process.env.GMAIL_OAUTH_ACCESS_TOKEN;
 
-const password = proccess.env.GMAIL_PASSWORD;
+const password = process.env.GMAIL_PASSWORD;
 
 const privKey = process.env.GMAIL_IAM_PRIV_KEY;
 
