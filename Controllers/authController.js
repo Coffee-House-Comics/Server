@@ -69,7 +69,7 @@ AuthController.registerUser = async function (req, res, next) {
         }
 
         // Check if username is sufficient
-        if (userName.trim() === "" /* or if it already exists */) {
+        if (userName.trim() === "" /* TODO: or if it already exists */) {
             return res.status(500).json({
                 error: "Malformed Username"
             });
