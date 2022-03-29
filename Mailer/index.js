@@ -13,6 +13,8 @@ const client_secret = process.env.GMAIL_OAUTH_CLIENT_SECRET;
 const refresh_token = process.env.GMAIL_OAUTH_REFRESH_TOKEN;
 let access_token = process.env.GMAIL_OAUTH_ACCESS_TOKEN;
 
+const password = proccess.env.GMAIL_PASSWORD;
+
 const privKey = process.env.GMAIL_IAM_PRIV_KEY;
 
 
@@ -46,15 +48,24 @@ mailController.generateMail = function (toAddress, message) {
 mailController.sendMail = async function (mailObj) {
     console.log("Sending mail...");
 
+    // TODO: Maybe get OAUTH token working in the future
+    // const transporter = nodemailer.createTransport({
+    //     host: 'smtp.gmail.com',
+    //     port: 465,
+    //     secure: true,
+    //     auth: {
+    //         type: 'OAuth2',
+    //         user: my_email,
+    //         serviceClient: json.client_id,
+    //         privateKey: json.private_key,
+    //     }
+    // });
+
     const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        service: 'gmail',
         auth: {
-            type: 'OAuth2',
-            user: my_email,
-            serviceClient: json.client_id,
-            privateKey: json.private_key,
+            user: 'coffeehousecomics416@gmail.com',
+            pass: password
         }
     });
 
