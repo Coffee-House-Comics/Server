@@ -57,7 +57,9 @@ AuthController.registerUser = async function (req, res, next) {
         const body = req.body;
 
         if (!body) {
-            return res.status(500);
+            return res.status(500).json({
+                error: "Malformed Body"
+            });
         }
 
         const userName = body.userName;
@@ -68,7 +70,9 @@ AuthController.registerUser = async function (req, res, next) {
         const bio = body.bio;
 
         if (!userName || !password || !confirmPassword || !email || !displayName || !bio) {
-            return res.status(500);
+            return res.status(500).json({
+                error: "Malformed body"
+            });
         }
 
         // Check if username is sufficient
@@ -135,7 +139,7 @@ AuthController.registerUser = async function (req, res, next) {
 
             user: {
                 displayName: displayName,
-                bio: bio,
+                bio: (bio) ? bio : "This user likes to keep things secret.",
                 profileImage: null,
 
                 totalBeans: 0,
@@ -192,7 +196,9 @@ AuthController.registerUser = async function (req, res, next) {
     }
     catch (err) {
         console.log("Create Account Error", err);
-        return res.status(500).json({});
+        return res.status(500).json({
+            error: "Error creating the account."
+        });
     }
 
 }
@@ -217,7 +223,65 @@ AuthController.loginUser = async function (req, res) {
 
     console.log("Attempting to login...");
 
-    return res.status(200).json({});
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const userName = body.userName;
+    const password = body.password;
+
+    if (!userName || !password) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        const targetAccount = await schemas.Account.findOne({ userName: userName });
+
+        if (!targetAccount) {
+            return res.status(500).json({
+                error: "Account does not exist."
+            });
+        }
+
+        // Now get the password hash
+        const isPasswordCorrect = await bcrypt.compare(password, targetAccount.passwordHash);
+
+        if (!isPasswordCorrect) {
+            return res.status(500).json({
+                error: "Password is incorrect."
+            });
+        }
+
+        // By now the user exists and the password has been verified
+
+        // Now create the cookie for the user and return it
+        const token = auth.signToken(targetAccount._id);
+        console.log(token);
+
+        return res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: true
+        }).status(200).json({
+            id: targetAccount._id,
+            displayName: targetAccount.user.displayName,
+            bio: targetAccount.user.bio,
+            profileImage: targetAccount.user.profileImage,
+
+        });
+    }
+    catch (err) {
+        console.log("Login Error", err);
+        return res.status(500).json({
+            error: "Error logging in."
+        });
+    }
 }
 
 AuthController.forgotPassword = async function (req, res) {
