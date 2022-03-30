@@ -142,7 +142,6 @@ const AccountSchema = new Schema({
     userName: String,
     email: String,
     passwordHash: String,
-    isLoggedIn: Boolean,
     isverified: Boolean,
     verificationCode: String,
 

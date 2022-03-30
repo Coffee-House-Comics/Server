@@ -1,9 +1,8 @@
-const jwt = require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
+const schemas = require('../Schemas/schemas');
 
 function authManager() {
     verify = function (req, res, next) {
-        // console.log("req: " + req);
-        // console.log("next: " + next);
         console.log("Who called verify?");
         try {
             const token = req.cookies.token;
@@ -11,7 +10,7 @@ function authManager() {
                 return res.status(401).json({
                     loggedIn: false,
                     user: null,
-                    errorMessage: "Unauthorized"
+                    error: "Unauthorized"
                 })
             }
 
@@ -22,12 +21,13 @@ function authManager() {
             // Get the expiration time
             const time = req.exp;
             const currentTime = Math.floor(Date.now() / 1000);
+            console.log("Time, current Time:", time, currentTime);
             const isExpired = time <= currentTime;
 
             if (isExpired) {
                 return res.status(401).json({
-                    user: null,
-                    errorMessage: "Expired"
+                    userId: null,
+                    error: "Expired"
                 });
             }
 
@@ -35,18 +35,17 @@ function authManager() {
         } catch (err) {
             console.error(err);
             return res.status(401).json({
-                user: null,
-                errorMessage: "Unauthorized"
+                userId: null,
+                error: "Unauthorized"
             });
         }
     }
 
-    expire = function (token) {
-        try {
-
-        } catch (err) {
-
-        }
+    expireToken = function () {
+        return jwt.sign({
+            exp: 0,
+            userId: null
+        }, process.env.JWT_SECRET, { expiresIn: '1h' });
     }
 
     verifyUser = function (req) {
@@ -67,6 +66,31 @@ function authManager() {
         return jwt.sign({
             userId: userId
         }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    }
+
+    // Simply checks to see if the email is already verified
+    emailIsVerified = async function (req, res, next) {
+        console.log("Checking if email is verified");
+
+        const userId = req.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                userId: null,
+                error: "No user in session"
+            });
+        }
+
+        const account = await schemas.Account.findOne({ _id: userId });
+
+        if (!account || !account.isverified) {
+            return res.status(401).json({
+                userId: userId,
+                error: "Email not yet verified"
+            });
+        }
+
+        next();
     }
 
     return this;

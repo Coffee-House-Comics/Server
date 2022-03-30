@@ -31,6 +31,24 @@ async function sendConfirmationEmail(Recepient, userId, confirmationCode) {
     await emailController.sendMail(emailMessage);
 }
 
+async function sendPasswordResetEmail(Recepient, password) {
+    const subject = "You have reset the password for your Coffee House Comics Account";
+    const message = "You have reset the password for your Coffee House Comics Account\n \
+        The new password is: " + password + "\n \
+        You may sign into your account using this new password \n \
+        We recommend you change the password to something you can remember\n \
+        Have a good day!";
+
+    const emailMessage = emailController.generateMail(Recepient, subject, message);
+    await emailController.sendMail(emailMessage);
+}
+
+async function generatePassHash(password) {
+    const saltRounds = 15;
+    const salt = await bcrypt.genSalt(saltRounds);
+    return await bcrypt.hash(password, salt);
+}
+
 // Main functions ----------------------------------------------
 
 const AuthController = {};
@@ -49,6 +67,9 @@ AuthController.registerUser = async function (req, res, next) {
 
         Response {
             status: 200 OK or 500 ERROR
+
+            // If error:
+            error: String
         }
     */
 
@@ -123,9 +144,7 @@ AuthController.registerUser = async function (req, res, next) {
         const code = generateCode();
 
         // Generate Password Hash
-        const saltRounds = 15;
-        const salt = await bcrypt.genSalt(saltRounds);
-        const passwordHash = await bcrypt.hash(password, salt);
+        const passwordHash = await generatePassHash(password);
 
         // Create the user object
         const newAccount = new schemas.Account({
@@ -133,7 +152,6 @@ AuthController.registerUser = async function (req, res, next) {
             email: email,
             passwordHash: passwordHash,
             // Wait for email to be verified
-            isLoggedIn: false,
             isverified: false,
             verificationCode: code,
 
@@ -216,7 +234,10 @@ AuthController.loginUser = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,           
+                profileImage: Image,    
+                
+                // If error:
+                error: String
             }
         }
     */
@@ -284,7 +305,6 @@ AuthController.loginUser = async function (req, res) {
     }
 }
 
-// TODO:
 AuthController.forgotPassword = async function (req, res) {
     /* Forgot Password (POST) ------------
         Request body: {
@@ -297,10 +317,56 @@ AuthController.forgotPassword = async function (req, res) {
         }
     */
 
+    // The way we are doing this is by emailing a new temporary password that will remain 
+    //  in effect until the user resets it so something else
+
     console.log("Entering forgot password");
 
+    const body = req.body;
 
-    return res.status(200).json({});
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const userName = body.userName;
+    const email = body.email;
+
+    if (!userName || !email) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        const account = await schemas.Account.findOne({ email: email });
+
+        if (!account || account.userName !== userName) {
+            return res.status(500).json({
+                error: "Either email or username is incorrect"
+            });
+        }
+
+        // Generate the new temporary password
+        const tempPass = generateCode(12);
+        const passHash = await generatePassHash(tempPass);
+
+        account.passwordHash = passHash;
+
+        // Send the email with the new password (no need to await)
+        sendPasswordResetEmail(account.email, tempPass);
+
+        await account.save();
+
+        return res.status(200).send("<h4>Check your email for a temporary password to use. Most emails arrive within a few minutes</h4>");
+    }
+    catch (err) {
+        console.log("Error in forgot password:", err);
+        return res.status(500).json({
+            error: "Error resseting password."
+        });
+    }
 }
 
 AuthController.logoutUser = async function (req, res) {
@@ -310,10 +376,8 @@ AuthController.logoutUser = async function (req, res) {
         Response {
             status: 200 OK or 500 ERROR,
             body: {
-                loggedIn: Boolean
-
                 // If 500 (Optional):
-                errorMessage: String
+                error: String
             }
         }
     */
@@ -321,39 +385,44 @@ AuthController.logoutUser = async function (req, res) {
     console.log("Attempting to logout.");
 
     if (!req || !req.userId) {
-        return res.status(500);
+        return res.status(500).send();
     }
 
 
     try {
         // Update the Token
-        auth.verify(req, res, async function () {
-            // Now actually do the updating
 
-            const loggedInUser = await schemas.Account.findOne({ _id: req.userId });
-            if (loggedInUser) {
-                loggedInUser.isLoggedIn = false;
+        // Now actually do the updating
 
-                await loggedInUser.save();
+        const loggedInUser = await schemas.Account.findOne({ _id: req.userId });
 
-                return res.status(200).json({
-                    loggedIn: false,
-                });
-            }
+        if (!loggedInUser) {
+            return res.status(400).json({
+                error: "User does not exist",
+            });
+        }
 
-            return res
-                .status(500)
-                .json({
-                    errorMessage: "This user was not logged in."
-                });
-        })
+        // Now create the cookie for the user (with the expired token) and return it
+        const token = auth.expireToken();
+        console.log(token);
 
+        return res.cookie("token", token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: true
+        }).status(200).json({
+            id: targetAccount._id,
+            displayName: targetAccount.user.displayName,
+            bio: targetAccount.user.bio,
+            profileImage: targetAccount.user.profileImage,
 
-        return res.status(200);
+        });
     }
     catch (err) {
-        console.error(err);
-        return res.status(500);
+        console.log("Login Error", err);
+        return res.status(500).json({
+            error: "Error logging out."
+        });
     }
 }
 
@@ -423,28 +492,66 @@ AuthController.updateProfile = async function (req, res) {
                 displayName: String,
                 bio: String,
                 profileImage: Image,
+
+                // If error:
+                error: String
             }
         }
     */
-}
 
-AuthController.changeEmail = async function (req, res) {
-    /* Change Email ------------
-        Request body: {
-            oldEmail: String, 
-            newEmail: String
+    console.log("Attempting to update profile.");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const image = body.image;
+    const displayName = body.displayName;
+    const bio = body.bio;
+
+    if (!image || !displayName || !bio) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        const account = await schemas.Account.findOne({ _id: req.userId });
+
+        if (!user) {
+            return res.status(500).json({
+                error: "User does not exist"
+            });
         }
 
-        Response {
-            status: 200 OK or 500 ERROR
-            body: {
-                id: ObjectId
-                displayName: String,
-                bio: String,
-                profileImage: Image,
-            }
-        }
-    */
+        account.user.displayName = displayName;
+        account.user.bio = bio;
+        account.user.profileImage = image;
+
+        // Now save the updated account
+        const savedAccount = await account.save();
+
+        return res.status(200).json({
+            id: savedAccount._id,
+            displayName: savedAccount.user.displayName,
+            bio: savedAccount.user.bio,
+            profileImage: savedAccount.user.profileImage
+        });
+    }
+    catch (err) {
+        console.log("Update Account Error", err);
+        return res.status(500).json({
+            error: "Error Updating profile."
+        });
+    }
 }
 
 AuthController.changePassword = async function (req, res) {
@@ -457,14 +564,73 @@ AuthController.changePassword = async function (req, res) {
     
         Response {
             status: 200 OK or 500 ERROR
+
+            // If there is an error
+            error: String
         }
     */
+
+    console.log("Attempting to change the password.");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const oldPassword = body.oldPassword;
+    const newPassword = body.newPassword;
+    const confirmNewPassword = body.confirmNewPassword;
+
+    if (!oldPassword || !newPassword || !confirmNewPassword) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        return res.status(500).json({
+            error: "New Passwords do not match"
+        });
+    }
+
+    try {
+        const targetAccount = await schemas.Account.findOne({ _id: req.userId });
+
+        const isPasswordCorrect = await bcrypt.compare(oldPassword, targetAccount.passwordHash);
+
+        if (!isPasswordCorrect) {
+            return res.status(500).json({
+                error: "Old password is incorrect."
+            });
+        }
+
+        // Generate Password Hash
+        const passwordHash = await generatePassHash(newPassword);
+
+        targetAccount.passwordHash = passwordHash;
+
+        await targetAccount.save();
+
+        return res.status(200).send();
+    }
+    catch (err) {
+        console.log("Error in change password:", err);
+        return res.status(500).json({
+            error: "Error changing password"
+        });
+    }
 }
 
 AuthController.changeUserName = async function (req, res) {
     /* Chnage Username ------------
         Request body: {
-            oldUserName: String,
             newUserName: String
         }
     
@@ -475,9 +641,64 @@ AuthController.changeUserName = async function (req, res) {
                 displayName: String,
                 bio: String,
                 profileImage: Image,
+
+                // If there is an error:
+                error: String
             }
         }
     */
+
+    console.log("Attempting to change the userName.");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const newUserName = body.newUserName;
+
+    if (!newUserName) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        // First let's make sure somebody else doesn't have the same username
+        const potentialConflict = await schemas.Account.findOne({ userName: newUserName });
+
+        if (!potentialConflict) {
+            return res.status(500).json({
+                error: "Somebody else has this username"
+            });
+        }
+
+        const targetAccount = await schemas.Account.findOne({ _id: req.userId });
+
+        targetAccount.userName = newUserName;
+
+        const savedAccount = await targetAccount.save();
+
+        return res.status(200).json({
+            id: savedAccount._id,
+            displayName: savedAccount.user.displayName,
+            bio: savedAccount.user.bio,
+            profileImage: savedAccount.user.profileImage
+        });
+    }
+    catch (err) {
+        console.log("Error in change userName:", err);
+        return res.status(500).json({
+            error: "Error changing userName"
+        });
+    }
 }
 
 module.exports = AuthController;
