@@ -19,14 +19,33 @@ function authManager() {
             console.log("verified.userId: " + verified.userId);
             req.userId = verified.userId;
 
+            // Get the expiration time
+            const time = req.exp;
+            const currentTime = Math.floor(Date.now() / 1000);
+            const isExpired = time <= currentTime;
+
+            if (isExpired) {
+                return res.status(401).json({
+                    user: null,
+                    errorMessage: "Expired"
+                });
+            }
+
             next();
         } catch (err) {
             console.error(err);
             return res.status(401).json({
-                loggedIn: false,
                 user: null,
                 errorMessage: "Unauthorized"
             });
+        }
+    }
+
+    expire = function (token) {
+        try {
+
+        } catch (err) {
+
         }
     }
 
@@ -47,7 +66,7 @@ function authManager() {
     signToken = function (userId) {
         return jwt.sign({
             userId: userId
-        }, process.env.JWT_SECRET);
+        }, process.env.JWT_SECRET, { expiresIn: '1h' });
     }
 
     return this;

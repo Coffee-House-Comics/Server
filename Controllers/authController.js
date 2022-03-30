@@ -284,6 +284,7 @@ AuthController.loginUser = async function (req, res) {
     }
 }
 
+// TODO:
 AuthController.forgotPassword = async function (req, res) {
     /* Forgot Password (POST) ------------
         Request body: {
@@ -329,16 +330,16 @@ AuthController.logoutUser = async function (req, res) {
         auth.verify(req, res, async function () {
             // Now actually do the updating
 
-            // const loggedInUser = await User.findOne({ _id: req.userId });
-            // if (loggedInUser) {
-            //     loggedInUser.isLoggedIn = false;
+            const loggedInUser = await schemas.Account.findOne({ _id: req.userId });
+            if (loggedInUser) {
+                loggedInUser.isLoggedIn = false;
 
-            //     await loggedInUser.save();
+                await loggedInUser.save();
 
-            //     return res.status(200).json({
-            //         loggedIn: false,
-            //     });
-            // }
+                return res.status(200).json({
+                    loggedIn: false,
+                });
+            }
 
             return res
                 .status(500)
