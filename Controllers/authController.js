@@ -12,15 +12,24 @@ const bcrypt = require('bcrypt');
 
 // Helper functions ----------------------------------------------
 
-async function sendConfirmationEmail(Recepient, confirmationCode) {
-
-}
-
 // Generate a random string with num bytes `len`
 function generateCode(len = 22) {
     return crypto.randomBytes(len).toString('hex');
 }
 
+function generateEmailAuthLink(userId, code) {
+    return "https://coffeehousecomics.com/" + userId + "/" + code;
+}
+
+async function sendConfirmationEmail(Recepient, userId, confirmationCode) {
+    const authLink = generateEmailAuthLink(userId, confirmationCode);
+
+    const subject = "Confirm your Coffee House Comics Account";
+    const message = "Thank you for registering an account with coffee house comics! Press this link (or paste it into the url) to verify your email: " + authLink;
+
+    const emailMessage = emailController.generateMail(Recepient, subject, message);
+    await emailController.sendMail(emailMessage);
+}
 
 // Main functions ----------------------------------------------
 
@@ -40,12 +49,6 @@ AuthController.registerUser = async function (req, res, next) {
 
         Response {
             status: 200 OK or 500 ERROR
-            // body: {
-            //     id: ObjectId
-            //     displayName: String,
-            //     bio: String,
-            //     profileImage: Image,
-            // }
         }
     */
 
@@ -69,21 +72,32 @@ AuthController.registerUser = async function (req, res, next) {
         }
 
         // Check if username is sufficient
-        if (userName.trim() === "" /* TODO: or if it already exists */) {
+        if (userName.trim() === "") {
             return res.status(500).json({
                 error: "Malformed Username"
+            });
+        }
+
+        // If this username already exists
+        if (! await schemas.Account.findOne({ _id: id })) {
+            return res.status(500).json({
+                error: "Username alreay exists"
             });
         }
 
         // Check if password is good
         if (password.trim() === "" || password !== confirmPassword) {
             return res.status(500).json({
-                error: "Password insufficient or Passwords do not match"
+                error: "Password insufficient or Passwords do not match."
             });
         }
 
-        // TODO: Check if email is already registered
-
+        // Check if email is already registered
+        if (! await schemas.Account.findOne({ email: email })) {
+            return res.status(500).json({
+                error: "This email is associated with an existing account."
+            });
+        }
 
         // Brief check on email
         if (email.trim() === "") {
@@ -104,15 +118,10 @@ AuthController.registerUser = async function (req, res, next) {
         // Generate a verification code
         const code = generateCode();
 
-        // TODO: send email to the client to confirm it
-
-
-
         // Generate Password Hash
         const saltRounds = 15;
         const salt = await bcrypt.genSalt(saltRounds);
         const passwordHash = await bcrypt.hash(password, salt);
-
 
         // Create the user object
         const newAccount = new schemas.Account({
@@ -174,7 +183,10 @@ AuthController.registerUser = async function (req, res, next) {
         const savedAccount = await newAccount.save();
         console.log("New Account saved: " + savedAccount._id);
 
-        // Remember we do not login the user here since the email must be confirmed first
+        // Send email to the client to confirm it (we could await it but no need to)
+        sendConfirmationEmail(email, savedAccount._id, code);
+
+        // **Remember we do not login the user here since the email must be confirmed first**
 
         return res.status(200).json({});
     }
@@ -221,11 +233,6 @@ AuthController.forgotPassword = async function (req, res) {
     */
 
     console.log("Entering forgot password");
-
-
-
-    const email = emailController.generateMail("shaan10901@gmail.com", "TESTING");
-    emailController.sendMail(email);
 
 
     return res.status(200).json({});
@@ -296,17 +303,44 @@ AuthController.confirmCode = async function (req, res) {
         }
     */
 
-    if (!req || !req.params || !req.params.id) {
-        res.status(500).send("Failure to approve the code.");
-        return;
+    if (!req || !req.params || !req.params.id || !req.params.code) {
+        return res.status(500).send("Failure to approve the code.");
     }
 
     // The code is stored within the request url
-    const code = req.params.id;
+    const id = req.params.id;
+    const code = req.params.code;
 
-    console.log("Trying to verify the code:", code);
+    console.log("Trying to verify the code " + code + " for user id:", id);
 
-    return res.status(200).send("<h4>Thank you for confirming your email!  You may login now.</h4>");
+    try {
+        // Get the user by ID
+        const user = await schemas.Account.findOne({ _id: id });
+
+        if (!user) {
+            return res.status(500).send("Failure to approve the code.");
+        }
+
+        const savedCode = user.verificationCode;
+
+        if (!savedCode) {
+            return res.status(500).send("Server error");
+        }
+
+        if (savedCode !== code) {
+            return res.status(500).send("Failure to match the code.");
+        }
+
+        // Reach here if the code is valid
+        user.isverified = true;
+
+        await user.save();
+
+        return res.status(200).send("<h4>Thank you for confirming your email!  You may login now.</h4>");
+    }
+    catch (err) {
+        return res.status(500).send("Failure to match the code.");
+    }
 }
 
 AuthController.updateProfile = async function (req, res) {

@@ -12,7 +12,7 @@ router.post('/forgotPassword', AuthController.forgotPassword);
 router.post('/logout', auth.verify, AuthController.logoutUser);
 
 // Used to confirm the email
-router.get('/confirmCode/:id', AuthController.confirmCode);
+router.get('/confirmCode/:id/:code', AuthController.confirmCode);
 
 // Account maintenence ------------------------------------------------
 router.put('/updateProfile', auth.verify, AuthController.updateProfile);

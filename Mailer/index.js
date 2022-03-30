@@ -33,14 +33,14 @@ const mailController = {};
 //     access_token = token;
 // });
 
-mailController.generateMail = function (toAddress, message) {
+mailController.generateMail = function (toAddress, subject, message) {
     return (
         {
             from: "Coffee House Comics Team <" + my_email + ">",
             to: toAddress,
-            subject: "Confirm your Coffee House Comics Account",
-            text: "You successfully registered an account with www.coffeehousecomics.com",
-            html: "<p>You successfully registered an account with www.coffeehousecomics.com</p>"
+            subject: subject,
+            text: message,
+            html: "<p>" + message + "</p>"
         }
     );
 }
