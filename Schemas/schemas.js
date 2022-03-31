@@ -7,20 +7,22 @@ const ObjectId = Schema.Types.ObjectId;
 
 // ---------------------------------------------------
 
-const Comment = ({
+// Needs to be separate schema so we can search for it by id
+const CommentSchema = new Schema({
     user: String,
     date: Date,
     text: String,
     beans: Number
 });
 
-const ForumPost = ({
+// Needs to be separate schema so we can search for it by id
+const ForumPostSchema = new Schema({
     title: String,
     body: String,
     user: String,
     date: Date,
     beans: Number,
-    comments: [Comment]
+    comments: [CommentSchema]
 });
 
 // ---------------------------------------------------
@@ -30,9 +32,6 @@ const PostMetadata = ({
     name: String,
     description: String,
     author: String,
-
-    // Use the postType to do the assigning
-    type: Number,
 
     isPublished: Boolean,
     publishedDate: Date,
@@ -44,7 +43,7 @@ const PostMetadata = ({
         seriesID: Number
     },
 
-    comments: [Comment],
+    comments: [CommentSchema],
 
     // Linking information
     authorID: ObjectId,
@@ -118,9 +117,10 @@ const SeriesSchema = new Schema({
 
 const appMetadata = ({
     beans: Number,
-    posts: [StoryPostSchema],
+    posts: [StoryPostSchema || ComicPostSchema],
     series: [SeriesSchema],
 
+    // Everything liked including posts, forum posts, and comments.
     liked: [ObjectId],
     disliked: [ObjectId],
     saved: [ObjectId],
@@ -134,7 +134,7 @@ const appMetadata = ({
 
     forum: {
         active: Boolean,
-        posts: [ForumPost]
+        posts: [ForumPostSchema]
     }
 });
 
@@ -173,10 +173,15 @@ const StoryPost = model('StoryPost', StoryPostSchema);
 
 const Series = model('Series', SeriesSchema);
 
+const Comment = model('Comment', CommentSchema);
+const ForumPost = model('ForumPost', ForumPostSchema);
+
 
 module.exports = {
     Account,
     ComicPost,
     StoryPost,
-    Series
+    Series,
+    Comment,
+    ForumPost
 };
