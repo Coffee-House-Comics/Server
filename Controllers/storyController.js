@@ -111,7 +111,7 @@ StoryController.search = async function (req, res) {
     });
 
     //Filter results by search
-    if (req.body.searchCriteria) {
+    if (req.body && req.body.searchCriteria) {
         for (let query of searchCriteria) {
             //Filter posts
             posts = posts.filter((post) => {
@@ -150,7 +150,7 @@ StoryController.subscriptions = async function (req, res) {
     let account = await schemas.Account.findOne({ _id: req.userId });
 
     //Check for error
-    if(!account){
+    if (!account) {
         return res.status(500).json({
             error: "Server error getting user from ID"
         });
@@ -159,7 +159,7 @@ StoryController.subscriptions = async function (req, res) {
 
     //Find all posts
     let content = await schemas.StoryPost.find({});
-    if(!content){
+    if (!content) {
         return res.status(500).json({
             error: "Server error getting user from ID"
         });
@@ -269,20 +269,71 @@ StoryController.unpublished = async function (req, res) {
 }
 
 // Publishing
-// TODO:
 StoryController.publish = async function (req, res) {
     /* Publish Story ------------ 
         Request body: {
-            series: {
-                isSeriesMember: Boolean,
-                seriesName: String,
-            },
-
-            Response {
-                status 200 OK or 500 ERROR
-            }
+            series: String
+        }
+        Response {
+            status 200 OK or 500 ERROR or 403 FORBIDDEN
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+    let series = null;
+    if(req.body && req.body.series){
+        series = req.body.series;
+    }
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    let story = await schemas.StoryPost.findOne({_id: storyId});
+    if(!story){
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure user owns this story
+    if(story.authorID !== userId){
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //The user does own this story. Now set it to published
+    await schemas.StoryPost.updateOne({_id: storyId}, {
+        isPublished: true,
+        series: series
+    });
+
+    return res.status(200).send();
 }
 
 // Deleting

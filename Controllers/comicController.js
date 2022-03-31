@@ -111,7 +111,7 @@ ComicController.search = async function (req, res) {
     });
 
     //Filter results by search
-    if (req.body.searchCriteria) {
+    if (req.body && req.body.searchCriteria) {
         for (let query of searchCriteria) {
             //Filter posts
             posts = posts.filter((post) => {
@@ -291,16 +291,68 @@ ComicController.unpublished = async function (req, res) {
 ComicController.publish = async function (req, res) {
     /* Publish Comic ------------ 
         Request body: {
-            series: {
-                isSeriesMember: Boolean,
-                seriesName: String,
-            },
-
-            Response {
-                status 200 OK or 500 ERROR
-            }
+            series: String
+        }
+        Response {
+            status 200 OK or 500 ERROR or 403 FORBIDDEN
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let comicId = req.params.id;
+    let series = null;
+    if(req.body && req.body.series){
+        series = req.body.series;
+    }
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    let comic = await schemas.ComicPost.findOne({_id: comicId});
+    if(!comic){
+        return res.status(500).json({
+            error: "Comic could not be found"
+        });
+    }
+
+    //Make sure user owns this comic
+    if(comic.authorID !== userId){
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //The user does own this comic. Now set it to published
+    await schemas.ComicPost.updateOne({_id: comicId}, {
+        isPublished: true,
+        series: series
+    });
+
+    return res.status(200).send();
 }
 
 // Deleting
