@@ -11,6 +11,9 @@ function arrRemove(arr, toRemove) {
     return arr.filter(item => item !== toRemove);
 }
 
+function findObjInArrayById(arr, id) {
+    return arr.find(element => element._id === id)
+}
 
 // Main functions ----------------------------------------------
 
@@ -247,13 +250,12 @@ CommonController.vote = async function (req, res, isStory) {
     }
 }
 
-// TODO:
 CommonController.vote_forumPost = async function (req, res, isStory) {
     /* Vote on a Forum Post ------------
         Request body: {
             type: Integer,
             // The id of the user that owns the forum
-            forumUserId: String
+            forumOwnerId: String
         }
     
         Response {
@@ -282,8 +284,9 @@ CommonController.vote_forumPost = async function (req, res, isStory) {
     }
 
     const type = body.type;
+    const forumOwnerId = body.forumOwnerId;
 
-    if (!type) {
+    if (!type || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -291,14 +294,37 @@ CommonController.vote_forumPost = async function (req, res, isStory) {
 
     try {
         // Get account that is doing the voting
-        const account = await schemas.Account({ _id: req.userId });
+        const account = await schemas.Account.findOne({ _id: req.userId });
+
+        // Get account of the Account that owns the forum
+        const forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
+
+        if (!account || !forumOwner) {
+            if (!type || !forumOwnerId) {
+                return res.status(500).json({
+                    error: "Issue finding users"
+                });
+            }
+        }
+
+        let forumPostObj = null
+        if (isStory)
+            forumPostObj = forumOwner.user.story.forum;
+        else
+            forumPostObj = forumOwner.user.comic.forum;
+
+        if (!forumPostObj || !forumPostObj.active) {
+            return res.status(500).json({
+                error: "Invalid request"
+            });
+        }
 
         // Get forum post that the voting is happening on
-        const post = schemas.ForumPost.findOne({ _id: req.params.id });
+        const post = findObjInArrayById(forumPostObj.posts, req.params.id);
 
-        if (!account || !post) {
+        if (!post) {
             return res.status(500).json({
-                error: "User or forumPost does not exist"
+                error: "Forum Post does not exist"
             });
         }
 
@@ -371,12 +397,26 @@ CommonController.vote_comment = async function (req, res) {
     /* Vote on a Comment ------------
         Request body: {
             type: Integer
+
+            // Where does the comment sit: Forum Post or Post
+            commentLocation: Integer
+
+            // The id of the account that owns the post or the location of the forum where the forum post is
+            locationOwnerId: String
         }
     
         Response {
             status: 200 OK or 500 ERROR,
         }
     */
+
+
+
+
+
+
+
+
 }
 
 
