@@ -6,6 +6,7 @@
 
 const emailController = require("../Mailer");
 const schemas = require('../Schemas/schemas');
+const schemaUtils = require('../Schemas/utils');
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 
@@ -233,6 +234,8 @@ AuthController.loginUser = async function (req, res) {
                 displayName: String,
                 bio: String,
                 profileImage: Image,    
+                storyBeans: Number, 
+                comicBeans: Number
                 
                 // If error:
                 error: String
@@ -283,17 +286,19 @@ AuthController.loginUser = async function (req, res) {
         const token = auth.signToken(targetAccount._id);
         console.log(token);
 
+        const responseJSON = schemaUtils.constructProfileObjFromAccount(targetAccount);
+
+        if (!responseJSON) {
+            return res.status(500).json({
+                error: "Error logging in."
+            });
+        }
+
         return res.cookie("token", token, {
             httpOnly: true,
             secure: true,
             sameSite: true
-        }).status(200).json({
-            id: targetAccount._id,
-            displayName: targetAccount.user.displayName,
-            bio: targetAccount.user.bio,
-            profileImage: targetAccount.user.profileImage,
-
-        });
+        }).status(200).json(responseJSON);
     }
     catch (err) {
         console.log("Login Error", err);
@@ -490,6 +495,8 @@ AuthController.updateProfile = async function (req, res) {
                 displayName: String,
                 bio: String,
                 profileImage: Image,
+                storyBeans: Number,
+                comicBeans: Number
 
                 // If error:
                 error: String
@@ -537,12 +544,15 @@ AuthController.updateProfile = async function (req, res) {
         // Now save the updated account
         const savedAccount = await account.save();
 
-        return res.status(200).json({
-            id: savedAccount._id,
-            displayName: savedAccount.user.displayName,
-            bio: savedAccount.user.bio,
-            profileImage: savedAccount.user.profileImage
-        });
+        const responseJSON = schemaUtils.constructProfileObjFromAccount(savedAccount);
+
+        if (!responseJSON) {
+            return res.status(500).json({
+                error: "Error logging in."
+            });
+        }
+
+        return res.status(200).json(responseJSON);
     }
     catch (err) {
         console.log("Update Account Error", err);
@@ -639,6 +649,8 @@ AuthController.changeUserName = async function (req, res) {
                 displayName: String,
                 bio: String,
                 profileImage: Image,
+                storyBeans: Number,
+                comicBeans: Numver
 
                 // If there is an error:
                 error: String
@@ -684,12 +696,15 @@ AuthController.changeUserName = async function (req, res) {
 
         const savedAccount = await targetAccount.save();
 
-        return res.status(200).json({
-            id: savedAccount._id,
-            displayName: savedAccount.user.displayName,
-            bio: savedAccount.user.bio,
-            profileImage: savedAccount.user.profileImage
-        });
+        const responseJSON = schemaUtils.constructProfileObjFromAccount(savedAccount);
+
+        if (!responseJSON) {
+            return res.status(500).json({
+                error: "Error logging in."
+            });
+        }
+
+        return res.status(200).json(responseJSON);
     }
     catch (err) {
         console.log("Error in change userName:", err);
