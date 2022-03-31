@@ -149,7 +149,7 @@ CommonController.getProfileByUserName = async function (req, res) {
 
 
 
-StoryController.vote_forumPost = async function (req, res) {
+CommonController.vote_forumPost = async function (req, res) {
     /* Vote on a Forum Post ------------
         Request body: {
             type: Integer,

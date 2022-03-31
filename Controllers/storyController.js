@@ -6,7 +6,7 @@
 
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
-const schemaUtils = require('../Schemas/utils');
+const utils = require('../Utils');
 
 // Variables -----------------------------------------------------
 
@@ -103,7 +103,7 @@ StoryController.search = async function (req, res) {
 
     //Build custom author objects
     authors = authors.map((account) => {
-        return schemaUtils.constructProfileObjFromAccount(account);
+        return utils.constructProfileObjFromAccount(account);
     });
 
     //Filter results by search

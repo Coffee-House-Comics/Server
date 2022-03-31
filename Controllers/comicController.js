@@ -7,6 +7,8 @@
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 
+const utils = require('../Utils');
+
 // Variables -----------------------------------------------------
 
 //The number of recent posts to deliver for explore page
