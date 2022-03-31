@@ -9,6 +9,7 @@ const ObjectId = Schema.Types.ObjectId;
 
 // Needs to be separate schema so we can search for it by id
 const CommentSchema = new Schema({
+    ownerId: ObjectId,
     user: String,
     date: Date,
     text: String,
@@ -17,6 +18,7 @@ const CommentSchema = new Schema({
 
 // Needs to be separate schema so we can search for it by id
 const ForumPostSchema = new Schema({
+    ownerId: ObjectId,
     title: String,
     body: String,
     user: String,

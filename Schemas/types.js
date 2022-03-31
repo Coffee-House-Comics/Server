@@ -10,6 +10,11 @@ const VoteType = {
     up: 1
 }
 
+const commentLocation = {
+    forumPost: 0,
+    post: 1
+}
+
 const SortType = {
     dateAsc: 0,
     dateDesc: 1,
@@ -23,5 +28,6 @@ module.exports = {
     PostType,
     SubscriptionType,
     VoteType,
+    commentLocation,
     SortType
 }
