@@ -6,7 +6,7 @@
 
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
-const schemaUtils = require('../Schemas/utils');
+const Utils = require('../Utils');
 
 // Variables -----------------------------------------------------
 
@@ -17,7 +17,6 @@ const NUM_RECENT_POSTS = 10;
 const NUM_LIKED_POSTS = 10;
 
 // Helper functions ----------------------------------------------
-
 
 
 // Main functions ------------------------------------------------
@@ -103,7 +102,7 @@ StoryController.search = async function (req, res) {
 
     //Build custom author objects
     authors = authors.map((account) => {
-        return schemaUtils.constructProfileObjFromAccount(account);
+        return Utils.constructProfileObjFromAccount(account);
     });
 
     //Filter results by search
@@ -527,7 +526,72 @@ StoryController.delete = async function (req, res) {
         });
     }
 
-    //The user does own this story. Now delete it
+    //Disconnect comments
+    for(let comment of story.comments){
+        //Disconnect comment from all users
+        let err = Utils.disconnectComment(comment);
+        if(err){
+            return res.status(500).json({
+                error: err
+            });
+        }
+    }
+
+    //Remove this post from all users' liked lists
+    for(let likerId of story.whoLiked){
+        //Get the user's Account object
+        let liker = await schemas.Account.findOne({_id: likerId});
+        if(!liker){
+            return res.status(500).json({
+                error: "Error retreiving liker account obj"
+            });
+        }
+
+        //Remove this post from the user's list of liked things
+        let likedIds = Utils.arrRemove(liker.user.story.liked, story._id);
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.story.liked": likedIds}
+            });
+        } catch(err){
+            return "Error updating post liker's list of liked objects";
+        }
+    }
+
+    //Remove this post from all users' disliked lists
+    for(let dislikerId of story.whoLiked){
+        //Get the user's Account object
+        let disliker = await schemas.Account.findOne({_id: dislikerId});
+        if(!disliker){
+            return res.status(500).json({
+                error: "Error retreiving disliker account obj"
+            });
+        }
+
+        //Remove this post from the user's list of disliked things
+        let dislikedIds = Utils.arrRemove(disliker.user.story.disliked, story._id);
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.story.disliked": dislikedIds}
+            });
+        } catch(err){
+            return "Error updating post disliker's list of disliked objects";
+        }
+    }
+
+    //Change the author's bean count
+    let newBeanCount = account.user.story.beans - story.beans;
+    try{
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.beans": newBeanCount}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating author's bean count"
+        });
+    }
+
+    //Delete the post
     try {
         await schemas.StoryPost.deleteOne({_id: storyId});
         return res.status(200).send();

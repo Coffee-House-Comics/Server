@@ -6,6 +6,7 @@
 
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
+const Utils = require('../Utils');
 
 // Variables -----------------------------------------------------
 
@@ -493,14 +494,13 @@ ComicController.publish = async function (req, res) {
 
 // Deleting
 ComicController.delete = async function (req, res) {
-    /* Deleting a comic ------------
+    /* Deleting a Comic ------------
         Request body: {}
 
         Response {
             status: 200 OK or 500 ERROR,
         }
     */
-
 
     //Check params
     if (!req) {
@@ -535,7 +535,7 @@ ComicController.delete = async function (req, res) {
     let comic = await schemas.ComicPost.findOne({_id: comicId});
     if(!comic){
         return res.status(500).json({
-            error: "comic could not be found"
+            error: "Comic could not be found"
         });
     }
 
@@ -546,7 +546,72 @@ ComicController.delete = async function (req, res) {
         });
     }
 
-    //The user does own this comic. Now delete it
+    //Disconnect comments
+    for(let comment of comic.comments){
+        //Disconnect comment from all users
+        let err = Utils.disconnectComment(comment);
+        if(err){
+            return res.status(500).json({
+                error: err
+            });
+        }
+    }
+
+    //Remove this post from all users' liked lists
+    for(let likerId of comic.whoLiked){
+        //Get the user's Account object
+        let liker = await schemas.Account.findOne({_id: likerId});
+        if(!liker){
+            return res.status(500).json({
+                error: "Error retreiving liker account obj"
+            });
+        }
+
+        //Remove this post from the user's list of liked things
+        let likedIds = Utils.arrRemove(liker.user.comic.liked, comic._id);
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.comic.liked": likedIds}
+            });
+        } catch(err){
+            return "Error updating post liker's list of liked objects";
+        }
+    }
+
+    //Remove this post from all users' disliked lists
+    for(let dislikerId of comic.whoLiked){
+        //Get the user's Account object
+        let disliker = await schemas.Account.findOne({_id: dislikerId});
+        if(!disliker){
+            return res.status(500).json({
+                error: "Error retreiving disliker account obj"
+            });
+        }
+
+        //Remove this post from the user's list of disliked things
+        let dislikedIds = Utils.arrRemove(disliker.user.comic.disliked, comic._id);
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.comic.disliked": dislikedIds}
+            });
+        } catch(err){
+            return "Error updating post disliker's list of disliked objects";
+        }
+    }
+
+    //Change the author's bean count
+    let newBeanCount = account.user.comic.beans - comic.beans;
+    try{
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.beans": newBeanCount}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating author's bean count"
+        });
+    }
+
+    //Delete the post
     try {
         await schemas.ComicPost.deleteOne({_id: comicId});
         return res.status(200).send();
