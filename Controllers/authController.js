@@ -548,7 +548,7 @@ AuthController.updateProfile = async function (req, res) {
 
         if (!responseJSON) {
             return res.status(500).json({
-                error: "Error logging in."
+                error: "Error Updating profile."
             });
         }
 
@@ -700,7 +700,7 @@ AuthController.changeUserName = async function (req, res) {
 
         if (!responseJSON) {
             return res.status(500).json({
-                error: "Error logging in."
+                error: "Error changing userName"
             });
         }
 
