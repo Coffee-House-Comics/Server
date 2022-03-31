@@ -140,8 +140,6 @@ const AccountSchema = new Schema({
         bio: String,
         profileImage: Buffer,
 
-        totalBeans: Number,
-
         story: {
             ...appMetadata
         },

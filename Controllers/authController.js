@@ -160,8 +160,6 @@ AuthController.registerUser = async function (req, res, next) {
                 bio: (bio) ? bio : "This user likes to keep things secret.",
                 profileImage: null,
 
-                totalBeans: 0,
-
                 story: {
                     beans: 0,
                     posts: [],
