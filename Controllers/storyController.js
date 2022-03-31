@@ -383,10 +383,16 @@ StoryController.publish = async function (req, res) {
     }
 
     //The user does own this story. Now set it to published
-    await schemas.StoryPost.updateOne({_id: storyId}, {
-        isPublished: true,
-        series: series
-    });
+    try{
+        await schemas.StoryPost.updateOne({_id: storyId}, {
+            isPublished: true,
+            series: series
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating story"
+        });
+    }
 
     return res.status(200).send();
 }
@@ -501,15 +507,68 @@ StoryController.user_saved = async function (req, res) {
     */
 }
 
-// TODO:
 StoryController.user_toggleForum = async function (req, res) {
     /* Toggle Forum for user ------------
         Request body: {}
     
         Response {
-            status: 200 OK or 500 ERROR
+            status: 200 OK or 500 ERROR,
+            body: {
+                isForumEnabled: Boolean
+
+                //If error
+                error: String
+            }
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Check existence of forum object
+    if(!account || !account.user || !account.user.story || !account.user.story.forum){
+        return res.status(500).json({
+            error: "No forum set for this account"
+        });
+    }
+
+    //Determine new (toggled) forum state
+    let newForumStatus = !(account.user.story.forum.active)
+
+    //Toggle user's forum state
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.story.forum.active": newForumStatus}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating forum state"
+        });
+    }
+
+    res.status(200).json({
+        isForumEnabled: newForumStatus
+    });
 }
 
 // Story metadata editing (Cover photo, Title, Bio, Series)
