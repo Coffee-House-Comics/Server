@@ -25,7 +25,6 @@ const SortType = {
 }
 
 module.exports = {
-    PostType,
     SubscriptionType,
     VoteType,
     commentLocation,

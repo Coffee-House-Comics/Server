@@ -165,5 +165,4 @@ module.exports = {
     Account,
     ComicPost,
     StoryPost,
-    Series,
 };

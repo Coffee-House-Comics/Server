@@ -49,8 +49,8 @@ router.post('/comment/forumPost/:id', auth.verify, StoryController.comment_forum
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 router.post('/vote/:id', auth.verify, auth.emailIsVerified, (req, res) => CommonController.vote(req, res, true));
-router.post('/vote/forumPost/:id', auth.verify, auth.emailIsVerified, StoryController.vote_forumPost);
-router.post('/vote/comment/:id', auth.verify, auth.emailIsVerified, StoryController.vote_comment);
+router.post('/vote/forumPost/:id', auth.verify, auth.emailIsVerified, (req, res) => CommonController.vote_forumPost(req, res, true));
+router.post('/vote/comment/:id', auth.verify, auth.emailIsVerified, (req, res) => CommonController.vote_comment(req, res, true));
 
 // Bookmarking a post
 router.post('/bookmark/:id', auth.verify, StoryController.bookmark);
