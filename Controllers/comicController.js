@@ -884,13 +884,165 @@ ComicController.vote = async function (req, res) {
 ComicController.vote_forumPost = async function (req, res) {
     /* Vote on a Forum Post ------------
         Request body: {
-            type: Integer
+            type: Integer,
+            // The id of the user that owns the forum
+            forumOwnerId: String
         }
     
         Response {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Entering vote on comic forum post");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    if (!req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const type = body.type;
+    const forumOwnerId = body.forumOwnerId;
+
+    if (!type || !forumOwnerId) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        // Get account that is doing the voting
+        const account = await schemas.Account.findOne({ _id: req.userId });
+
+        // Get account of the Account that owns the forum
+        const forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
+
+        if (!account || !forumOwner) {
+            return res.status(500).json({
+                error: "Issue finding users"
+            });
+        }
+
+        const forumPostObj = forumOwner.user.comic.forum;
+
+        if (!forumPostObj || !forumPostObj.active) {
+            return res.status(500).json({
+                error: "Invalid request"
+            });
+        }
+
+        // Get forum post that the voting is happening on
+        const post = utils.findObjInArrayById(forumPostObj.posts, req.params.id);
+
+        console.log("vfp:", post);
+
+        if (!post) {
+            return res.status(500).json({
+                error: "Forum Post does not exist"
+            });
+        }
+
+        // Get the owner of the forum post
+        const postOwner = await schemas.Account.findOne({ _id: post.ownerId });
+
+        const userLiked = account.user.comic.liked;
+        const userDisliked = account.user.comic.disliked;
+
+        // 3 Different cases
+        if (userLiked.includes(post._id)) {
+            if (type === types.VoteType.down) {
+                userLiked = arrRemove(userLiked, post._id);
+                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+
+                post.beans -= 2;
+                postOwner.user.comic.beans -= 2;
+
+                userDisliked.push(post._id);
+                post.whoDisliked.push(req.userId);
+            }
+            else if (type === types.VoteType.up) {
+                /* Do Nothing */
+            }
+            else {
+                userLiked = arrRemove(userLiked, post._id);
+                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+
+                post.beans -= 1;
+                postOwner.user.comic.beans -= 1;
+            }
+        }
+        else if (userDisliked.includes(post._id)) {
+            if (type === types.VoteType.down) {
+                /* Do Nothing */
+            }
+            else if (type === types.VoteType.up) {
+                userDisliked = arrRemove(userDisliked, post._id);
+                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+
+                post.beans += 2;
+                postOwner.user.comic.beans += 2;
+
+                userLiked.push(post._id);
+                post.whoLiked.push(req.userId);
+            }
+            else {
+                userDisliked = arrRemove(userDisliked, post._id);
+                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+
+                post.beans += 1;
+                postOwner.user.comic.beans += 1;
+            }
+        }
+        else {
+            if (type === types.VoteType.down) {
+                userDisliked.push(post._id);
+                post.whoDisliked.push(req.userId);
+
+                post.beans -= 1;
+                postOwner.user.comic.beans -= 1;
+            }
+            else if (type === types.VoteType.up) {
+                userLiked.push(post._id);
+                post.whoLiked.push(req.userId);
+
+                post.beans += 1;
+                postOwner.user.comic.beans += 1;
+            }
+            else {
+                /* Do nothing */
+            }
+        }
+
+        // Now we need to do the saving
+        await postOwner.save();
+
+        account.user.comic.liked = userLiked;
+        account.user.comic.disliked = userDisliked;
+        await account.save();
+
+        // FIXME: Maybe we have to do some reasigning here??? Or is this fine???
+        await forumOwner.save();
+
+        res.status(200).send();
+    }
+    catch (err) {
+        res.status(500).json({
+            error: "Server issue with voting on forum post."
+        });
+    }
 }
 
 ComicController.vote_comment = async function (req, res) {
