@@ -694,9 +694,74 @@ ComicController.bookmark = async function (req, res) {
        Request body: { }
    
        Response {
-           status: 200 OK or 500 ERROR,
+           status: 200 OK or 500 ERROR or 403 FORBIDDEN,
        }
    */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let comicId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Make sure user bookmarks list exists
+    if(!account || !account.user || !account.user.comic || !account.user.comic.saved){
+        return res.status(500).json({
+            error: "User bookmarks list does not exist"
+        });
+    }
+
+    //Get post
+    let comic = await schemas.ComicPost.findOne({_id: comicId});
+    if(!comic){
+        return res.status(500).json({
+            error: "Comic could not be found"
+        });
+    }
+
+    //Make post is published
+    if(!comic.isPublished){
+        return res.status(403).json({
+            error: "This comic is not published"
+        });
+    }
+
+    //Comic is published. Add its ID to user bookmarks list
+    let newBookmarksList = account.user.comic.saved.push(comicId);
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.comic.saved": newBookmarksList}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error adding bookmark"
+        });
+    }
+
+    return res.status(200).send();
 }
 
 ComicController.deleteBookmark = async function (req, res) {
@@ -707,6 +772,63 @@ ComicController.deleteBookmark = async function (req, res) {
            status: 200 OK or 500 ERROR,
        }
    */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let comicId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Make sure user bookmarks list exists
+    if(!account || !account.user || !account.user.comic || !account.user.comic.saved){
+        return res.status(500).json({
+            error: "User bookmarks list does not exist"
+        });
+    }
+
+    //Make sure comic is in bookmarks list
+    if(!account.user.comic.saved.includes(comicId)){
+        return res.status(500).json({
+            error: "The specified comic is not bookmarked by this user"
+        });
+    }
+
+    //Story is in bookmarks list. Remove it and update
+    let newBookmarksList = account.user.comic.saved.splice(account.user.comic.saved.indexOf(comicId), 1);
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.comic.saved": newBookmarksList}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error removing bookmark"
+        });
+    }
+
+    return res.status(200).send();
 }
 
 ComicController.subscribe_user = async function (req, res) {

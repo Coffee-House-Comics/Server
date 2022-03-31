@@ -6,6 +6,7 @@
 
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
+const schemaUtils = require('../Schemas/utils');
 
 // Variables -----------------------------------------------------
 
@@ -102,12 +103,7 @@ StoryController.search = async function (req, res) {
 
     //Build custom author objects
     authors = authors.map((account) => {
-        return {
-            id: account._id,
-            displayName: account.user.displayName,
-            bio: account.user.bio,
-            profileImage: account.user.profileImage
-        }
+        return schemaUtils.constructProfileObjFromAccount(account);
     });
 
     //Filter results by search
@@ -628,26 +624,153 @@ StoryController.comment_forumPost = async function (req, res) {
     */
 }
 
-// TODO:
 StoryController.bookmark = async function (req, res) {
     /* Bookmark a post ------------
        Request body: { }
    
        Response {
-           status: 200 OK or 500 ERROR,
+           status: 200 OK or 500 ERROR or 403 FORBIDDEN,
+           body:{
+               //If error:
+               error: String
+           }
        }
    */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Make sure user bookmarks list exists
+    if(!account || !account.user || !account.user.story || !account.user.story.saved){
+        return res.status(500).json({
+            error: "User bookmarks list does not exist"
+        });
+    }
+
+    //Get post
+    let story = await schemas.StoryPost.findOne({_id: storyId});
+    if(!story){
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make post is published
+    if(!story.isPublished){
+        return res.status(403).json({
+            error: "This story is not published"
+        });
+    }
+
+    //Story is published. Add its ID to user bookmarks list
+    let newBookmarksList = account.user.story.saved.push(storyId);
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.story.saved": newBookmarksList}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error adding bookmark"
+        });
+    }
+
+    return res.status(200).send();
 }
 
-// TODO:
 StoryController.deleteBookmark = async function (req, res) {
     /* UN-Bookmark a post ------------
        Request body: { }
    
        Response {
            status: 200 OK or 500 ERROR,
+           body: {
+               //If error
+               error: String
+           }
        }
    */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Make sure user bookmarks list exists
+    if(!account || !account.user || !account.user.story || !account.user.story.saved){
+        return res.status(500).json({
+            error: "User bookmarks list does not exist"
+        });
+    }
+
+    //Make sure story is in bookmarks list
+    if(!account.user.story.saved.includes(storyId)){
+        return res.status(500).json({
+            error: "The specified story is not bookmarked by this user"
+        });
+    }
+
+    //Story is in bookmarks list. Remove it and update
+    let newBookmarksList = account.user.story.saved.splice(account.user.story.saved.indexOf(storyId), 1);
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.story.saved": newBookmarksList}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error removing bookmark"
+        });
+    }
+
+    return res.status(200).send();
 }
 
 // TODO:
