@@ -13,7 +13,10 @@ const CommentSchema = new Schema({
     user: String,
     date: Date,
     text: String,
-    beans: Number
+    beans: Number,
+
+    whoLiked: [ObjectId],
+    whoDisliked: [ObjectId]
 });
 
 // Needs to be separate schema so we can search for it by id
@@ -24,7 +27,10 @@ const ForumPostSchema = new Schema({
     user: String,
     date: Date,
     beans: Number,
-    comments: [CommentSchema]
+    comments: [CommentSchema],
+
+    whoLiked: [ObjectId],
+    whoDisliked: [ObjectId]
 });
 
 // ---------------------------------------------------
@@ -45,6 +51,9 @@ const PostMetadata = ({
 
     // Linking information
     authorID: ObjectId,
+
+    whoLiked: [ObjectId],
+    whoDisliked: [ObjectId],
 });
 
 const ComicPostSchema = new Schema({
