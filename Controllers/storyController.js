@@ -337,7 +337,6 @@ StoryController.publish = async function (req, res) {
 }
 
 // Deleting
-// TODO:
 StoryController.delete = async function (req, res) {
     /* Deleting a Story ------------
         Request body: {}
@@ -346,6 +345,60 @@ StoryController.delete = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    let story = await schemas.StoryPost.findOne({_id: storyId});
+    if(!story){
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure user owns this story
+    if(story.authorID !== userId){
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //The user does own this story. Now delete it
+    try {
+        await schemas.StoryPost.deleteOne({_id: storyId});
+        return res.status(200).send();
+    } catch(err){
+        return res.status(500).json({
+            error: "Error deleting story"
+        });
+    }
 }
 
 // TODO:

@@ -364,6 +364,61 @@ ComicController.delete = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let comicId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    let comic = await schemas.ComicPost.findOne({_id: comicId});
+    if(!comic){
+        return res.status(500).json({
+            error: "comic could not be found"
+        });
+    }
+
+    //Make sure user owns this comic
+    if(comic.authorID !== userId){
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //The user does own this comic. Now delete it
+    try {
+        await schemas.ComicPost.deleteOne({_id: comicId});
+        return res.status(200).send();
+    } catch(err){
+        return res.status(500).json({
+            error: "Error deleting comic"
+        });
+    }
 }
 
 ComicController.delete_comment = async function (req, res) {
