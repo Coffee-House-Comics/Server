@@ -150,7 +150,7 @@ ComicController.subscriptions = async function (req, res) {
     let account = await schemas.Account.findOne({ _id: req.userId });
 
     //Check for error
-    if(!account){
+    if (!account) {
         return res.status(500).json({
             error: "Server error getting user from ID"
         });
@@ -159,7 +159,7 @@ ComicController.subscriptions = async function (req, res) {
 
     //Find all posts
     let content = await schemas.ComicPost.find({});
-    if(!content){
+    if (!content) {
         return res.status(500).json({
             error: "Server error getting user from ID"
         });
@@ -235,12 +235,12 @@ ComicController.create = async function (req, res) {
             error: "No request provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
     }
-    if(!req.body || !req.body.name || !req.body.description){
+    if (!req.body || !req.body.name || !req.body.description) {
         return res.status(400).json({
             error: "Invalid request body"
         });
@@ -252,8 +252,8 @@ ComicController.create = async function (req, res) {
     let description = req.body.description;
 
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
@@ -275,7 +275,7 @@ ComicController.create = async function (req, res) {
             unpublished: [],
             published: []
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error saving new comic"
         })
@@ -283,24 +283,24 @@ ComicController.create = async function (req, res) {
 
     //Get current posts array
     let currentPosts = account.user.comic.posts;
-    if(!currentPosts){
+    if (!currentPosts) {
         currentPosts = [];
     }
-    
+
     //Add post to user's posts array
     currentPosts.push(createdComic._id);
 
     //Save change to user
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.comic.posts": currentPosts}
+            "$set": { "user.comic.posts": currentPosts }
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error updating forum state"
         });
     }
-    
+
     res.status(200).json({
         id: createdComic._id
     });
@@ -323,17 +323,17 @@ ComicController.published = async function (req, res) {
 
     //Get params
     let comicId = req.params.id;
-    
+
     //Get post
-    let comic = await schemas.ComicPost.findOne({_id: comicId});
-    if(!comic){
+    let comic = await schemas.ComicPost.findOne({ _id: comicId });
+    if (!comic) {
         return res.status(500).json({
             error: "Comic could not be found"
         });
     }
 
     //Make sure user the comic is published
-    if(!comic.isPublished){
+    if (!comic.isPublished) {
         return res.status(403).json({
             error: "This comic is not published"
         });
@@ -366,12 +366,12 @@ ComicController.unpublished = async function (req, res) {
             error: "No request provided"
         });
     }
-    if (!req.params.id){
+    if (!req.params.id) {
         return res.status(500).json({
             error: "No id provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
@@ -382,30 +382,30 @@ ComicController.unpublished = async function (req, res) {
     let comicId = req.params.id;
 
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
     }
 
     //Get post
-    let comic = await schemas.ComicPost.findOne({_id: comicId});
-    if(!comic){
+    let comic = await schemas.ComicPost.findOne({ _id: comicId });
+    if (!comic) {
         return res.status(500).json({
             error: "Comic could not be found"
         });
     }
 
     //Make sure user owns this comic
-    if(comic.authorID !== userId){
+    if (comic.authorID !== userId) {
         return res.status(403).json({
             error: "This user does not own this post"
         });
     }
 
     //Make sure comic is unpublished
-    if(comic.isPublished){
+    if (comic.isPublished) {
         return res.status(400).json({
             error: "This comic is published"
         });
@@ -434,12 +434,12 @@ ComicController.publish = async function (req, res) {
             error: "No request provided"
         });
     }
-    if (!req.params.id){
+    if (!req.params.id) {
         return res.status(500).json({
             error: "No id provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
@@ -449,45 +449,45 @@ ComicController.publish = async function (req, res) {
     let userId = req.userId;
     let comicId = req.params.id;
     let series = null;
-    if(req.body && req.body.series){
+    if (req.body && req.body.series) {
         series = req.body.series;
     }
 
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
     }
 
     //Get post
-    let comic = await schemas.ComicPost.findOne({_id: comicId});
-    if(!comic){
+    let comic = await schemas.ComicPost.findOne({ _id: comicId });
+    if (!comic) {
         return res.status(500).json({
             error: "Comic could not be found"
         });
     }
 
     //Make sure user owns this comic
-    if(comic.authorID !== userId){
+    if (comic.authorID !== userId) {
         return res.status(403).json({
             error: "This user does not own this post"
         });
     }
 
     //The user does own this comic. Now set it to published
-    try{
-        await schemas.ComicPost.updateOne({_id: comicId}, {
+    try {
+        await schemas.ComicPost.updateOne({ _id: comicId }, {
             isPublished: true,
             series: series
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error updating comic"
         });
     }
-    
+
     return res.status(200).send();
 }
 
@@ -508,12 +508,12 @@ ComicController.delete = async function (req, res) {
             error: "No request provided"
         });
     }
-    if (!req.params.id){
+    if (!req.params.id) {
         return res.status(500).json({
             error: "No id provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
@@ -524,23 +524,23 @@ ComicController.delete = async function (req, res) {
     let comicId = req.params.id;
 
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
     }
 
     //Get post
-    let comic = await schemas.ComicPost.findOne({_id: comicId});
-    if(!comic){
+    let comic = await schemas.ComicPost.findOne({ _id: comicId });
+    if (!comic) {
         return res.status(500).json({
             error: "comic could not be found"
         });
     }
 
     //Make sure user owns this comic
-    if(comic.authorID !== userId){
+    if (comic.authorID !== userId) {
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -548,9 +548,9 @@ ComicController.delete = async function (req, res) {
 
     //The user does own this comic. Now delete it
     try {
-        await schemas.ComicPost.deleteOne({_id: comicId});
+        await schemas.ComicPost.deleteOne({ _id: comicId });
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error deleting comic"
         });
@@ -619,7 +619,7 @@ ComicController.user_toggleForum = async function (req, res) {
             error: "No request provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
@@ -627,17 +627,17 @@ ComicController.user_toggleForum = async function (req, res) {
 
     //Get params
     let userId = req.userId;
-    
+
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
     }
 
     //Check existence of forum object
-    if(!account || !account.user || !account.user.comic || !account.user.comic.forum){
+    if (!account || !account.user || !account.user.comic || !account.user.comic.forum) {
         return res.status(500).json({
             error: "No forum set for this account"
         });
@@ -649,9 +649,9 @@ ComicController.user_toggleForum = async function (req, res) {
     //Toggle user's forum state
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.comic.forum.active": newForumStatus}
+            "$set": { "user.comic.forum.active": newForumStatus }
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error updating forum state"
         });
@@ -733,15 +733,150 @@ ComicController.comment_forumPost = async function (req, res) {
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 ComicController.vote = async function (req, res) {
-    /* Vote on a Comic ------------
-        Request body: {
-            type: Integer
-        }
+    /* Vote on a Comic Post ------------
+            Request body: {
+                type: Integer (-1, 0, 1)
+            }
+        
+            Response {
+                status: 200 OK or 500 ERROR,
     
-        Response {
-            status: 200 OK or 500 ERROR,
+                //If error
+                error: String
+            }
+        */
+
+    console.log("Entering vote on post (comic)");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    if (!req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const type = body.type;
+
+    if (!type) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        // Get account that is doing the voting
+        const account = await schemas.Account({ _id: req.userId });
+
+        // Get post that the voting is happening on
+        const post = await schemas.ComicPost.findOne({ _id: req.params.id });
+
+        if (!account || !post) {
+            return res.status(500).json({
+                error: "User or post does not exist"
+            });
         }
-    */
+
+        // Get the owner of the post
+        const postOwner = await schemas.Account.findOne({ _id: post.authorID });
+
+        const postOwnerBeans = postOwner.user.comic.beans;
+
+        const userLiked = userLiked = account.user.comic.liked;
+        const userDisliked = account.user.comic.disliked;
+
+        // 3 Different cases
+        if (userLiked.includes(post._id)) {
+            if (type === types.VoteType.down) {
+                userLiked = utils.arrRemove(userLiked, post._id);
+                post.whoLiked = utils.arrRemove(post.whoLiked, req.userId);
+
+                post.beans -= 2;
+                postOwnerBeans -= 2;
+
+                postOwner.userDisliked.push(post._id);
+                post.whoDisliked.push(req.userId);
+            }
+            else if (type === types.VoteType.up) {
+                /* Do Nothing */
+            }
+            else {
+                userLiked = utils.arrRemove(userLiked, post._id);
+                post.whoLiked = utils.arrRemove(post.whoLiked, req.userId);
+
+                post.beans -= 1;
+                postOwnerBeans -= 1;
+            }
+        }
+        else if (userDisliked.includes(post._id)) {
+            if (type === types.VoteType.down) {
+                /* Do Nothing */
+            }
+            else if (type === types.VoteType.up) {
+                userDisliked = utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = utils.arrRemove(post.whoDisliked, req.userId);
+
+                post.beans += 2;
+                postOwnerBeans += 2;
+
+                userLiked.push(post._id);
+                post.whoLiked.push(req.userId);
+            }
+            else {
+                userDisliked = utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = utils.arrRemove(post.whoDisliked, req.userId);
+
+                post.beans += 1;
+                postOwnerBeans += 1;
+            }
+        }
+        else {
+            if (type === types.VoteType.down) {
+                userDisliked.push(post._id);
+                post.whoDisliked.push(req.userId);
+
+                post.beans -= 1;
+                postOwnerBeans -= 1;
+            }
+            else if (type === types.VoteType.up) {
+                userLiked.push(post._id);
+                post.whoLiked.push(req.userId);
+
+                post.beans += 1;
+                postOwnerBeans += 1;
+            }
+            else {
+                /* Do nothing */
+            }
+        }
+
+        // Now we need to save all the information we updated into the database
+        await post.save();
+
+        account.user.comic.liked = userLiked;
+        account.user.comic.disliked = userDisliked;
+        await account.save();
+
+        postOwner.user.comic.beans = postOwnerBeans;
+        await postOwner.save();
+
+        res.status(200).send();
+    }
+    catch (err) {
+        res.status(500).json({
+            error: "Server issue with voting on post."
+        });
+    }
 }
 
 ComicController.vote_forumPost = async function (req, res) {
@@ -783,12 +918,12 @@ ComicController.bookmark = async function (req, res) {
             error: "No request provided"
         });
     }
-    if (!req.params.id){
+    if (!req.params.id) {
         return res.status(500).json({
             error: "No id provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
@@ -799,30 +934,30 @@ ComicController.bookmark = async function (req, res) {
     let comicId = req.params.id;
 
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
     }
 
     //Make sure user bookmarks list exists
-    if(!account || !account.user || !account.user.comic || !account.user.comic.saved){
+    if (!account || !account.user || !account.user.comic || !account.user.comic.saved) {
         return res.status(500).json({
             error: "User bookmarks list does not exist"
         });
     }
 
     //Get post
-    let comic = await schemas.ComicPost.findOne({_id: comicId});
-    if(!comic){
+    let comic = await schemas.ComicPost.findOne({ _id: comicId });
+    if (!comic) {
         return res.status(500).json({
             error: "Comic could not be found"
         });
     }
 
     //Make post is published
-    if(!comic.isPublished){
+    if (!comic.isPublished) {
         return res.status(403).json({
             error: "This comic is not published"
         });
@@ -832,9 +967,9 @@ ComicController.bookmark = async function (req, res) {
     let newBookmarksList = account.user.comic.saved.push(comicId);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.comic.saved": newBookmarksList}
+            "$set": { "user.comic.saved": newBookmarksList }
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error adding bookmark"
         });
@@ -858,12 +993,12 @@ ComicController.deleteBookmark = async function (req, res) {
             error: "No request provided"
         });
     }
-    if (!req.params.id){
+    if (!req.params.id) {
         return res.status(500).json({
             error: "No id provided"
         });
     }
-    if(!req.userId){
+    if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
         });
@@ -874,22 +1009,22 @@ ComicController.deleteBookmark = async function (req, res) {
     let comicId = req.params.id;
 
     //Get user
-    let account = await schemas.Account.findOne({_id: userId});
-    if(!account){
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
         return res.status(500).json({
             error: "User could not be found"
         });
     }
 
     //Make sure user bookmarks list exists
-    if(!account || !account.user || !account.user.comic || !account.user.comic.saved){
+    if (!account || !account.user || !account.user.comic || !account.user.comic.saved) {
         return res.status(500).json({
             error: "User bookmarks list does not exist"
         });
     }
 
     //Make sure comic is in bookmarks list
-    if(!account.user.comic.saved.includes(comicId)){
+    if (!account.user.comic.saved.includes(comicId)) {
         return res.status(500).json({
             error: "The specified comic is not bookmarked by this user"
         });
@@ -899,9 +1034,9 @@ ComicController.deleteBookmark = async function (req, res) {
     let newBookmarksList = account.user.comic.saved.splice(account.user.comic.saved.indexOf(comicId), 1);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.comic.saved": newBookmarksList}
+            "$set": { "user.comic.saved": newBookmarksList }
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error removing bookmark"
         });
