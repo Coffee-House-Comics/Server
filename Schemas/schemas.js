@@ -173,15 +173,9 @@ const StoryPost = model('StoryPost', StoryPostSchema);
 
 const Series = model('Series', SeriesSchema);
 
-const Comment = model('Comment', CommentSchema);
-const ForumPost = model('ForumPost', ForumPostSchema);
-
-
 module.exports = {
     Account,
     ComicPost,
     StoryPost,
     Series,
-    Comment,
-    ForumPost
 };
