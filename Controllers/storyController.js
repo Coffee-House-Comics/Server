@@ -4,8 +4,19 @@
         2. res.status(CODE).json({})
 */
 
+const schemas = require('../Schemas/schemas');
+const common = require('./commonController'); 
+
+
+// Helper functions ----------------------------------------------
+
+
+
+// Main functions ----------------------------------------------
+
 const StoryController = {};
 
+//TODO: 
 StoryController.explore = async function (req, res) {
     /* Explore ------------
         Request body: {
@@ -20,8 +31,13 @@ StoryController.explore = async function (req, res) {
             }
         }
     */
+
+
+
+
 }
 
+// TODO:
 StoryController.subscriptions = async function (req, res) {
     /* Subscriptions ------------
         Request body: {
@@ -38,44 +54,13 @@ StoryController.subscriptions = async function (req, res) {
     */
 }
 
-StoryController.getProfileById = async function (req, res) {
-    /* Get profile By ID ------------
-        Request body: {}
-
-        Response {
-            status 200 OK or 500 ERROR
-            body: {
-                id: ObjectId
-                displayName: String,
-                bio: String,
-                profileImage: Image,
-            }
-        }
-    */
-}
-
-StoryController.getProfileByUserName = async function (req, res) {
-    /* Get profile By userName ------------
-        Request body: {}
-
-        Response {
-            status 200 OK or 500 ERROR
-            body: {
-                id: ObjectId
-                displayName: String,
-                bio: String,
-                profileImage: Image,
-            }
-        }
-    */
-}
-
 
 // Need Authentication ------------------------------------------------
 
 // Creating
+// TODO:
 StoryController.create = async function (req, res) {
-    /* Create a Story (On the backend) ------------
+    /* Create a Story Post (On the backend) ------------
         Request body: {
             id: String || null,
             userName: String  || null
@@ -88,8 +73,12 @@ StoryController.create = async function (req, res) {
             }
         }
     */
+
+    
+
 }
 
+// TODO:
 StoryController.published = async function (req, res) {
     /* Get published Story by id  ------------
         Request body: {}
@@ -128,6 +117,7 @@ StoryController.published = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.unpublished = async function (req, res) {
     /* Get UNpublished Story by id  ------------
         Request body: {}
@@ -158,6 +148,7 @@ StoryController.unpublished = async function (req, res) {
 }
 
 // Publishing
+// TODO:
 StoryController.publish = async function (req, res) {
     /* Publish Story ------------ 
         Request body: {
@@ -174,6 +165,7 @@ StoryController.publish = async function (req, res) {
 }
 
 // Deleting
+// TODO:
 StoryController.delete = async function (req, res) {
     /* Deleting a Story ------------
         Request body: {}
@@ -184,6 +176,7 @@ StoryController.delete = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.delete_comment = async function (req, res) {
     /* Delete a comment------------
         Request body: {}
@@ -194,6 +187,7 @@ StoryController.delete_comment = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.delete_forumPost = async function (req, res) {
     /* Delete a Forum Post------------
         Request body: {}
@@ -204,6 +198,7 @@ StoryController.delete_forumPost = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.deleteSticker = async function (req, res) {
     /* Delete a sticker ------------
         Request body: {}
@@ -215,6 +210,7 @@ StoryController.deleteSticker = async function (req, res) {
 }
 
 // User related Content
+// TODO:
 StoryController.user_saved = async function (req, res) {
     /* Get user's saved Storys ------------
         Request body: {}
@@ -225,6 +221,7 @@ StoryController.user_saved = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.user_toggleForum = async function (req, res) {
     /* Toggle Forum for user ------------
         Request body: {}
@@ -236,6 +233,7 @@ StoryController.user_toggleForum = async function (req, res) {
 }
 
 // Story metadata editing (Cover photo, Title, Bio, Series)
+// TODO:
 StoryController.metadata_update = async function (req, res) {
     /* Update the metadata of a Story ------------
         Request body: {
@@ -250,6 +248,7 @@ StoryController.metadata_update = async function (req, res) {
 }
 
 // Story content editing
+// TODO:
 StoryController.content_save = async function (req, res) {
     /* Update the metadata of a Story ------------
         Request body: {
@@ -264,6 +263,7 @@ StoryController.content_save = async function (req, res) {
 }
 
 // Commenting
+// TODO:
 StoryController.comment = async function (req, res) {
     /* Comment on a Story ------------
         Request body: {
@@ -276,6 +276,7 @@ StoryController.comment = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.comment_forumPost = async function (req, res) {
     /* Comment on a Forum Post ------------
         Request body: {
@@ -288,43 +289,7 @@ StoryController.comment_forumPost = async function (req, res) {
     */
 }
 
-// Voting (upvoting/downvoting AKA liking/disliking)
-StoryController.vote = async function (req, res) {
-    /* Vote on a Story ------------
-        Request body: {
-            type: Integer
-        }
-    
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
-StoryController.vote_forumPost = async function (req, res) {
-    /* Vote on a Forum Post ------------
-        Request body: {
-            type: Integer
-        }
-    
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
-StoryController.vote_comment = async function (req, res) {
-    /* Vote on a Comment ------------
-        Request body: {
-            type: Integer
-        }
-    
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
+// TODO:
 StoryController.bookmark = async function (req, res) {
     /* Bookmark a post ------------
        Request body: { }
@@ -335,6 +300,7 @@ StoryController.bookmark = async function (req, res) {
    */
 }
 
+// TODO:
 StoryController.deleteBookmark = async function (req, res) {
     /* UN-Bookmark a post ------------
        Request body: { }
@@ -345,6 +311,7 @@ StoryController.deleteBookmark = async function (req, res) {
    */
 }
 
+// TODO:
 StoryController.subscribe_user = async function (req, res) {
     /*
         Request body { }
@@ -355,6 +322,7 @@ StoryController.subscribe_user = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.unsubscribe_user = async function (req, res) {
     /*
         Request body { }
@@ -365,6 +333,7 @@ StoryController.unsubscribe_user = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.subscribe_series = async function (req, res) {
     /*
         Request body { }
@@ -375,6 +344,7 @@ StoryController.subscribe_series = async function (req, res) {
     */
 }
 
+// TODO:
 StoryController.unsubscribe_series = async function (req, res) {
     /*
         Request body { }
@@ -383,6 +353,24 @@ StoryController.unsubscribe_series = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Entering getProfileById");
+
+    if (!req || !req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+
+    try {
+        const user = await schemas.Account.findOne({ _id: req.params.id });
+
+    }
+    catch (err) {
+        return res.status(500).json({
+            err: "Server error getting profile by id"
+        });
+    }
 }
 
 
