@@ -1,37 +1,12 @@
 const nodemailer = require("nodemailer");
 const dotenv = require('dotenv');
-const { google } = require("googleapis");
-const OAuth2 = google.auth.OAuth2;
-
-const json = require('../Secrets/gmail_auth_file.json');
 
 // Extract the environment variables
 dotenv.config();
 const my_email = process.env.GMAIL_ADDRESS;
-const client_id = process.env.GMAIL_OAUTH_CLIENT_ID;
-const client_secret = process.env.GMAIL_OAUTH_CLIENT_SECRET;
-const refresh_token = process.env.GMAIL_OAUTH_REFRESH_TOKEN;
-let access_token = process.env.GMAIL_OAUTH_ACCESS_TOKEN;
-
 const password = process.env.GMAIL_PASSWORD;
 
-const privKey = process.env.GMAIL_IAM_PRIV_KEY;
-
-
 const mailController = {};
-
-// const oauth2Client = new OAuth2(
-//     client_id,
-//     client_secret, // Client Secret
-// );
-
-// oauth2Client.setCredentials({
-//     refresh_token: refresh_token
-// });
-
-// access_token = oauth2Client.getAccessToken(function (token) {
-//     access_token = token;
-// });
 
 mailController.generateMail = function (toAddress, subject, message) {
     return (
@@ -47,19 +22,6 @@ mailController.generateMail = function (toAddress, subject, message) {
 
 mailController.sendMail = async function (mailObj) {
     console.log("Sending mail...");
-
-    // TODO: Maybe get OAUTH token working in the future
-    // const transporter = nodemailer.createTransport({
-    //     host: 'smtp.gmail.com',
-    //     port: 465,
-    //     secure: true,
-    //     auth: {
-    //         type: 'OAuth2',
-    //         user: my_email,
-    //         serviceClient: json.client_id,
-    //         privateKey: json.private_key,
-    //     }
-    // });
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
