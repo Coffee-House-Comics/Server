@@ -37,11 +37,7 @@ const PostMetadata = ({
     publishedDate: Date,
     beans: Number,
 
-    series: {
-        isSeriesMember: Boolean,
-        seriesName: String,
-        seriesID: Number
-    },
+    series: String,
 
     comments: [CommentSchema],
 
@@ -107,18 +103,10 @@ const StoryPostSchema = new Schema({
 
 // ---------------------------------------------------
 
-const SeriesSchema = new Schema({
-    name: String,
-    beans: Number,
-    members: [StoryPostSchema || ComicPostSchema]
-});
-
-// ---------------------------------------------------
-
 const appMetadata = ({
     beans: Number,
-    posts: [StoryPostSchema || ComicPostSchema],
-    series: [SeriesSchema],
+    posts: [ObjectId],
+    series: [String],
 
     // Everything liked including posts, forum posts, and comments.
     liked: [ObjectId],
@@ -170,8 +158,6 @@ const Account = model('Account', AccountSchema);
 
 const ComicPost = model('ComicPost', ComicPostSchema);
 const StoryPost = model('StoryPost', StoryPostSchema);
-
-const Series = model('Series', SeriesSchema);
 
 module.exports = {
     Account,
