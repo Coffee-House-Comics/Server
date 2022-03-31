@@ -6,7 +6,7 @@
 
 const emailController = require("../Mailer");
 const schemas = require('../Schemas/schemas');
-const schemaUtils = require('../Schemas/utils');
+const utils = require('../Utils');
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 
@@ -286,7 +286,7 @@ AuthController.loginUser = async function (req, res) {
         const token = auth.signToken(targetAccount._id);
         console.log(token);
 
-        const responseJSON = schemaUtils.constructProfileObjFromAccount(targetAccount);
+        const responseJSON = utils.constructProfileObjFromAccount(targetAccount);
 
         if (!responseJSON) {
             return res.status(500).json({
@@ -544,7 +544,7 @@ AuthController.updateProfile = async function (req, res) {
         // Now save the updated account
         const savedAccount = await account.save();
 
-        const responseJSON = schemaUtils.constructProfileObjFromAccount(savedAccount);
+        const responseJSON = utils.constructProfileObjFromAccount(savedAccount);
 
         if (!responseJSON) {
             return res.status(500).json({
@@ -696,7 +696,7 @@ AuthController.changeUserName = async function (req, res) {
 
         const savedAccount = await targetAccount.save();
 
-        const responseJSON = schemaUtils.constructProfileObjFromAccount(savedAccount);
+        const responseJSON = utils.constructProfileObjFromAccount(savedAccount);
 
         if (!responseJSON) {
             return res.status(500).json({

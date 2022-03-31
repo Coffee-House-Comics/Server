@@ -17,4 +17,11 @@ utils.constructProfileObjFromAccount = function (account) {
     };
 }
 
+utils.findObjInArrayById = function (arr, id) {
+    return arr.find(element => element._id === id)
+}
+
+utils.arrRemove = function (arr, toRemove) {
+    return arr.filter(item => item !== toRemove);
+}
 module.exports = utils;
