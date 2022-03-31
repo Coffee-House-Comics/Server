@@ -212,19 +212,98 @@ ComicController.getProfileByUserName = async function (req, res) {
 
 // Creating
 ComicController.create = async function (req, res) {
-    /* Create a Comic (On the backend) ------------
+    /* Create a Comic Post (On the backend) ------------
         Request body: {
-            id: String || null,
-            userName: String  || null
+            name: String,
+            description: String
         }
 
         Response {
             status: 200 OK or 500 ERROR,
             body: {
                 id: ObjectId
+
+                //If error
+                error: String
             }
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+    if(!req.body || !req.body.name || !req.body.description){
+        return res.status(400).json({
+            error: "Invalid request body"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let name = req.body.name;
+    let description = req.body.description;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Create comic and save to DB
+    let createdComic = null;
+    try {
+        createdComic = await schemas.ComicPost.create({
+            name: name,
+            description: description,
+            author: account.user.displayName,
+            isPublished: false,
+            publishedDate: null,
+            beans: 0,
+            series: null,
+            comments: [],
+            authorID: userId,
+            unpublished: [],
+            published: []
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error saving new comic"
+        })
+    }
+
+    //Get current posts array
+    let currentPosts = account.user.comic.posts;
+    if(!currentPosts){
+        currentPosts = [];
+    }
+    
+    //Add post to user's posts array
+    currentPosts.push(createdComic._id);
+
+    //Save change to user
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.comic.posts": currentPosts}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating forum state"
+        });
+    }
+    
+    res.status(200).json({
+        id: createdComic._id
+    });
 }
 
 ComicController.published = async function (req, res) {
@@ -816,7 +895,7 @@ ComicController.deleteBookmark = async function (req, res) {
         });
     }
 
-    //Story is in bookmarks list. Remove it and update
+    //Comic is in bookmarks list. Remove it and update
     let newBookmarksList = account.user.comic.saved.splice(account.user.comic.saved.indexOf(comicId), 1);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {

@@ -175,24 +175,104 @@ StoryController.subscriptions = async function (req, res) {
 // Need Authentication ------------------------------------------------
 
 // Creating
-// TODO:
 StoryController.create = async function (req, res) {
     /* Create a Story Post (On the backend) ------------
         Request body: {
-            id: String || null,
-            userName: String  || null
+            name: String,
+            description: String
         }
 
         Response {
             status: 200 OK or 500 ERROR,
             body: {
                 id: ObjectId
+
+                //If error
+                error: String
             }
         }
     */
 
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+    if(!req.body || !req.body.name || !req.body.description){
+        return res.status(400).json({
+            error: "Invalid request body"
+        });
+    }
 
+    //Get params
+    let userId = req.userId;
+    let name = req.body.name;
+    let description = req.body.description;
 
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Create story and save to DB
+    let createdStory = null;
+    try {
+        createdStory = await schemas.StoryPost.create({
+            name: name,
+            description: description,
+            author: account.user.displayName,
+            isPublished: false,
+            publishedDate: null,
+            beans: 0,
+            series: null,
+            comments: [],
+            authorID: userId,
+            unpublished: {
+                pages: [],
+                ReactFlowJSON: null
+            },
+            published: {
+                pages: []
+            }
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error saving new story"
+        })
+    }
+
+    //Get current posts array
+    let currentPosts = account.user.story.posts;
+    if(!currentPosts){
+        currentPosts = [];
+    }
+    
+    //Add post to user's posts array
+    currentPosts.push(createdStory._id);
+
+    //Save change to user
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.story.posts": currentPosts}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating forum state"
+        });
+    }
+    
+    res.status(200).json({
+        id: createdStory._id
+    });
 }
 
 StoryController.published = async function (req, res) {
