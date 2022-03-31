@@ -199,73 +199,128 @@ StoryController.create = async function (req, res) {
 
 }
 
-// TODO:
 StoryController.published = async function (req, res) {
     /* Get published Story by id  ------------
         Request body: {}
 
         Response {
-            status: 200 OK or 500 ERROR,
+            status: 200 OK or 500 ERROR or 403 FORBIDDEN,
             body: {
-                name: String,
-                description: String,
-
-                author: String,
-                authorID: ObjectId,
-
-                series: {
-                    isSeriesMember: Boolean,
-                    seriesName: String,
-                    seriesID: Number
-                },
-
-                publishedDate: Date,
-                beans: Number,
-                comments: [CommentSchema],
+                content: StoryPost Object
                 
-                pages: [
-                    title: String,
-                    body: JSON,
-                    decisions: [
-                        {
-                            name: String,
-                            nextPageId: String
-                        }
-                    ]
-                ],    
+                //If error
+                error: String
             }
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+
+    //Get params
+    let storyId = req.params.id;
+    
+    //Get post
+    let story = await schemas.StoryPost.findOne({_id: storyId});
+    if(!story){
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure user the story is published
+    if(!story.isPublished){
+        return res.status(403).json({
+            error: "This story is not published"
+        });
+    }
+
+    //The story is published. Now send it in response
+    return res.status(200).json({
+        content: story
+    });
 }
 
-// TODO:
+
 StoryController.unpublished = async function (req, res) {
     /* Get UNpublished Story by id  ------------
         Request body: {}
 
         Response {
-            status: 200 OK or 500 ERROR,
+            status: 200 OK or 500 ERROR or 400 BAD,
             body: {
-                name: String,
-                description: String,
-                
-                author: String,
-                authorID: ObjectId,
+                content: StoryPost Object
 
-                pages: [
-                    title: String,
-                    body: JSON,
-                    decisions: [
-                        {
-                            name: String,
-                            nextPageId: String
-                        }
-                    ]
-                ],
-                ReactFlowJSON: JSON,
+                //If error
+                error: String
             }
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id){
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    let story = await schemas.StoryPost.findOne({_id: storyId});
+    if(!story){
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure user owns this story
+    if(story.authorID !== userId){
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //Make sure story is unpublished
+    if(story.isPublished){
+        return res.status(400).json({
+            error: "This story is published"
+        });
+    }
+
+    //The user does own this story and it is published. Now send it in response body
+    return res.status(200).json({
+        content: story
+    });
 }
 
 // Publishing
@@ -328,10 +383,16 @@ StoryController.publish = async function (req, res) {
     }
 
     //The user does own this story. Now set it to published
-    await schemas.StoryPost.updateOne({_id: storyId}, {
-        isPublished: true,
-        series: series
-    });
+    try{
+        await schemas.StoryPost.updateOne({_id: storyId}, {
+            isPublished: true,
+            series: series
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating story"
+        });
+    }
 
     return res.status(200).send();
 }
@@ -446,15 +507,68 @@ StoryController.user_saved = async function (req, res) {
     */
 }
 
-// TODO:
 StoryController.user_toggleForum = async function (req, res) {
     /* Toggle Forum for user ------------
         Request body: {}
     
         Response {
-            status: 200 OK or 500 ERROR
+            status: 200 OK or 500 ERROR,
+            body: {
+                isForumEnabled: Boolean
+
+                //If error
+                error: String
+            }
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if(!req.userId){
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    
+    //Get user
+    let account = await schemas.Account.findOne({_id: userId});
+    if(!account){
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Check existence of forum object
+    if(!account || !account.user || !account.user.story || !account.user.story.forum){
+        return res.status(500).json({
+            error: "No forum set for this account"
+        });
+    }
+
+    //Determine new (toggled) forum state
+    let newForumStatus = !(account.user.story.forum.active)
+
+    //Toggle user's forum state
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.story.forum.active": newForumStatus}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating forum state"
+        });
+    }
+
+    res.status(200).json({
+        isForumEnabled: newForumStatus
+    });
 }
 
 // Story metadata editing (Cover photo, Title, Bio, Series)
