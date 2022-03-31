@@ -559,7 +559,7 @@ StoryController.delete = async function (req, res) {
     }
 
     //Remove this post from all users' disliked lists
-    for(let dislikerId of story.whoLiked){
+    for(let dislikerId of story.whoDisliked){
         //Get the user's Account object
         let disliker = await schemas.Account.findOne({_id: dislikerId});
         if(!disliker){
@@ -613,7 +613,7 @@ StoryController.delete_comment = async function (req, res) {
     */
 }
 
-// TODO:
+
 StoryController.delete_forumPost = async function (req, res) {
     /* Delete a Forum Post------------
         Request body: {}
@@ -622,6 +622,126 @@ StoryController.delete_forumPost = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if(!req.params){
+        return res.status(500).json({
+            error: "No req. params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let postId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    let post = Utils.findObjInArrayById(account.user.story.forum.posts, postId);
+    if(!post){
+        return res.status(500).json({
+            error: "There is no forum post with the provided ID in this user's story forum"
+        });
+    }
+
+    //Disconnect comments
+    for(let comment of post.comments){
+        //Disconnect comment from all users
+        let err = Utils.disconnectComment(comment);
+        if(err){
+            return res.status(500).json({
+                error: err
+            });
+        }
+    }
+
+    //Remove this post from all users' liked lists
+    for(let likerId of post.whoLiked){
+        //Get the user's Account object
+        let liker = await schemas.Account.findOne({_id: likerId});
+        if(!liker){
+            return res.status(500).json({
+                error: "Error retreiving liker account obj"
+            });
+        }
+
+        //Remove this post from the user's list of liked things
+        let likedIds = Utils.arrRemove(liker.user.story.liked, post._id);
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.story.liked": likedIds}
+            });
+        } catch(err){
+            return "Error updating forum post liker's list of liked objects";
+        }
+    }
+
+    //Remove this post from all users' disliked lists
+    for(let dislikerId of post.whoDisliked){
+        //Get the user's Account object
+        let disliker = await schemas.Account.findOne({_id: dislikerId});
+        if(!disliker){
+            return res.status(500).json({
+                error: "Error retreiving disliker account obj"
+            });
+        }
+
+        //Remove this post from the user's list of disliked things
+        let dislikedIds = Utils.arrRemove(disliker.user.story.disliked, post._id);
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.story.disliked": dislikedIds}
+            });
+        } catch(err){
+            return "Error updating forum post disliker's list of disliked objects";
+        }
+    }
+
+    //Change the author's bean count
+    let newBeanCount = account.user.story.beans - post.beans;
+    try{
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.beans": newBeanCount}
+        });
+    } catch(err){
+        return res.status(500).json({
+            error: "Error updating author's bean count"
+        });
+    }
+
+    //Delete the post
+    try {
+        let newForumPostsArray = Utils.arrRemove(account.user.story.forum.posts, post);
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": {"user.story.forum.posts": newForumPostsArray}
+        });
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error deleting forum post"
+        });
+    }
 }
 
 // TODO:
