@@ -10,8 +10,18 @@ const VoteType = {
     up: 1
 }
 
+const SortType = {
+    dateAsc: 0,
+    dateDesc: 1,
+    beansAsc: 2,
+    beansDesc: 3,
+    alphaAsc: 4,
+    alphaDesc: 5
+}
+
 module.exports = {
     PostType,
     SubscriptionType,
-    VoteType
+    VoteType,
+    SortType
 }

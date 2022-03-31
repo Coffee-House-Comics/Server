@@ -5,53 +5,174 @@
 */
 
 const schemas = require('../Schemas/schemas');
-const common = require('./commonController'); 
+const common = require('./commonController');
 
+// Variables -----------------------------------------------------
+
+//The number of recent posts to deliver for explore page
+const NUM_RECENT_POSTS = 10;
+
+//The number of most liked posts to deliver for explore page
+const NUM_LIKED_POSTS = 10;
 
 // Helper functions ----------------------------------------------
 
 
 
-// Main functions ----------------------------------------------
+// Main functions ------------------------------------------------
 
 const StoryController = {};
 
-//TODO: 
 StoryController.explore = async function (req, res) {
     /* Explore ------------
-        Request body: {
-            sortMethod: String
-            searchCriteria: String
-        }
+        Request body: {}
 
         Response {
             status 200 OK or 500 ERROR
             body: {
-                [Story Series Objects]
+                mostRecent: [StoryPost Objects]
+                mostLiked: [StoryPost Objects]
+
+                //If error
+                error: String
             }
         }
     */
 
+    let recentContent = [];
+    let likedContent = [];
 
+    //Find most recent posts
+    recentContent = await schemas.StoryPost.find({}).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
 
+    //Find most liked posts
+    likedContent = await schemas.StoryPost.find({}).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
+
+    if (recentContent && likedContent) {
+        //Send content in response body
+        return res.status(200).json({
+            mostRecent: recentContent,
+            mostLiked: likedContent
+        });
+    }
+
+    return res.status(500).json({
+        error: "Server error processing explore request"
+    });
 
 }
 
-// TODO:
-StoryController.subscriptions = async function (req, res) {
-    /* Subscriptions ------------
+StoryController.search = async function (req, res) {
+    /* Search ------------
         Request body: {
-            sortMethod: String
-            searchCriteria: String
+            searchCriteria: [String]
         }
 
         Response {
             status 200 OK or 500 ERROR
             body: {
-                [Story Series Objects]
+                content: {
+                    posts: [StoryPost Objects]
+                    authors: [{
+                        id: ObjectId
+                        displayName: String,
+                        bio: String,
+                        profileImage: Image,
+                    }]
+                }
+
+                //If error
+                error: String
             }
         }
     */
+
+    //Find all posts
+    let posts = await schemas.StoryPost.find({});
+
+    //Find all authors
+    let authors = await schemas.Account.find({});
+
+    //Check for errors
+    if (!posts || !authors) {
+        return res.status(500).json({
+            error: "Server error getting all posts & authors to search/sort"
+        });
+    }
+
+    //Build custom author objects
+    authors = authors.map((account) => {
+        return {
+            id: account._id,
+            displayName: account.user.displayName,
+            bio: account.user.bio,
+            profileImage: account.user.profileImage
+        }
+    });
+
+    //Filter results by search
+    if (req.body.searchCriteria) {
+        for (let query of searchCriteria) {
+            //Filter posts
+            posts = posts.filter((post) => {
+                return (post.name.includes(query) || post.author.includes(query) || post.series.includes(query));
+            });
+
+            //Filter authors
+            authors = authors.filter((author) => {
+                return (author.displayName.includes(query));
+            });
+        }
+    }
+
+    return res.status(200).json({
+        posts: posts,
+        authors: authors
+    });
+}
+
+StoryController.subscriptions = async function (req, res) {
+    /* Subscriptions ------------
+        Request body: {}
+
+        Response {
+            status 200 OK or 500 ERROR
+            body: {
+                content: [StoryPost Objects]
+
+                //If error
+                error: String
+            }
+        }
+    */
+
+    //Get the user that made the request
+    let account = await schemas.Account.findOne({ _id: req.userId });
+
+    //Check for error
+    if(!account){
+        return res.status(500).json({
+            error: "Server error getting user from ID"
+        });
+    }
+    let user = account.user;
+
+    //Find all posts
+    let content = await schemas.StoryPost.find({});
+    if(!content){
+        return res.status(500).json({
+            error: "Server error getting user from ID"
+        });
+    }
+
+    //Filter for subscribed posts
+    content = content.filter((post) => {
+        return user.story.subscriptions.map((subscription) => subscription.id).includes(post._id);
+    });
+
+    return res.status(200).json({
+        content: content
+    });
 }
 
 
@@ -74,7 +195,7 @@ StoryController.create = async function (req, res) {
         }
     */
 
-    
+
 
 }
 
@@ -368,7 +489,7 @@ StoryController.unsubscribe_series = async function (req, res) {
     }
     catch (err) {
         return res.status(500).json({
-            err: "Server error getting profile by id"
+            error: "Server error getting profile by id"
         });
     }
 }
