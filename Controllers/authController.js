@@ -19,7 +19,7 @@ function generateCode(len = 22) {
 }
 
 function generateEmailAuthLink(userId, code) {
-    return "https://coffeehousecomics.com/" + userId + "/" + code;
+    return "https://coffeehousecomics.com/auth/confirmCode/" + userId + "/" + code;
 }
 
 async function sendConfirmationEmail(Recepient, userId, confirmationCode) {
@@ -105,7 +105,7 @@ AuthController.registerUser = async function (req, res, next) {
         }
 
         // If this username already exists
-        if (! await schemas.Account.findOne({ _id: id })) {
+        if (await schemas.Account.findOne({ userName: userName })) {
             return res.status(500).json({
                 error: "Username alreay exists"
             });
@@ -119,7 +119,7 @@ AuthController.registerUser = async function (req, res, next) {
         }
 
         // Check if email is already registered
-        if (! await schemas.Account.findOne({ email: email })) {
+        if (await schemas.Account.findOne({ email: email })) {
             return res.status(500).json({
                 error: "This email is associated with an existing account."
             });
