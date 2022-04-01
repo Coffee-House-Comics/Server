@@ -44,6 +44,7 @@ const PostMetadata = ({
     isPublished: Boolean,
     publishedDate: Date,
     beans: Number,
+    coverPhoto: Buffer,
 
     series: String,
 
@@ -59,57 +60,31 @@ const PostMetadata = ({
 const ComicPostSchema = new Schema({
     ...PostMetadata,
 
-    // Unpublished storing
-    unpublished: [
+    pages: [
         {
             title: String,
             konvaPage: JSON
         }
     ],
 
-    // Published storing
-    published: [
-        {
-            title: String,
-            image: Buffer,
-        }
-    ],
 });
 
 const StoryPostSchema = new Schema({
     ...PostMetadata,
-    // Unpublished storing
-    unpublished: {
-        pages: [
-            {
-                title: String,
-                body: JSON,
-                decisions: [
-                    {
-                        name: String,
-                        nextPageId: String
-                    }
-                ]
-            }
-        ],
-        ReactFlowJSON: JSON,
-    },
 
-    // Published storing
-    published: {
-        pages: [
-            {
-                title: String,
-                body: JSON,
-                decisions: [
-                    {
-                        name: String,
-                        nextPageId: String
-                    }
-                ]
-            }
-        ],
-    }
+    pages: [
+        {
+            title: String,
+            body: JSON,
+            decisions: [
+                {
+                    name: String,
+                    nextPageIndex: Number
+                }
+            ]
+        }
+    ],
+    ReactFlowJSON: JSON
 });
 
 // ---------------------------------------------------

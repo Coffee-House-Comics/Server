@@ -242,13 +242,9 @@ StoryController.create = async function (req, res) {
             series: null,
             comments: [],
             authorID: userId,
-            unpublished: {
-                pages: [],
-                ReactFlowJSON: null
-            },
-            published: {
-                pages: []
-            }
+            pages: [],
+            ReactFlowJSON: null
+
         });
     } catch (err) {
         return res.status(500).json({
@@ -860,7 +856,6 @@ StoryController.user_toggleForum = async function (req, res) {
 }
 
 // Story metadata editing (Cover photo, Title, Bio, Series)
-// TODO:
 StoryController.metadata_update = async function (req, res) {
     /* Update the metadata of a Story ------------
         //NOTE: A request should omit any fields in the body which should not change
@@ -973,18 +968,102 @@ StoryController.metadata_update = async function (req, res) {
 }
 
 // Story content editing
-// TODO:
 StoryController.content_save = async function (req, res) {
-    /* Update the metadata of a Story ------------
+    /* Update the content of a Story ------------
         Request body: {
-            title: String,
-            bio: String
+            pages: [{
+                title: String,
+                body: JSON,
+                decisions: [{
+                    name: String,
+                    nextPageIndex: Number (int)
+                }]
+            }],
+            ReactFlowJSON: JSON
         }
 
         Response {
             status: 200 OK or 500 ERROR
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    if (!req.body || !req.body.pages || !req.body.ReactFlowJSON) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let pages = req.body.pages;
+    let ReactFlowJSON = req.body.ReactFlowJSON;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    const story = await schemas.StoryPost.findOne({ _id: storyId });
+    if (!story) {
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure user owns this story
+    if (story.authorID !== userId) {
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //Make sure story is unpublished
+    if (story.isPublished) {
+        return res.status(400).json({
+            error: "A published story cannot be edited"
+        });
+    }
+
+    //Make changes
+    story.pages = pages;
+    story.ReactFlowJSON = ReactFlowJSON;
+
+    //Save changes to DB
+    try{
+        await story.save();
+        return res.status(200).send();
+    } catch(err){
+        return res.status(500).json({
+            error: "Error saving story content changes"
+        });
+    }
 }
 
 // Commenting
