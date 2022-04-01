@@ -9,6 +9,7 @@ const common = require('./commonController');
 const Utils = require('../Utils');
 const { SubscriptionType } = require('../Schemas/types');
 const { json } = require('body-parser');
+const { arrRemove } = require('../Utils');
 
 // Variables -----------------------------------------------------
 
@@ -768,12 +769,84 @@ ComicController.delete_forumPost = async function (req, res) {
 
 ComicController.deleteSticker = async function (req, res) {
     /* Delete a sticker ------------
-        Request body: {}
+        Request body: {
+            sticker: JSON
+        }
 
         Response {
             status: 200 OK or 500 ERROR
+
+            body: {
+                //If error
+                error: String
+            }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+
+    if (!req.body || !req.body.sticker) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let sticker = req.body.sticker;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get current list of stickers
+    let stickers = account.user.comic.savedStickers;
+    if (!stickers) {
+        stickers = [];
+    }
+
+    //Remove sticker from list of stickers
+    let newStickers = Utils.arrRemove(stickers, sticker);
+    if(!newStickers){
+        return res.status(500).json({
+            error: "The provided sticker is not in the saved stickers list"
+        });
+    }
+
+    //Update DB
+    account.user.comic.stickers = newStickers;
+    try {
+        await account.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving new sticker"
+        });
+    }
 }
 
 // User related Content
@@ -1148,7 +1221,7 @@ ComicController.content_saveSticker = async function (req, res) {
 
     //Get current list of stickers
     let stickers = account.user.comic.savedStickers;
-    if(!stickers){
+    if (!stickers) {
         stickers = [];
     }
 
@@ -1157,10 +1230,10 @@ ComicController.content_saveSticker = async function (req, res) {
 
     //Update DB
     account.user.comic.stickers = stickers;
-    try{
+    try {
         await account.save();
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error saving new sticker"
         });
