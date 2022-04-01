@@ -1056,10 +1056,10 @@ StoryController.content_save = async function (req, res) {
     story.ReactFlowJSON = ReactFlowJSON;
 
     //Save changes to DB
-    try{
+    try {
         await story.save();
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error saving story content changes"
         });
@@ -1067,7 +1067,6 @@ StoryController.content_save = async function (req, res) {
 }
 
 // Commenting
-// TODO:
 StoryController.comment = async function (req, res) {
     /* Comment on a Story ------------
         Request body: {
@@ -1078,19 +1077,195 @@ StoryController.comment = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    if (!req.body || !req.body.text) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let commentText = req.body.text;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    const story = await schemas.StoryPost.findOne({ _id: storyId });
+    if (!story) {
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure story is published
+    if (!story.isPublished) {
+        return res.status(400).json({
+            error: "This story is not published"
+        });
+    }
+
+    //Build the comment
+    const comment = {
+        ownerId: userId,
+        user: account.user.displayName,
+        date: new Date(),
+        text: commentText,
+        beans: 0,
+        whoLiked: [],
+        whoDisliked: []
+    };
+
+    //Add the comment to the post
+    story.comments.push(comment);
+
+    //Save changes to DB
+    try {
+        await story.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving forum posts to DB"
+        });
+    }
 }
 
-// TODO:
 StoryController.comment_forumPost = async function (req, res) {
     /* Comment on a Forum Post ------------
         Request body: {
             text: String
+            forumUserId: ObjectID
         }
     
         Response {
             status: 200 OK or 500 ERROR,
+
+            body:{ 
+                //If error
+                error: String
+            }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let forumPostId = req.params.id;
+
+    if (!req.body || !req.body.text || !req.body.forumUserId) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let commentText = req.body.text;
+    let forumUserId = req.body.forumUserId;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get forum user
+    let forumAccount = await schemas.Account.findOne({ _id: forumUserId });
+    if (!forumAccount) {
+        return res.status(500).json({
+            error: "Forum user could not be found"
+        });
+    }
+
+    //Make sure the forum user's forum is enabled
+    if (!forumAccount.user.story.forum.active) {
+        return res.status(500).json({
+            error: "This user's forum is not enabled"
+        });
+    }
+
+    //Find the post to comment on
+    let forumPosts = forumAccount.user.story.forum.posts;
+    let post = Utils.findObjInArrayById(forumPosts, forumPostId);
+    let postIndex = forumPosts.indexOf(post);
+
+    //Build the comment
+    const comment = {
+        ownerId: userId,
+        user: account.user.displayName,
+        date: new Date(),
+        text: commentText,
+        beans: 0,
+        whoLiked: [],
+        whoDisliked: []
+    };
+
+    //Add the comment to the post
+    post.comments.push(comment);
+
+    //Update the array of posts
+    forumPosts[postIndex] = post;
+
+    //Save changes to DB
+    try {
+        await schemas.Account.findByIdAndUpdate(forumUserId, {
+            "$set": { "user.story.forum.posts": forumPosts }
+        });
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving forum posts to DB"
+        });
+    }
 }
 
 StoryController.bookmark = async function (req, res) {
