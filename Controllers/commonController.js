@@ -141,41 +141,6 @@ CommonController.getProfileByUserName = async function (req, res) {
 
 
 
-
-
-// TODO: Vote on a comment on a post
-CommonController.vote_comment = async function (req, res, isStory) {
-    /* Vote on a Comment ------------
-        Request body: {
-            type: Integer
-
-            // The id of the account that owns the post or the location of the forum where the forum post is
-            locationOwnerId: String
-        }
-    
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonController.publish = async function (req, res, mode) {
     /* Publish Story ------------ 
         Request body: {
