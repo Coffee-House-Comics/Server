@@ -55,7 +55,7 @@ router.post('/comment/forumPost/:id', auth.verify, ComicController.comment_forum
 router.post('/vote/:id', auth.verify, ComicController.vote);
 router.post('/vote/forumPost/:id', auth.verify, ComicController.vote_forumPost);
 router.post('/vote/comment/:id', auth.verify, ComicController.vote_comment);
-router.post('/vote/forumPost/comment/:id', auth.verify, auth.emailIsVerified);
+router.post('/vote/forumPost/comment/:id', auth.verify, auth.emailIsVerified, ComicController.vote_forumpost_comment);
 
 
 // Bookmarking a post

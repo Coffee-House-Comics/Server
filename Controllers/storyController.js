@@ -1622,8 +1622,8 @@ StoryController.vote = async function (req, res) {
         // 3 Different cases
         if (userLiked.includes(post._id)) {
             if (type === types.VoteType.down) {
-                userLiked = utils.arrRemove(userLiked, post._id);
-                post.whoLiked = utils.arrRemove(post.whoLiked, req.userId);
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
 
                 post.beans -= 2;
                 postOwnerBeans -= 2;
@@ -1635,8 +1635,8 @@ StoryController.vote = async function (req, res) {
                 /* Do Nothing */
             }
             else {
-                userLiked = utils.arrRemove(userLiked, post._id);
-                post.whoLiked = utils.arrRemove(post.whoLiked, req.userId);
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
@@ -1647,8 +1647,8 @@ StoryController.vote = async function (req, res) {
                 /* Do Nothing */
             }
             else if (type === types.VoteType.up) {
-                userDisliked = utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = utils.arrRemove(post.whoDisliked, req.userId);
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
 
                 post.beans += 2;
                 postOwnerBeans += 2;
@@ -1657,8 +1657,8 @@ StoryController.vote = async function (req, res) {
                 post.whoLiked.push(req.userId);
             }
             else {
-                userDisliked = utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = utils.arrRemove(post.whoDisliked, req.userId);
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
 
                 post.beans += 1;
                 postOwnerBeans += 1;
@@ -1767,7 +1767,7 @@ StoryController.vote_forumPost = async function (req, res) {
         }
 
         // Get forum post that the voting is happening on
-        const post = utils.findObjInArrayById(forumPostObj.posts, req.params.id);
+        const post = Utils.findObjInArrayById(forumPostObj.posts, req.params.id);
 
         console.log("vfp:", post);
 
@@ -1869,7 +1869,7 @@ StoryController.vote_forumPost = async function (req, res) {
 }
 
 // Vote on a comment on a post
-StoryController.vote_comment = async function (req, res, isStory) {
+StoryController.vote_comment = async function (req, res) {
     /* Vote on a Comment ------------
         Request body: {
             type: Integer
@@ -1927,7 +1927,7 @@ StoryController.vote_comment = async function (req, res, isStory) {
         }
 
         // Find the comment
-        const comment = utils.findObjInArrayById(post.comments, req.params.id);
+        const comment = Utils.findObjInArrayById(post.comments, req.params.id);
 
         if (!comment) {
             return res.status(500).json({
@@ -1942,63 +1942,63 @@ StoryController.vote_comment = async function (req, res, isStory) {
         const userDisliked = account.user.story.disliked;
 
         // 3 Different cases
-        if (userLiked.includes(post._id)) {
+        if (userLiked.includes(comment._id)) {
             if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, post._id);
-                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+                userLiked = arrRemove(userLiked, comment._id);
+                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
 
-                post.beans -= 2;
+                comment.beans -= 2;
                 commentOwner.user.story.beans -= 2;
 
-                userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                userDisliked.push(comment._id);
+                comment.whoDisliked.push(req.userId);
             }
             else if (type === types.VoteType.up) {
                 /* Do Nothing */
             }
             else {
-                userLiked = arrRemove(userLiked, post._id);
-                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+                userLiked = arrRemove(userLiked, comment._id);
+                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
 
-                post.beans -= 1;
+                comment.beans -= 1;
                 commentOwner.user.story.beans -= 1;
             }
         }
-        else if (userDisliked.includes(post._id)) {
+        else if (userDisliked.includes(comment._id)) {
             if (type === types.VoteType.down) {
                 /* Do Nothing */
             }
             else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, post._id);
-                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+                userDisliked = arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
 
-                post.beans += 2;
+                comment.beans += 2;
                 commentOwner.user.story.beans += 2;
 
-                userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                userLiked.push(comment._id);
+                comment.whoLiked.push(req.userId);
             }
             else {
-                userDisliked = arrRemove(userDisliked, post._id);
-                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+                userDisliked = arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
 
-                post.beans += 1;
+                comment.beans += 1;
                 commentOwner.user.story.beans += 1;
             }
         }
         else {
             if (type === types.VoteType.down) {
-                userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                userDisliked.push(comment._id);
+                comment.whoDisliked.push(req.userId);
 
-                post.beans -= 1;
+                comment.beans -= 1;
                 commentOwner.user.story.beans -= 1;
             }
             else if (type === types.VoteType.up) {
-                userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                userLiked.push(comment._id);
+                comment.whoLiked.push(req.userId);
 
-                post.beans += 1;
+                comment.beans += 1;
                 commentOwner.user.story.beans += 1;
             }
             else {
@@ -2013,6 +2013,8 @@ StoryController.vote_comment = async function (req, res, isStory) {
         account.user.story.disliked = userDisliked;
         await account.save();
 
+        // FIXME: Is this enough??
+        console.log("Does it include new comment upvotes...", post);
         await post.save();
 
         res.status(200).send();
@@ -2024,5 +2026,184 @@ StoryController.vote_comment = async function (req, res, isStory) {
     }
 }
 
+StoryController.vote_forumpost_comment = async function (req, res) {
+    /* Vote on a Comment ------------
+        Request body: {
+            type: Integer
+
+            // The id of the forum post
+            forumPostId: String,
+            // The id of the owner of the forum
+            forumOwnerId: String
+        }
+    
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+
+    console.log("Entering the vote on a comment on a story forum post function");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    if (!req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const type = body.type;
+    const forumPostId = body.forumPostId;
+    const forumOwnerId = body.forumOwnerId;
+
+    if (!type || !forumPostId || !forumOwnerId) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        // Get account that is doing the voting
+        const account = await schemas.Account.findOne({ _id: req.userId });
+
+        // Get the account that owns the forum
+        const forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
+
+        if (!account || !forumOwner) {
+            return res.status(500).json({
+                error: "Issue finding accounts"
+            });
+        }
+
+        // Lets make sure thay forums are even activated
+        if (!forumOwner.user.story.forum.active) {
+            return res.status(500).json({
+                error: "Forum not active"
+            });
+        }
+
+        // Now we must get the forum post
+        const post = Utils.findObjInArrayById(forumOwner.user.story.forum.posts, forumPostId);
+
+        if (!post) {
+            return res.status(500).json({
+                error: "Forum Post does not contain the post"
+            });
+        }
+
+        // Now we must get the comment
+        const comment = Utils.findObjInArrayById(post.comments, req.params.id);
+
+        if (!comment) {
+            return res.status(500).json({
+                error: "Issue finding comment"
+            });
+        }
+
+        const commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+
+        if (!commentOwner) {
+            return res.status(500).json({
+                error: "Comment owner does not exist"
+            });
+        }
+
+        const userLiked = account.user.story.liked;
+        const userDisliked = account.user.story.disliked;
+
+        // 3 Different cases
+        if (userLiked.includes(comment._id)) {
+            if (type === types.VoteType.down) {
+                userLiked = arrRemove(userLiked, comment._id);
+                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+
+                comment.beans -= 2;
+                commentOwner.user.story.beans -= 2;
+
+                userDisliked.push(comment._id);
+                comment.whoDisliked.push(req.userId);
+            }
+            else if (type === types.VoteType.up) {
+                /* Do Nothing */
+            }
+            else {
+                userLiked = arrRemove(userLiked, comment._id);
+                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+
+                comment.beans -= 1;
+                commentOwner.user.story.beans -= 1;
+            }
+        }
+        else if (userDisliked.includes(comment._id)) {
+            if (type === types.VoteType.down) {
+                /* Do Nothing */
+            }
+            else if (type === types.VoteType.up) {
+                userDisliked = arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+
+                comment.beans += 2;
+                commentOwner.user.story.beans += 2;
+
+                userLiked.push(comment._id);
+                comment.whoLiked.push(req.userId);
+            }
+            else {
+                userDisliked = arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+
+                comment.beans += 1;
+                commentOwner.user.story.beans += 1;
+            }
+        }
+        else {
+            if (type === types.VoteType.down) {
+                userDisliked.push(comment._id);
+                comment.whoDisliked.push(req.userId);
+
+                comment.beans -= 1;
+                commentOwner.user.story.beans -= 1;
+            }
+            else if (type === types.VoteType.up) {
+                userLiked.push(comment._id);
+                comment.whoLiked.push(req.userId);
+
+                comment.beans += 1;
+                commentOwner.user.story.beans += 1;
+            }
+            else {
+                /* Do nothing */
+            }
+        }
+
+        // Now we need to do the saving
+        await commentOwner.save();
+
+        account.user.story.liked = userLiked;
+        account.user.story.disliked = userDisliked;
+        await account.save();
+
+        // FIXME: Is this enough: ???
+        console.log("Is this enough...or do we need to do more reassigning:", forumOwner.user.story.forum.posts);
+        await forumOwner.save();
+
+        res.status(200).send();
+    }
+    catch (err) {
+        res.status(500).json({
+            error: "Server issue with voting on forum post."
+        });
+    }
+}
 
 module.exports = StoryController;

@@ -1,3 +1,5 @@
+const schemas = require('../Schemas/schemas');
+
 const utils = {};
 
 utils.constructProfileObjFromAccount = function (account) {
@@ -12,8 +14,12 @@ utils.constructProfileObjFromAccount = function (account) {
         displayName: account.user.displayName,
         bio: account.user.bio,
         profileImage: account.user.profileImage,
+
         storyBeans: account.user.story.beans,
         comicBeans: account.user.story.beans,
+
+        storyForum: (account.user.story.forum.active) ? account.user.story.forum.posts : null,
+        comicForum: (account.user.comic.forum.active) ? account.user.comic.forum.posts : null,
     };
 }
 
