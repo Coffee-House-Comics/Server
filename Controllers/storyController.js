@@ -7,6 +7,7 @@
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 const Utils = require('../Utils');
+const { SubscriptionType } = require('../Schemas/types');
 
 // Variables -----------------------------------------------------
 
@@ -715,6 +716,27 @@ StoryController.delete_forumPost = async function (req, res) {
             });
         } catch(err){
             return "Error updating forum post disliker's list of disliked objects";
+        }
+    }
+
+    //Remove this post from all subscribed users' subscriptions list
+    for(let subscriberId of story.whoSubscribed){
+        //Get the user's Account object
+        let subscriber = await schemas.Account.findOne({_id: subscriberId});
+        if(!subscriber){
+            return res.status(500).json({
+                error: "Error retreiving subscriber account obj"
+            });
+        }
+
+        //Remove this post from the user's list of subscriptions
+        let subscriptions = Utils.arrRemove(subscriber.user.story.subscriptions, {type: SubscriptionType.story, id: story._id});
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.story.subsciptions": subscriptions}
+            });
+        } catch(err){
+            return "Error updating subscriber's list of subscriptions";
         }
     }
 

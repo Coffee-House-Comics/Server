@@ -7,8 +7,7 @@
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 const Utils = require('../Utils');
-
-const utils = require('../Utils');
+const { SubscriptionType } = require('../Schemas/types');
 
 // Variables -----------------------------------------------------
 
@@ -19,7 +18,6 @@ const NUM_RECENT_POSTS = 10;
 const NUM_LIKED_POSTS = 10;
 
 // Helper functions ----------------------------------------------
-
 
 
 // Main functions ------------------------------------------------
@@ -576,7 +574,7 @@ ComicController.delete = async function (req, res) {
                 "$set": {"user.comic.liked": likedIds}
             });
         } catch(err){
-            return "Error updating post liker's list of liked objects";
+            return "Error updating comic liker's list of liked objects";
         }
     }
 
@@ -597,7 +595,28 @@ ComicController.delete = async function (req, res) {
                 "$set": {"user.comic.disliked": dislikedIds}
             });
         } catch(err){
-            return "Error updating post disliker's list of disliked objects";
+            return "Error updating comic disliker's list of disliked objects";
+        }
+    }
+
+    //Remove this post from all subscribed users' subscriptions list
+    for(let subscriberId of comic.whoSubscribed){
+        //Get the user's Account object
+        let subscriber = await schemas.Account.findOne({_id: subscriberId});
+        if(!subscriber){
+            return res.status(500).json({
+                error: "Error retreiving subscriber account obj"
+            });
+        }
+
+        //Remove this post from the user's list of subscriptions
+        let subscriptions = Utils.arrRemove(subscriber.user.comic.subscriptions, {type: SubscriptionType.comic, id: comic._id});
+        try {
+            await schemas.Account.findByIdAndUpdate(userId, {
+                "$set": {"user.comic.subsciptions": subscriptions}
+            });
+        } catch(err){
+            return "Error updating subscriber's list of subscriptions";
         }
     }
 
@@ -985,8 +1004,8 @@ ComicController.vote = async function (req, res) {
         // 3 Different cases
         if (userLiked.includes(post._id)) {
             if (type === types.VoteType.down) {
-                userLiked = utils.arrRemove(userLiked, post._id);
-                post.whoLiked = utils.arrRemove(post.whoLiked, req.userId);
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
 
                 post.beans -= 2;
                 postOwnerBeans -= 2;
@@ -998,8 +1017,8 @@ ComicController.vote = async function (req, res) {
                 /* Do Nothing */
             }
             else {
-                userLiked = utils.arrRemove(userLiked, post._id);
-                post.whoLiked = utils.arrRemove(post.whoLiked, req.userId);
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
@@ -1010,8 +1029,8 @@ ComicController.vote = async function (req, res) {
                 /* Do Nothing */
             }
             else if (type === types.VoteType.up) {
-                userDisliked = utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = utils.arrRemove(post.whoDisliked, req.userId);
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
 
                 post.beans += 2;
                 postOwnerBeans += 2;
@@ -1020,8 +1039,8 @@ ComicController.vote = async function (req, res) {
                 post.whoLiked.push(req.userId);
             }
             else {
-                userDisliked = utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = utils.arrRemove(post.whoDisliked, req.userId);
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
 
                 post.beans += 1;
                 postOwnerBeans += 1;
@@ -1130,7 +1149,7 @@ ComicController.vote_forumPost = async function (req, res) {
         }
 
         // Get forum post that the voting is happening on
-        const post = utils.findObjInArrayById(forumPostObj.posts, req.params.id);
+        const post = Utils.findObjInArrayById(forumPostObj.posts, req.params.id);
 
         console.log("vfp:", post);
 

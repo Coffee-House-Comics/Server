@@ -1,7 +1,8 @@
 const SubscriptionType = {
     user: 0,
     comic: 1,
-    Series: 2
+    story: 2,
+    Series: 3
 }
 
 const VoteType = {
