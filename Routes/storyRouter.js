@@ -65,9 +65,4 @@ router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);
 router.delete('/subscribe/user/:id', auth.verify, StoryController.unsubscribe_user);
 
 
-
-
-
-
-
 module.exports = router

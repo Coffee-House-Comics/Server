@@ -868,7 +868,9 @@ ComicController.delete_forumPost = async function (req, res) {
 
 ComicController.delete_comment = async function (req, res) {
     /* Delete comment on a post ------------
-        Request body: {}
+        Request body: {
+            postId: ObjectID
+        }
 
         Response {
             status 200 OK or 500 ERROR
@@ -880,23 +882,174 @@ ComicController.delete_comment = async function (req, res) {
             }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No req. params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let commentId = req.params.id;
+    if (!req.body || !req.body.postId) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+    let postId = req.body.postId;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    const comic = await schemas.ComicPost.findOne({ _id: postId });
+    if (!comic) {
+        return res.status(500).json({
+            error: "Comic could not be found"
+        });
+    }
+
+    //Get comment
+    let comment = Utils.findObjInArrayById(comic.comments, commentId);
+    if(!comment){
+        return res.status(500).json({
+            error: "The specified comment could not be found"
+        });
+    }
+
+    //Disconnect comment
+    await Utils.disconnectComment(comment)
+
+    //Remove comment
+    Utils.arrRemove(comic.comments, comment);
+
+    //Save changes
+    try{
+        await comic.save();
+        return res.status(200).send();
+    } catch(err){
+        return res.status(500).json({
+            error: "Unable to save changes after deleting comment"
+        });
+    }
 }
 
 ComicController.delete_forumPost_comment = async function (req, res) {
-    /* Bookmarks ------------
-        Request body: {}
+    /* Delete forum post comment ------------
+        Request body: {
+            forumUserId: ObjectID,
+            forumPostId: ObjectID
+        }
 
         Response {
             status 200 OK or 500 ERROR
             body: {
-                formOwnerId: String,
-                forumPostId: String
-
                 //If error
                 error: String
             }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No req. params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let commentId = req.params.id;
+    if (!req.body || !req.body.forumUserId || !req.body.forumPostId) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+    let forumUserId = req.body.forumUserId;
+    let postId = req.body.forumPostId;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get forum user
+    let forumAccount = await schemas.Account.findOne({ _id: forumUserId });
+    if (!forumAccount) {
+        return res.status(500).json({
+            error: "Forum user could not be found"
+        });
+    }
+
+    //Get post
+    let post = Utils.findObjInArrayById(forumAccount.user.comic.forum.posts, postId);
+    if (!post) {
+        return res.status(500).json({
+            error: "There is no forum post with the provided ID in this forum user's comic forum"
+        });
+    }
+
+    //Get comment
+    let comment = Utils.findObjInArrayById(post.comments, commentId);
+    if(!comment){
+        return res.status(500).json({
+            error: "The specified comment could not be found"
+        });
+    }
+
+    //Disconnect comment
+    await Utils.disconnectComment(comment)
+
+    //Remove comment
+    Utils.arrRemove(forumAccount.user.comic.forum.posts[posts.indexOf(post)].comments, comment);
+
+    //Save changes
+    try{
+        await forumAccount.save();
+        return res.status(200).send();
+    } catch(err){
+        return res.status(500).json({
+            error: "Unable to save changes after deleting forum post comment"
+        });
+    }
 
 }
 
