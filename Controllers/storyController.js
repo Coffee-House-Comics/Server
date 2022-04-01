@@ -863,15 +863,113 @@ StoryController.user_toggleForum = async function (req, res) {
 // TODO:
 StoryController.metadata_update = async function (req, res) {
     /* Update the metadata of a Story ------------
+        //NOTE: A request should omit any fields in the body which should not change
         Request body: {
-            title: String,
-            bio: String
+            name: String,
+            description: String,
+            coverPhoto: String,
+            series: String
         }
 
         Response {
             status: 200 OK or 500 ERROR
+            body:{
+                //If error 
+                error: String
+            }
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let storyId = req.params.id;
+
+    if (!req.body) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let name = req.body.name;
+    let description = req.body.description;
+    let coverPhoto = req.body.coverPhoto;
+    let series = req.body.series;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    const story = await schemas.StoryPost.findOne({ _id: storyId });
+    if (!story) {
+        return res.status(500).json({
+            error: "Story could not be found"
+        });
+    }
+
+    //Make sure user owns this story
+    if (story.authorID !== userId) {
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //Make sure story is unpublished
+    if (story.isPublished) {
+        return res.status(400).json({
+            error: "A published story cannot be edited"
+        });
+    }
+
+    //Make edits
+    if (name) {
+        story.name = name;
+    }
+    if (description) {
+        story.description = description;
+    }
+    if (coverPhoto) {
+        story.coverPhoto = coverPhoto;
+    }
+    if (series) {
+        story.series = series;
+    }
+
+    //Save to DB
+    try {
+        await story.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving story changes"
+        });
+    }
 }
 
 // Story content editing
