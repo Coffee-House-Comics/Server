@@ -18,14 +18,14 @@ router.get('/profile/:userName', CommonController.getProfileByUserName);
 
 // Creating ------------------------------------------------
 // Create a post
-router.post('/create', auth.verify, auth.emailIsVerified, StoryController.create);
+router.post('/create', auth.verify, StoryController.create);
 //Create a forum post
 router.post('/forumPost/:id', auth.verify, StoryController.createForumPost);
 
 // Get published post by ID (unauthenticated)
 router.get('/published/:id', StoryController.published);
 // Get unpublished post 
-router.get('/unpublished/:id', auth.verify, auth.emailIsVerified, StoryController.unpublished);
+router.get('/unpublished/:id', auth.verify, StoryController.unpublished);
 
 // Publishing
 router.post('/publish/:id', auth.verify, StoryController.publish);
@@ -33,8 +33,8 @@ router.post('/publish/:id', auth.verify, StoryController.publish);
 // Deleting
 router.delete('/:id', auth.verify, StoryController.delete);
 router.delete('/forumPost/:id', auth.verify, StoryController.delete_forumPost);
-router.delete('/comment/:id', auth.verify, auth.emailIsVerified, StoryController.delete_comment);
-router.delete('/forumPost/comment/:id', auth.verify, auth.emailIsVerified, StoryController.delete_forumPost_comment);
+router.delete('/comment/:id', auth.verify, StoryController.delete_comment);
+router.delete('/forumPost/comment/:id', auth.verify, StoryController.delete_forumPost_comment);
 
 // User related Content
 router.get('/user/saved', auth.verify, StoryController.user_saved);
@@ -51,10 +51,10 @@ router.post('/comment/:id', auth.verify, StoryController.comment);
 router.post('/comment/forumPost/:id', auth.verify, StoryController.comment_forumPost);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
-router.post('/vote/:id', auth.verify, auth.emailIsVerified, StoryController.vote);
-router.post('/vote/forumPost/:id', auth.verify, auth.emailIsVerified, StoryController.vote_forumPost);
-router.post('/vote/comment/:id', auth.verify, auth.emailIsVerified, StoryController.vote_comment);
-router.post('/vote/forumPost/comment/:id', auth.verify, auth.emailIsVerified, StoryController.vote_forumpost_comment);
+router.post('/vote/:id', auth.verify, StoryController.vote);
+router.post('/vote/forumPost/:id', auth.verify, StoryController.vote_forumPost);
+router.post('/vote/comment/:id', auth.verify, StoryController.vote_comment);
+router.post('/vote/forumPost/comment/:id', auth.verify, StoryController.vote_forumpost_comment);
 
 // Bookmarking a post
 router.post('/bookmark/:id', auth.verify, StoryController.bookmark);

@@ -271,6 +271,15 @@ AuthController.loginUser = async function (req, res) {
             });
         }
 
+        //Make sure email is verified
+        console.log("Checking if email is verified");
+        if (!targetAccount.isverified) {
+            return res.status(401).json({
+                userId: userId,
+                error: "Email not yet verified"
+            });
+        }
+
         // Now get the password hash
         const isPasswordCorrect = await bcrypt.compare(password, targetAccount.passwordHash);
 
@@ -348,6 +357,15 @@ AuthController.forgotPassword = async function (req, res) {
         if (!account || account.userName !== userName) {
             return res.status(500).json({
                 error: "Either email or username is incorrect"
+            });
+        }
+
+        //Make sure email is verified
+        console.log("Checking if email is verified");
+        if (!targetAccount.isverified) {
+            return res.status(401).json({
+                userId: userId,
+                error: "Email not yet verified"
             });
         }
 

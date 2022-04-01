@@ -56,14 +56,14 @@ router.post('/content/saveSticker', auth.verify, ComicController.content_saveSti
 // Commenting
 router.post('/comment/:id', auth.verify, ComicController.comment);
 router.post('/comment/forumPost/:id', auth.verify, ComicController.comment_forumPost);
-router.delete('/comment/:id', auth.verify, auth.emailIsVerified, ComicController.delete_comment);
-router.delete('/forumPost/comment/:id', auth.verify, auth.emailIsVerified, ComicController.delete_forumPost_comment);
+router.delete('/comment/:id', auth.verify, ComicController.delete_comment);
+router.delete('/forumPost/comment/:id', auth.verify, ComicController.delete_forumPost_comment);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 router.post('/vote/:id', auth.verify, ComicController.vote);
 router.post('/vote/forumPost/:id', auth.verify, ComicController.vote_forumPost);
 router.post('/vote/comment/:id', auth.verify, ComicController.vote_comment);
-router.post('/vote/forumPost/comment/:id', auth.verify, auth.emailIsVerified, ComicController.vote_forumpost_comment);
+router.post('/vote/forumPost/comment/:id', auth.verify, ComicController.vote_forumpost_comment);
 
 
 // Bookmarking a post
