@@ -5,6 +5,8 @@ const ComicController = require('../Controllers/comicController')
 
 // Get the explore tab
 router.get('/explore', ComicController.explore);
+// Search
+router.get('/search', ComicController.search);
 // Get the subscriptions tab
 router.get('/subscriptions', auth.verify, ComicController.subscriptions);
 
