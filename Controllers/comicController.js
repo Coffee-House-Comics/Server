@@ -8,6 +8,7 @@ const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 const Utils = require('../Utils');
 const { SubscriptionType } = require('../Schemas/types');
+const { json } = require('body-parser');
 
 // Variables -----------------------------------------------------
 
@@ -547,10 +548,10 @@ ComicController.delete = async function (req, res) {
     }
 
     //Disconnect comments
-    for(let comment of comic.comments){
+    for (let comment of comic.comments) {
         //Disconnect comment from all users
         let err = Utils.disconnectComment(comment);
-        if(err){
+        if (err) {
             return res.status(500).json({
                 error: err
             });
@@ -558,10 +559,10 @@ ComicController.delete = async function (req, res) {
     }
 
     //Remove this post from all users' liked lists
-    for(let likerId of comic.whoLiked){
+    for (let likerId of comic.whoLiked) {
         //Get the user's Account object
-        let liker = await schemas.Account.findOne({_id: likerId});
-        if(!liker){
+        let liker = await schemas.Account.findOne({ _id: likerId });
+        if (!liker) {
             return res.status(500).json({
                 error: "Error retreiving liker account obj"
             });
@@ -571,18 +572,20 @@ ComicController.delete = async function (req, res) {
         let likedIds = Utils.arrRemove(liker.user.comic.liked, comic._id);
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.comic.liked": likedIds}
+                "$set": { "user.comic.liked": likedIds }
             });
-        } catch(err){
-            return "Error updating comic liker's list of liked objects";
+        } catch (err) {
+            return res.status(500).json({
+                error: "Error updating comic liker's list of liked objects"
+            });
         }
     }
 
     //Remove this post from all users' disliked lists
-    for(let dislikerId of comic.whoDisliked){
+    for (let dislikerId of comic.whoDisliked) {
         //Get the user's Account object
-        let disliker = await schemas.Account.findOne({_id: dislikerId});
-        if(!disliker){
+        let disliker = await schemas.Account.findOne({ _id: dislikerId });
+        if (!disliker) {
             return res.status(500).json({
                 error: "Error retreiving disliker account obj"
             });
@@ -592,41 +595,45 @@ ComicController.delete = async function (req, res) {
         let dislikedIds = Utils.arrRemove(disliker.user.comic.disliked, comic._id);
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.comic.disliked": dislikedIds}
+                "$set": { "user.comic.disliked": dislikedIds }
             });
-        } catch(err){
-            return "Error updating comic disliker's list of disliked objects";
+        } catch (err) {
+            return res.status(500).json({
+                error: "Error updating comic disliker's list of disliked objects"
+            });
         }
     }
 
     //Remove this post from all subscribed users' subscriptions list
-    for(let subscriberId of comic.whoSubscribed){
+    for (let subscriberId of comic.whoSubscribed) {
         //Get the user's Account object
-        let subscriber = await schemas.Account.findOne({_id: subscriberId});
-        if(!subscriber){
+        let subscriber = await schemas.Account.findOne({ _id: subscriberId });
+        if (!subscriber) {
             return res.status(500).json({
                 error: "Error retreiving subscriber account obj"
             });
         }
 
         //Remove this post from the user's list of subscriptions
-        let subscriptions = Utils.arrRemove(subscriber.user.comic.subscriptions, {type: SubscriptionType.comic, id: comic._id});
+        let subscriptions = Utils.arrRemove(subscriber.user.comic.subscriptions, { type: SubscriptionType.comic, id: comic._id });
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.comic.subsciptions": subscriptions}
+                "$set": { "user.comic.subsciptions": subscriptions }
             });
-        } catch(err){
-            return "Error updating subscriber's list of subscriptions";
+        } catch (err) {
+            return res.status(500).json({
+                error: "Error updating subscriber's list of subscriptions"
+            });
         }
     }
 
     //Change the author's bean count
     let newBeanCount = account.user.comic.beans - comic.beans;
-    try{
+    try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.beans": newBeanCount}
+            "$set": { "user.beans": newBeanCount }
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error updating author's bean count"
         });
@@ -668,7 +675,7 @@ ComicController.delete_forumPost = async function (req, res) {
             error: "No request provided"
         });
     }
-    if(!req.params){
+    if (!req.params) {
         return res.status(500).json({
             error: "No req. params provided"
         });
@@ -698,17 +705,17 @@ ComicController.delete_forumPost = async function (req, res) {
 
     //Get post
     let post = Utils.findObjInArrayById(account.user.comic.forum.posts, postId);
-    if(!post){
+    if (!post) {
         return res.status(500).json({
             error: "There is no forum post with the provided ID in this user's comic forum"
         });
     }
 
     //Disconnect comments
-    for(let comment of post.comments){
+    for (let comment of post.comments) {
         //Disconnect comment from all users
         let err = Utils.disconnectComment(comment);
-        if(err){
+        if (err) {
             return res.status(500).json({
                 error: err
             });
@@ -716,10 +723,10 @@ ComicController.delete_forumPost = async function (req, res) {
     }
 
     //Remove this post from all users' liked lists
-    for(let likerId of post.whoLiked){
+    for (let likerId of post.whoLiked) {
         //Get the user's Account object
-        let liker = await schemas.Account.findOne({_id: likerId});
-        if(!liker){
+        let liker = await schemas.Account.findOne({ _id: likerId });
+        if (!liker) {
             return res.status(500).json({
                 error: "Error retreiving liker account obj"
             });
@@ -729,18 +736,20 @@ ComicController.delete_forumPost = async function (req, res) {
         let likedIds = Utils.arrRemove(liker.user.comic.liked, post._id);
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.comic.liked": likedIds}
+                "$set": { "user.comic.liked": likedIds }
             });
-        } catch(err){
-            return "Error updating forum post liker's list of liked objects";
+        } catch (err) {
+            return res.status(500).json({
+                error: "Error updating forum post liker's list of liked objects"
+            });
         }
     }
 
     //Remove this post from all users' disliked lists
-    for(let dislikerId of post.whoDisliked){
+    for (let dislikerId of post.whoDisliked) {
         //Get the user's Account object
-        let disliker = await schemas.Account.findOne({_id: dislikerId});
-        if(!disliker){
+        let disliker = await schemas.Account.findOne({ _id: dislikerId });
+        if (!disliker) {
             return res.status(500).json({
                 error: "Error retreiving disliker account obj"
             });
@@ -750,20 +759,22 @@ ComicController.delete_forumPost = async function (req, res) {
         let dislikedIds = Utils.arrRemove(disliker.user.comic.disliked, post._id);
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.comic.disliked": dislikedIds}
+                "$set": { "user.comic.disliked": dislikedIds }
             });
-        } catch(err){
-            return "Error updating forum post disliker's list of disliked objects";
+        } catch (err) {
+            return res.status(500).json({
+                error: "Error updating forum post disliker's list of disliked objects"
+            });
         }
     }
 
     //Change the author's bean count
     let newBeanCount = account.user.comic.beans - post.beans;
-    try{
+    try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.beans": newBeanCount}
+            "$set": { "user.beans": newBeanCount }
         });
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Error updating author's bean count"
         });
@@ -773,7 +784,7 @@ ComicController.delete_forumPost = async function (req, res) {
     try {
         let newForumPostsArray = Utils.arrRemove(account.user.comic.forum.posts, post);
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": {"user.comic.forum.posts": newForumPostsArray}
+            "$set": { "user.comic.forum.posts": newForumPostsArray }
         });
         return res.status(200).send();
     } catch (err) {
@@ -1411,6 +1422,59 @@ ComicController.subscribe_user = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let subscribeeId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get subscribee (to make sure it exists)
+    let subscribee = await schemas.Account.findOne({ _id: subscribeeId });
+    if (!subscribee) {
+        return res.status(500).json({
+            error: "There is no user with the specified ID"
+        });
+    }
+
+    //Add the subscribee's ID to the user's subscriptions list
+    let subscriptions = account.user.comic.subscriptions;
+    if (!subscriptions) {
+        subscriptions = [];
+    }
+    subscriptions.push({ type: SubscriptionType.user, id: subscribeeId });
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": { "user.comic.subsciptions": subscriptions }
+        });
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error updating subscriber's list of subscriptions"
+        });
+    }
 }
 
 ComicController.unsubscribe_user = async function (req, res) {
@@ -1421,6 +1485,69 @@ ComicController.unsubscribe_user = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let subscribeeId = req.params.id;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get subscribee (to make sure it exists)
+    let subscribee = await schemas.Account.findOne({ _id: subscribeeId });
+    if (!subscribee) {
+        return res.status(500).json({
+            error: "There is no user with the specified ID"
+        });
+    }
+
+    //Get the user's current list of subscriptions
+    let subscriptions = account.user.comic.subscriptions;
+    if (!subscriptions) {
+        subscriptions = [];
+    }
+    
+    //Remove the subscription from the list
+    let newSubscriptions = Utils.arrRemove(subscriptions, { type: SubscriptionType.user, id: subscribeeId });
+    if(!newSubscriptions){
+        return res.status(500).json({
+            error: "This user is not subscribed to the given item"
+        });
+    }
+
+    //Update DB
+    try {
+        await schemas.Account.findByIdAndUpdate(userId, {
+            "$set": { "user.comic.subsciptions": subscriptions }
+        });
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error updating user's list of subscriptions"
+        });
+    }
 }
 
 ComicController.subscribe_series = async function (req, res) {
