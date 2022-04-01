@@ -17,6 +17,10 @@ router.get('/profile/:userName', ComicController.getProfileByUserName);
 // Creating ------------------------------------------------
 // Create a Comic
 router.post('/create', auth.verify, ComicController.create);
+//Create a forum post
+router.post('/forumPost/:id', auth.verify, ComicController.createForumPost);
+
+//Viewing
 // View a published comic by id
 router.get('/published/:id', ComicController.published);
 // view an unpublished comic (to edit it)
