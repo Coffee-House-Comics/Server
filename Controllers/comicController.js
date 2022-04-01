@@ -1094,17 +1094,77 @@ ComicController.content_save = async function (req, res) {
 ComicController.content_saveSticker = async function (req, res) {
     /* Save a Sticker ------------
         Request body: {
-            title: String,
-            bio: String
+            sticker: JSON
         }
 
         Response {
             status: 200 OK or 500 ERROR,
             body: {
-                id: ObjectId
+                //If error
+                error: String
             }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+
+    if (!req.body || !req.body.sticker) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let sticker = req.body.sticker;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get current list of stickers
+    let stickers = account.user.comic.savedStickers;
+    if(!stickers){
+        stickers = [];
+    }
+
+    //Add new sticker to list of stickers
+    stickers.push(sticker);
+
+    //Update DB
+    account.user.comic.stickers = stickers;
+    try{
+        await account.save();
+        return res.status(200).send();
+    } catch(err){
+        return res.status(500).json({
+            error: "Error saving new sticker"
+        });
+    }
 }
 
 // Commenting
