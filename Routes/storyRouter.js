@@ -33,6 +33,8 @@ router.post('/publish/:id', auth.verify, StoryController.publish);
 // Deleting
 router.delete('/:id', auth.verify, StoryController.delete);
 router.delete('/forumPost/:id', auth.verify, StoryController.delete_forumPost);
+router.delete('/comment/:id', auth.verify, auth.emailIsVerified, StoryController.delete_comment);
+router.delete('/forumPost/comment/:id', auth.verify, auth.emailIsVerified, StoryController.delete_forumPost_comment);
 
 // User related Content
 router.get('/user/saved', auth.verify, StoryController.user_saved);

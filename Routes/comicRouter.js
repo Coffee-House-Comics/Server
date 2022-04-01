@@ -56,6 +56,8 @@ router.post('/content/saveSticker', auth.verify, ComicController.content_saveSti
 // Commenting
 router.post('/comment/:id', auth.verify, ComicController.comment);
 router.post('/comment/forumPost/:id', auth.verify, ComicController.comment_forumPost);
+router.delete('/comment/:id', auth.verify, auth.emailIsVerified, ComicController.delete_comment);
+router.delete('/forumPost/comment/:id', auth.verify, auth.emailIsVerified, ComicController.delete_forumPost_comment);
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 router.post('/vote/:id', auth.verify, ComicController.vote);

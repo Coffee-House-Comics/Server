@@ -842,6 +842,40 @@ StoryController.delete_forumPost = async function (req, res) {
     }
 }
 
+StoryController.delete_comment = async function (req, res) {
+    /* Delete comment on a post ------------
+        Request body: {}
+
+        Response {
+            status 200 OK or 500 ERROR
+            body: {
+                postOwnerId: String 
+                
+                //If error
+                error: String
+            }
+        }
+    */
+}
+
+StoryController.delete_forumPost_comment = async function (req, res) {
+    /* Bookmarks ------------
+        Request body: {}
+
+        Response {
+            status 200 OK or 500 ERROR
+            body: {
+                formOwnerId: String,
+                forumPostId: String
+
+                //If error
+                error: String
+            }
+        }
+    */
+
+}
+
 // User related Content
 StoryController.user_saved = async function (req, res) {
     /* Bookmarks ------------

@@ -866,6 +866,40 @@ ComicController.delete_forumPost = async function (req, res) {
     }
 }
 
+ComicController.delete_comment = async function (req, res) {
+    /* Delete comment on a post ------------
+        Request body: {}
+
+        Response {
+            status 200 OK or 500 ERROR
+            body: {
+                postOwnerId: String 
+                
+                //If error
+                error: String
+            }
+        }
+    */
+}
+
+ComicController.delete_forumPost_comment = async function (req, res) {
+    /* Bookmarks ------------
+        Request body: {}
+
+        Response {
+            status 200 OK or 500 ERROR
+            body: {
+                formOwnerId: String,
+                forumPostId: String
+
+                //If error
+                error: String
+            }
+        }
+    */
+
+}
+
 ComicController.deleteSticker = async function (req, res) {
     /* Delete a sticker ------------
         Request body: {
