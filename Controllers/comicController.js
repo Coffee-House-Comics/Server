@@ -9,6 +9,7 @@ const common = require('./commonController');
 const Utils = require('../Utils');
 const { SubscriptionType } = require('../Schemas/types');
 const { json } = require('body-parser');
+const { arrRemove } = require('../Utils');
 
 // Variables -----------------------------------------------------
 
@@ -311,6 +312,105 @@ ComicController.create = async function (req, res) {
     res.status(200).json({
         id: createdComic._id
     });
+}
+
+ComicController.createForumPost = async function (req, res) {
+    /* Make forum post
+        Request body: {
+            title: String,
+            body: String
+        }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+            body: {
+                //If error
+                error: String
+            }
+        }
+     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let forumUserId = req.params.id;
+
+    if (!req.body || !req.body.title || !req.body.body) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+    let postTitle = req.body.title;
+    let postBody = req.body.body;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get forum user
+    let forumAccount = await schemas.Account.findOne({ _id: forumUserId });
+    if (!forumAccount) {
+        return res.status(500).json({
+            error: "Forum user could not be found"
+        });
+    }
+
+    //Make sure the forum user's forum is enabled
+    if (!forumAccount.user.comic.forum.active) {
+        return res.status(500).json({
+            error: "This user's forum is not enabled"
+        });
+    }
+
+    //Make the post
+    const forumPost = {
+        ownerId: userId,
+        title: postTitle,
+        body: postBody,
+        user: account.user.displayName,
+        date: new Date(),
+        beans: 0,
+        comments: [],
+        whoLiked: [],
+        whoDisliked: []
+    }
+
+    //Add the post to the user's forum
+    forumAccount.user.comic.forum.posts.push(forumPost);
+
+    //Save changes to DB
+    try {
+        await forumAccount.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving forum posts to DB"
+        });
+    }
 }
 
 ComicController.published = async function (req, res) {
@@ -768,12 +868,84 @@ ComicController.delete_forumPost = async function (req, res) {
 
 ComicController.deleteSticker = async function (req, res) {
     /* Delete a sticker ------------
-        Request body: {}
+        Request body: {
+            sticker: JSON
+        }
 
         Response {
             status: 200 OK or 500 ERROR
+
+            body: {
+                //If error
+                error: String
+            }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+
+    if (!req.body || !req.body.sticker) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let sticker = req.body.sticker;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get current list of stickers
+    let stickers = account.user.comic.savedStickers;
+    if (!stickers) {
+        stickers = [];
+    }
+
+    //Remove sticker from list of stickers
+    let newStickers = Utils.arrRemove(stickers, sticker);
+    if (!newStickers) {
+        return res.status(500).json({
+            error: "The provided sticker is not in the saved stickers list"
+        });
+    }
+
+    //Update DB
+    account.user.comic.stickers = newStickers;
+    try {
+        await account.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving new sticker"
+        });
+    }
 }
 
 // User related Content
@@ -1094,17 +1266,77 @@ ComicController.content_save = async function (req, res) {
 ComicController.content_saveSticker = async function (req, res) {
     /* Save a Sticker ------------
         Request body: {
-            title: String,
-            bio: String
+            sticker: JSON
         }
 
         Response {
             status: 200 OK or 500 ERROR,
             body: {
-                id: ObjectId
+                //If error
+                error: String
             }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+
+    if (!req.body || !req.body.sticker) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let sticker = req.body.sticker;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get current list of stickers
+    let stickers = account.user.comic.savedStickers;
+    if (!stickers) {
+        stickers = [];
+    }
+
+    //Add new sticker to list of stickers
+    stickers.push(sticker);
+
+    //Update DB
+    account.user.comic.stickers = stickers;
+    try {
+        await account.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving new sticker"
+        });
+    }
 }
 
 // Commenting

@@ -17,6 +17,10 @@ router.get('/profile/:userName', ComicController.getProfileByUserName);
 // Creating ------------------------------------------------
 // Create a Comic
 router.post('/create', auth.verify, ComicController.create);
+//Create a forum post
+router.post('/forumPost/:id', auth.verify, ComicController.createForumPost);
+
+//Viewing
 // View a published comic by id
 router.get('/published/:id', ComicController.published);
 // view an unpublished comic (to edit it)
@@ -31,8 +35,8 @@ router.post('/publish/:id', auth.verify, ComicController.publish);
 router.delete('/:id', auth.verify, ComicController.delete);
 // Delete a forum post by ID
 router.delete('/forumPost/:id', auth.verify, ComicController.delete_forumPost);
-// Delete a Sticker by ID
-router.delete('/sticker/:id', auth.verify, ComicController.deleteSticker);
+// Delete a Sticker
+router.delete('/sticker', auth.verify, ComicController.deleteSticker);
 
 // User related Content
 // Get a users saved content
