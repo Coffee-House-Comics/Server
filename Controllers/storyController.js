@@ -536,7 +536,7 @@ StoryController.delete = async function (req, res) {
     //Disconnect comments
     for (let comment of story.comments) {
         //Disconnect comment from all users
-        let err = Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -667,7 +667,7 @@ StoryController.delete_forumPost = async function (req, res) {
     //Disconnect comments
     for (let comment of post.comments) {
         //Disconnect comment from all users
-        let err = Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(comment);
         if (err) {
             return res.status(500).json({
                 error: err
