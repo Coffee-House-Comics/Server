@@ -280,8 +280,7 @@ ComicController.create = async function (req, res) {
             series: null,
             comments: [],
             authorID: userId,
-            unpublished: [],
-            published: []
+            pages: []
         });
     } catch (err) {
         return res.status(500).json({
@@ -997,16 +996,99 @@ ComicController.metadata_update = async function (req, res) {
 
 // Comic content editing
 ComicController.content_save = async function (req, res) {
-    /* Update the metadata of a comic ------------
+    /* Update the content of a comic ------------
         Request body: {
-            title: String,
-            bio: String
+            pages: [{
+                title: String,
+                konvaPage: JSON
+            }]
         }
 
         Response {
             status: 200 OK or 500 ERROR
+
+            body: {
+                //If error
+                error: String
+            }
         }
     */
+    //Check params
+    if (!req) {
+        return res.status(500).json({
+            error: "No request provided"
+        });
+    }
+    if (!req.params) {
+        return res.status(500).json({
+            error: "No params provided"
+        });
+    }
+    if (!req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+    if (!req.userId) {
+        return res.status(500).json({
+            error: "User ID not found"
+        });
+    }
+
+    //Get params
+    let userId = req.userId;
+    let comicId = req.params.id;
+
+    if (!req.body || !req.body.pages) {
+        return res.status(500).json({
+            error: "Invalid request body"
+        });
+    }
+
+    let pages = req.body.pages;
+
+    //Get user
+    let account = await schemas.Account.findOne({ _id: userId });
+    if (!account) {
+        return res.status(500).json({
+            error: "User could not be found"
+        });
+    }
+
+    //Get post
+    const comic = await schemas.ComicPost.findOne({ _id: comicId });
+    if (!comic) {
+        return res.status(500).json({
+            error: "Comic could not be found"
+        });
+    }
+
+    //Make sure user owns this comic
+    if (comic.authorID !== userId) {
+        return res.status(403).json({
+            error: "This user does not own this post"
+        });
+    }
+
+    //Make sure comic is unpublished
+    if (comic.isPublished) {
+        return res.status(400).json({
+            error: "A published comic cannot be edited"
+        });
+    }
+
+    //Make changes
+    comic.pages = pages;
+
+    //Save changes to DB
+    try {
+        await comic.save();
+        return res.status(200).send();
+    } catch (err) {
+        return res.status(500).json({
+            error: "Error saving comic content changes"
+        });
+    }
 }
 
 ComicController.content_saveSticker = async function (req, res) {
