@@ -29,8 +29,6 @@ router.post('/publish/:id', auth.verify, ComicController.publish);
 // Deleting
 // Delete a comic by ID
 router.delete('/:id', auth.verify, ComicController.delete);
-// Delete a comment by ID
-router.delete('/comment/:id', auth.verify, ComicController.delete_comment);
 // Delete a forum post by ID
 router.delete('/forumPost/:id', auth.verify, ComicController.delete_forumPost);
 // Delete a Sticker by ID
@@ -55,8 +53,10 @@ router.post('/comment/forumPost/:id', auth.verify, ComicController.comment_forum
 
 // Voting (upvoting/downvoting AKA liking/disliking)
 router.post('/vote/:id', auth.verify, ComicController.vote);
-router.post('/vote/forumPost', auth.verify, ComicController.vote_forumPost);
-router.post('/vote/comment', auth.verify, ComicController.vote_comment);
+router.post('/vote/forumPost/:id', auth.verify, ComicController.vote_forumPost);
+router.post('/vote/comment/:id', auth.verify, ComicController.vote_comment);
+router.post('/vote/forumPost/comment/:id', auth.verify, auth.emailIsVerified);
+
 
 // Bookmarking a post
 router.post('/bookmark/:id', auth.verify, ComicController.bookmark);
@@ -65,8 +65,5 @@ router.delete('/bookmark/:id', auth.verify, ComicController.deleteBookmark);
 // Subscribing to a user
 router.post('/subscribe/user/:id', auth.verify, ComicController.subscribe_user);
 router.delete('/subscribe/user/:id', auth.verify, ComicController.unsubscribe_user);
-// Subscribing to a series
-router.post('/subscribe/series/:id', auth.verify, ComicController.subscribe_series);
-router.delete('/subscribe/series/:id', auth.verify, ComicController.unsubscribe_series);
 
 module.exports = router

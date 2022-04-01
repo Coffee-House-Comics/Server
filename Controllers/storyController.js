@@ -170,7 +170,7 @@ StoryController.subscriptions = async function (req, res) {
     });
 
     //Get IDs to return instead of objects
-    contentIds = content.map((post)=>post._id);
+    contentIds = content.map((post) => post._id);
 
     return res.status(200).json({
         content: contentIds
@@ -612,18 +612,6 @@ StoryController.delete = async function (req, res) {
         });
     }
 }
-
-// TODO:
-StoryController.delete_comment = async function (req, res) {
-    /* Delete a comment------------
-        Request body: {}
-
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
 
 StoryController.delete_forumPost = async function (req, res) {
     /* Delete a Forum Post------------
@@ -1193,10 +1181,10 @@ StoryController.unsubscribe_user = async function (req, res) {
     if (!subscriptions) {
         subscriptions = [];
     }
-    
+
     //Remove the subscription from the list
     let newSubscriptions = Utils.arrRemove(subscriptions, { type: SubscriptionType.user, id: subscribeeId });
-    if(!newSubscriptions){
+    if (!newSubscriptions) {
         return res.status(500).json({
             error: "This user is not subscribed to the given item"
         });
@@ -1211,46 +1199,6 @@ StoryController.unsubscribe_user = async function (req, res) {
     } catch (err) {
         return res.status(500).json({
             error: "Error updating user's list of subscriptions"
-        });
-    }
-}
-
-// TODO:
-StoryController.subscribe_series = async function (req, res) {
-    /*
-        Request body { }
-
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
-// TODO:
-StoryController.unsubscribe_series = async function (req, res) {
-    /*
-        Request body { }
-
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-
-    console.log("Entering getProfileById");
-
-    if (!req || !req.params || !req.params.id) {
-        return res.status(500).json({
-            error: "No id provided"
-        });
-    }
-
-    try {
-        const user = await schemas.Account.findOne({ _id: req.params.id });
-
-    }
-    catch (err) {
-        return res.status(500).json({
-            error: "Server error getting profile by id"
         });
     }
 }

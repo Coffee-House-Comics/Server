@@ -176,7 +176,7 @@ ComicController.subscriptions = async function (req, res) {
     });
 
     //Get IDs to return instead of objects
-    contentIds = content.map((post)=>post._id);
+    contentIds = content.map((post) => post._id);
 
     return res.status(200).json({
         content: contentIds
@@ -631,16 +631,6 @@ ComicController.delete = async function (req, res) {
             error: "Error deleting comic"
         });
     }
-}
-
-ComicController.delete_comment = async function (req, res) {
-    /* Delete a comment------------
-        Request body: {}
-
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
 }
 
 ComicController.delete_forumPost = async function (req, res) {
@@ -1542,10 +1532,10 @@ ComicController.unsubscribe_user = async function (req, res) {
     if (!subscriptions) {
         subscriptions = [];
     }
-    
+
     //Remove the subscription from the list
     let newSubscriptions = Utils.arrRemove(subscriptions, { type: SubscriptionType.user, id: subscribeeId });
-    if(!newSubscriptions){
+    if (!newSubscriptions) {
         return res.status(500).json({
             error: "This user is not subscribed to the given item"
         });
@@ -1562,26 +1552,6 @@ ComicController.unsubscribe_user = async function (req, res) {
             error: "Error updating user's list of subscriptions"
         });
     }
-}
-
-ComicController.subscribe_series = async function (req, res) {
-    /*
-        Request body { }
-
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
-}
-
-ComicController.unsubscribe_series = async function (req, res) {
-    /*
-        Request body { }
-
-        Response {
-            status: 200 OK or 500 ERROR,
-        }
-    */
 }
 
 

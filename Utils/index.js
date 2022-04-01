@@ -32,18 +32,18 @@ utils.arrRemove = function (arr, toRemove) {
  * @param {CommentSchema} comment The comment to disconnect
  * @returns A string error if one occurred, null if successful
  */
-utils.disconnectComment = function(comment){
+utils.disconnectComment = async function (comment) {
     //Find the user who made this comment
-    let commenter = await schemas.Account.findOne({_id: comment.ownerId});
-    if(!commenter){
+    let commenter = await schemas.Account.findOne({ _id: comment.ownerId });
+    if (!commenter) {
         return "Error finding comment owner";
     }
 
     //Find all users who liked this comment
-    for(let likerID of comment.whoLiked){
+    for (let likerID of comment.whoLiked) {
         //Find the user for this ID
-        let liker = await schemas.Account.findOne({_id: likerID});
-        if(!liker){
+        let liker = await schemas.Account.findOne({ _id: likerID });
+        if (!liker) {
             return "Liker could not be found";
         }
 
@@ -51,9 +51,9 @@ utils.disconnectComment = function(comment){
         let currentBeanCount = commenter.user.story.beans;
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.story.beans": currentBeanCount - 1}
+                "$set": { "user.story.beans": currentBeanCount - 1 }
             });
-        } catch(err){
+        } catch (err) {
             return "Error updating commenter's bean count";
         }
 
@@ -61,18 +61,18 @@ utils.disconnectComment = function(comment){
         let likedIds = Utils.arrRemove(liker.user.story.liked, comment._id);
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.story.liked": likedIds}
+                "$set": { "user.story.liked": likedIds }
             });
-        } catch(err){
+        } catch (err) {
             return "Error updating comment liker's list of liked objects";
         }
     }
 
     //Find all users who disliked this comment
-    for(let dislikerID of comment.whoDisliked){
+    for (let dislikerID of comment.whoDisliked) {
         //Find the user for this ID
-        let disliker = await schemas.Account.findOne({_id: dislikerID});
-        if(!disliker){
+        let disliker = await schemas.Account.findOne({ _id: dislikerID });
+        if (!disliker) {
             return "Disliker could not be found";
         }
 
@@ -80,9 +80,9 @@ utils.disconnectComment = function(comment){
         let currentBeanCount = commenter.user.story.beans;
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.story.beans": currentBeanCount + 1}
+                "$set": { "user.story.beans": currentBeanCount + 1 }
             });
-        } catch(err){
+        } catch (err) {
             return "Error updating commenter's bean count";
         }
 
@@ -90,9 +90,9 @@ utils.disconnectComment = function(comment){
         let dislikedIds = Utils.arrRemove(disliker.user.story.disliked, comment._id);
         try {
             await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": {"user.story.disliked": dislikedIds}
+                "$set": { "user.story.disliked": dislikedIds }
             });
-        } catch(err){
+        } catch (err) {
             return "Error updating comment disliker's list of disliked objects";
         }
     }

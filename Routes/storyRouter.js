@@ -30,7 +30,6 @@ router.post('/publish/:id', auth.verify, StoryController.publish);
 
 // Deleting
 router.delete('/:id', auth.verify, StoryController.delete);
-router.delete('/comment/:id', auth.verify, StoryController.delete_comment);
 router.delete('/forumPost/:id', auth.verify, StoryController.delete_forumPost);
 
 // User related Content
@@ -60,9 +59,6 @@ router.delete('/bookmark/:id', auth.verify, StoryController.deleteBookmark);
 // Subscribing to a user
 router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);
 router.delete('/subscribe/user/:id', auth.verify, StoryController.unsubscribe_user);
-// Subscribing to a series
-router.post('/subscribe/series/:id', auth.verify, StoryController.subscribe_series);
-router.delete('/subscribe/series/:id', auth.verify, StoryController.unsubscribe_series);
 
 
 
