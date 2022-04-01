@@ -53,8 +53,7 @@ const PostMetadata = ({
     authorID: ObjectId,
 
     whoLiked: [ObjectId],
-    whoDisliked: [ObjectId],
-    whoSubscribed: [ObjectId]
+    whoDisliked: [ObjectId]
 });
 
 const ComicPostSchema = new Schema({

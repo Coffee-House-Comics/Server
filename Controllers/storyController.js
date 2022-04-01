@@ -31,8 +31,8 @@ StoryController.explore = async function (req, res) {
         Response {
             status 200 OK or 500 ERROR
             body: {
-                mostRecent: [StoryPost Objects]
-                mostLiked: [StoryPost Objects]
+                mostRecent: [ObjectId]
+                mostLiked: [ObjectId]
 
                 //If error
                 error: String
@@ -49,11 +49,15 @@ StoryController.explore = async function (req, res) {
     //Find most liked posts
     likedContent = await schemas.StoryPost.find({}).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
 
+    //Convert lists from Post objects to IDs
+    recentIds = recentContent.map((post) => post._id);
+    likedIds = likedContent.map((post) => post._id);
+
     if (recentContent && likedContent) {
         //Send content in response body
         return res.status(200).json({
-            mostRecent: recentContent,
-            mostLiked: likedContent
+            mostRecent: recentIds,
+            mostLiked: likedIds
         });
     }
 
@@ -73,13 +77,8 @@ StoryController.search = async function (req, res) {
             status 200 OK or 500 ERROR
             body: {
                 content: {
-                    posts: [StoryPost Objects]
-                    authors: [{
-                        id: ObjectId
-                        displayName: String,
-                        bio: String,
-                        profileImage: Image,
-                    }]
+                    posts: [ObjectId]
+                    authors: [ObjectId]
                 }
 
                 //If error
@@ -121,9 +120,13 @@ StoryController.search = async function (req, res) {
         }
     }
 
+    //Get lists of IDs to return
+    let postIds = posts.map((post) => post._id);
+    let authorIds = authors.map((author) => author.id);
+
     return res.status(200).json({
-        posts: posts,
-        authors: authors
+        posts: postIds,
+        authors: authorIds
     });
 }
 
@@ -134,7 +137,7 @@ StoryController.subscriptions = async function (req, res) {
         Response {
             status 200 OK or 500 ERROR
             body: {
-                content: [StoryPost Objects]
+                content: [ObjectId]
 
                 //If error
                 error: String
@@ -166,8 +169,11 @@ StoryController.subscriptions = async function (req, res) {
         return user.story.subscriptions.map((subscription) => subscription.id).includes(post._id);
     });
 
+    //Get IDs to return instead of objects
+    contentIds = content.map((post)=>post._id);
+
     return res.status(200).json({
-        content: content
+        content: contentIds
     });
 }
 
@@ -727,29 +733,6 @@ StoryController.delete_forumPost = async function (req, res) {
         }
     }
 
-    //Remove this post from all subscribed users' subscriptions list
-    for (let subscriberId of story.whoSubscribed) {
-        //Get the user's Account object
-        let subscriber = await schemas.Account.findOne({ _id: subscriberId });
-        if (!subscriber) {
-            return res.status(500).json({
-                error: "Error retreiving subscriber account obj"
-            });
-        }
-
-        //Remove this post from the user's list of subscriptions
-        let subscriptions = Utils.arrRemove(subscriber.user.story.subscriptions, { type: SubscriptionType.story, id: story._id });
-        try {
-            await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": { "user.story.subsciptions": subscriptions }
-            });
-        } catch (err) {
-            return res.status(500).json({
-                error: "Error updating subscriber's list of subscriptions"
-            });
-        }
-    }
-
     //Change the author's bean count
     let newBeanCount = account.user.story.beans - post.beans;
     try {
@@ -776,27 +759,52 @@ StoryController.delete_forumPost = async function (req, res) {
     }
 }
 
-// TODO:
-StoryController.deleteSticker = async function (req, res) {
-    /* Delete a sticker ------------
-        Request body: {}
-
-        Response {
-            status: 200 OK or 500 ERROR
-        }
-    */
-}
-
 // User related Content
-// TODO:
 StoryController.user_saved = async function (req, res) {
-    /* Get user's saved Storys ------------
+    /* Bookmarks ------------
         Request body: {}
 
         Response {
-            status: 200 OK or 500 ERROR,
+            status 200 OK or 500 ERROR
+            body: {
+                content: [StoryPost Objects]
+
+                //If error
+                error: String
+            }
         }
     */
+
+    //Get the user that made the request
+    let account = await schemas.Account.findOne({ _id: req.userId });
+
+    //Check for error
+    if (!account) {
+        return res.status(500).json({
+            error: "Server error getting user from ID"
+        });
+    }
+    let user = account.user;
+
+    //Find all posts
+    let content = await schemas.StoryPost.find({});
+    if (!content) {
+        return res.status(500).json({
+            error: "Server error getting user from ID"
+        });
+    }
+
+    //Filter for bookmarked (saved) posts
+    content = content.filter((post) => {
+        return user.story.saved.includes(post);
+    });
+
+    //Extract post IDs to return array of IDs
+    contentIds = content.map((post) => post._id);
+
+    return res.status(200).json({
+        content: contentIds
+    });
 }
 
 StoryController.user_toggleForum = async function (req, res) {
