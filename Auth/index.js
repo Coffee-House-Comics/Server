@@ -65,7 +65,7 @@ function authManager() {
     signToken = function (userId) {
         return jwt.sign({
             userId: userId
-        }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        }, process.env.JWT_SECRET, { expiresIn: '48h' });
     }
 
     // Simply checks to see if the email is already verified
