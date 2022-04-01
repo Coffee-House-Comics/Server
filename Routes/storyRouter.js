@@ -19,6 +19,7 @@ router.get('/profile/:userName', CommonController.getProfileByUserName);
 // Creating ------------------------------------------------
 // Create a post
 router.post('/create', auth.verify, auth.emailIsVerified, StoryController.create);
+// TODO: Create a forum post
 
 // Get published post by ID (unauthenticated)
 router.get('/published/:id', StoryController.published);

@@ -1602,7 +1602,164 @@ StoryController.vote_forumPost = async function (req, res) {
         await account.save();
 
         // FIXME: Maybe we have to do some reasigning here??? Or is this fine???
+        console.log("forum Owner:", forumOwner);
         await forumOwner.save();
+
+        res.status(200).send();
+    }
+    catch (err) {
+        res.status(500).json({
+            error: "Server issue with voting on forum post."
+        });
+    }
+}
+
+// Vote on a comment on a post
+StoryController.vote_comment = async function (req, res, isStory) {
+    /* Vote on a Comment ------------
+        Request body: {
+            type: Integer
+
+            // The id of the post
+            postId: String
+        }
+    
+        Response {
+            status: 200 OK or 500 ERROR,
+        }
+    */
+
+    console.log("Entering the vote on a comment on a story post function");
+
+    if (!req || !req.userId) {
+        return res.status(500).send();
+    }
+
+    if (!req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "No id provided"
+        });
+    }
+
+    const body = req.body;
+
+    if (!body) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    const type = body.type;
+    const postId = body.postId;
+
+    if (!type || !postId) {
+        return res.status(500).json({
+            error: "Malformed Body"
+        });
+    }
+
+    try {
+        // Get account that is doing the voting
+        const account = await schemas.Account.findOne({ _id: req.userId });
+
+        // Get the post
+        const post = await schemas.story.findOne({ _id: postId });
+
+
+        if (!account || !commentOwner) {
+            return res.status(500).json({
+                error: "Issue finding users"
+            });
+        }
+
+        // Find the comment
+        const comment = utils.findObjInArrayById(post.comments, req.params.id);
+
+        if (!comment) {
+            return res.status(500).json({
+                error: "Issue finding comment"
+            });
+        }
+
+        // Get the owner of the comment
+        const commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+
+        const userLiked = account.user.story.liked;
+        const userDisliked = account.user.story.disliked;
+
+        // 3 Different cases
+        if (userLiked.includes(post._id)) {
+            if (type === types.VoteType.down) {
+                userLiked = arrRemove(userLiked, post._id);
+                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+
+                post.beans -= 2;
+                commentOwner.user.story.beans -= 2;
+
+                userDisliked.push(post._id);
+                post.whoDisliked.push(req.userId);
+            }
+            else if (type === types.VoteType.up) {
+                /* Do Nothing */
+            }
+            else {
+                userLiked = arrRemove(userLiked, post._id);
+                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+
+                post.beans -= 1;
+                commentOwner.user.story.beans -= 1;
+            }
+        }
+        else if (userDisliked.includes(post._id)) {
+            if (type === types.VoteType.down) {
+                /* Do Nothing */
+            }
+            else if (type === types.VoteType.up) {
+                userDisliked = arrRemove(userDisliked, post._id);
+                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+
+                post.beans += 2;
+                commentOwner.user.story.beans += 2;
+
+                userLiked.push(post._id);
+                post.whoLiked.push(req.userId);
+            }
+            else {
+                userDisliked = arrRemove(userDisliked, post._id);
+                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+
+                post.beans += 1;
+                commentOwner.user.story.beans += 1;
+            }
+        }
+        else {
+            if (type === types.VoteType.down) {
+                userDisliked.push(post._id);
+                post.whoDisliked.push(req.userId);
+
+                post.beans -= 1;
+                commentOwner.user.story.beans -= 1;
+            }
+            else if (type === types.VoteType.up) {
+                userLiked.push(post._id);
+                post.whoLiked.push(req.userId);
+
+                post.beans += 1;
+                commentOwner.user.story.beans += 1;
+            }
+            else {
+                /* Do nothing */
+            }
+        }
+
+        // Now we need to do the saving
+        await commentOwner.save();
+
+        account.user.story.liked = userLiked;
+        account.user.story.disliked = userDisliked;
+        await account.save();
+
+        await post.save();
 
         res.status(200).send();
     }
