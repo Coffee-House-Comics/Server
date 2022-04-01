@@ -50,7 +50,7 @@ router.post('/user/toggleForum', auth.verify, ComicController.user_toggleForum);
 router.put('/metadata/update/:id', auth.verify, ComicController.metadata_update);
 
 // Comic content editing
-router.put('/content/save', auth.verify, ComicController.content_save);
+router.put('/content/save/:id', auth.verify, ComicController.content_save);
 router.post('/content/saveSticker', auth.verify, ComicController.content_saveSticker);
 
 // Commenting

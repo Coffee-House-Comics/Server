@@ -44,7 +44,7 @@ router.post('/user/toggleForum', auth.verify, StoryController.user_toggleForum);
 router.put('/metadata/update/:id', auth.verify, StoryController.metadata_update);
 
 // Story content editing
-router.put('/content/save', auth.verify, StoryController.content_save);
+router.put('/content/save/:id', auth.verify, StoryController.content_save);
 
 // Commenting
 router.post('/comment/:id', auth.verify, StoryController.comment);
