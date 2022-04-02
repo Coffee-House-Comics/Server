@@ -7,8 +7,8 @@
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 const Utils = require('../Utils');
-const { SubscriptionType } = require('../Schemas/types');
-const { disconnectComment, arrRemove } = require('../Utils');
+const deepEqual = require('fast-deep-equal/es6');
+const types = require('../Schemas/types');
 
 // Variables -----------------------------------------------------
 
@@ -103,15 +103,20 @@ StoryController.search = async function (req, res) {
 
     //Build custom author objects
     authors = authors.map((account) => {
-        return Utils.constructProfileObjFromAccount(account);
+        return {
+            id: account._id,
+            displayName: account.user.displayName,
+            bio: account.user.bio,
+            profileImage: account.user.profileImage
+        }
     });
 
     //Filter results by search
     if (req.body && req.body.searchCriteria) {
-        for (let query of searchCriteria) {
+        for (let query of req.body.searchCriteria) {
             //Filter posts
             posts = posts.filter((post) => {
-                return (post.name.includes(query) || post.author.includes(query) || post.series.includes(query));
+                return (post.name.includes(query) || post.author.includes(query) || (post.series && post.series.includes(query)));
             });
 
             //Filter authors
@@ -157,21 +162,27 @@ StoryController.subscriptions = async function (req, res) {
     }
     let user = account.user;
 
-    //Find all posts
-    let content = await schemas.StoryPost.find({});
+    //Find all users
+    let content = await schemas.Account.find({});
     if (!content) {
         return res.status(500).json({
             error: "Server error getting user from ID"
         });
     }
 
-    //Filter for subscribed posts
-    content = content.filter((post) => {
-        return user.story.subscriptions.map((subscription) => subscription.id).includes(post._id);
-    });
+    //Filter for subscribed users and only keep their IDs (not the whole object)
+    let subscriptionsIds = user.story.subscriptions;
+    console.log("Subscriptions IDs: ", subscriptionsIds);
+    let contentIds = content.filter((user) => {
+        for (subId of subscriptionsIds) {
+            if (deepEqual(subId, user._id)) {
+                return true;
+            }
+        }
+        return false;
+    }).map((user) => user._id);
 
-    //Get IDs to return instead of objects
-    contentIds = content.map((post) => post._id);
+    console.log("ContentIds: ", contentIds);
 
     return res.status(200).json({
         content: contentIds
@@ -912,7 +923,7 @@ StoryController.delete_comment = async function (req, res) {
 
     //Get comment
     let comment = Utils.findObjInArrayById(story.comments, commentId);
-    if(!comment){
+    if (!comment) {
         return res.status(500).json({
             error: "The specified comment could not be found"
         });
@@ -922,13 +933,13 @@ StoryController.delete_comment = async function (req, res) {
     await Utils.disconnectComment(comment)
 
     //Remove comment
-    Utils.arrRemove(story.comments, comment);
+    story.comments = Utils.arrRemove(story.comments, comment);
 
     //Save changes
-    try{
+    try {
         await story.save();
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Unable to save changes after deleting comment"
         });
@@ -1001,6 +1012,7 @@ StoryController.delete_forumPost_comment = async function (req, res) {
 
     //Get post
     let post = Utils.findObjInArrayById(forumAccount.user.story.forum.posts, postId);
+    let postIndex = forumAccount.user.story.forum.posts.indexOf(post);
     if (!post) {
         return res.status(500).json({
             error: "There is no forum post with the provided ID in this forum user's story forum"
@@ -1009,7 +1021,8 @@ StoryController.delete_forumPost_comment = async function (req, res) {
 
     //Get comment
     let comment = Utils.findObjInArrayById(post.comments, commentId);
-    if(!comment){
+    let commentIndex = post.comments.indexOf(comment);
+    if (!comment) {
         return res.status(500).json({
             error: "The specified comment could not be found"
         });
@@ -1019,13 +1032,17 @@ StoryController.delete_forumPost_comment = async function (req, res) {
     await Utils.disconnectComment(comment)
 
     //Remove comment
-    Utils.arrRemove(forumAccount.user.story.forum.posts[posts.indexOf(post)].comments, comment);
+    let newPostsArr = [...forumAccount.user.story.forum.posts];
+    post.comments = Utils.arrRemove([...post.comments], comment);
+    newPostsArr[postIndex] = post;
 
     //Save changes
-    try{
-        await forumAccount.save();
+    try {
+        await schemas.Account.findByIdAndUpdate(forumAccount._id, {
+            "$set": { "user.story.forum.posts": newPostsArr }
+        });
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Unable to save changes after deleting forum post comment"
         });
@@ -1068,12 +1085,11 @@ StoryController.user_saved = async function (req, res) {
     }
 
     //Filter for bookmarked (saved) posts
-    content = content.filter((post) => {
+    contentIds = content.map((post) => post._id);
+    contentIds = contentIds.filter((post) => {
         return user.story.saved.includes(post);
     });
-
-    //Extract post IDs to return array of IDs
-    contentIds = content.map((post) => post._id);
+    console.log("Bookmarked posts: ", contentIds);
 
     return res.status(200).json({
         content: contentIds
@@ -1627,7 +1643,10 @@ StoryController.bookmark = async function (req, res) {
     }
 
     //Story is published. Add its ID to user bookmarks list
-    let newBookmarksList = account.user.story.saved.push(storyId);
+
+    let newBookmarksList = [...account.user.story.saved];
+    newBookmarksList.push(storyId);
+    console.log("New bookmarks list: ", newBookmarksList);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
             "$set": { "user.story.saved": newBookmarksList }
@@ -1698,7 +1717,8 @@ StoryController.deleteBookmark = async function (req, res) {
     }
 
     //Story is in bookmarks list. Remove it and update
-    let newBookmarksList = account.user.story.saved.splice(account.user.story.saved.indexOf(storyId), 1);
+    let newBookmarksList = [...account.user.story.saved]
+    newBookmarksList.splice(account.user.story.saved.indexOf(storyId), 1);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
             "$set": { "user.story.saved": newBookmarksList }
@@ -1759,21 +1779,22 @@ StoryController.subscribe_user = async function (req, res) {
     }
 
     //Add the subscribee's ID to the user's subscriptions list
-    let subscriptions = account.user.story.subscriptions;
+    let subscriptions = [...account.user.story.subscriptions];
+    console.log("Subscriptions arr: ", subscriptions);
     if (!subscriptions) {
         subscriptions = [];
     }
-    subscriptions.push({ type: SubscriptionType.user, id: subscribeeId });
-
-    //Update DB
+    let subscriptionItem = subscribeeId;
+    subscriptions.push(subscriptionItem);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": { "user.story.subsciptions": subscriptions }
+            "$set": { "user.story.subscriptions": subscriptions }
         });
         return res.status(200).send();
     } catch (err) {
+        console.log(err);
         return res.status(500).json({
-            error: "Error updating user's list of subscriptions"
+            error: "Error updating subscriber's list of subscriptions"
         });
     }
 }
@@ -1830,8 +1851,16 @@ StoryController.unsubscribe_user = async function (req, res) {
     }
 
     //Remove the subscription from the list
-    let newSubscriptions = Utils.arrRemove(subscriptions, { type: SubscriptionType.user, id: subscribeeId });
-    if (!newSubscriptions) {
+    console.log("ID of user to unsubscribe from: ", subscribeeId);
+    let newSubscriptions = [];
+    for (subscription of subscriptions) {
+        if (subscription != subscribeeId) {
+            newSubscriptions.push(subscription);
+        }
+    }
+    console.log("Subscriptions: ", subscriptions);
+    console.log("New Subscriptions: ", newSubscriptions);
+    if (newSubscriptions.length == subscriptions.length) {
         return res.status(500).json({
             error: "This user is not subscribed to the given item"
         });
@@ -1840,7 +1869,7 @@ StoryController.unsubscribe_user = async function (req, res) {
     //Update DB
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": { "user.story.subsciptions": subscriptions }
+            "$set": { "user.story.subscriptions": newSubscriptions }
         });
         return res.status(200).send();
     } catch (err) {
@@ -1895,7 +1924,7 @@ StoryController.vote = async function (req, res) {
 
     try {
         // Get account that is doing the voting
-        const account = await schemas.Account({ _id: req.userId });
+        const account = await schemas.Account.findOne({ _id: req.userId });
 
         // Get post that the voting is happening on
         const post = await schemas.StoryPost.findOne({ _id: req.params.id });
@@ -1909,89 +1938,106 @@ StoryController.vote = async function (req, res) {
         // Get the owner of the post
         const postOwner = await schemas.Account.findOne({ _id: post.authorID });
 
-        const postOwnerBeans = postOwner.user.story.beans;
+        let postOwnerBeans = postOwner.user.story.beans;
 
-        const userLiked = userLiked = account.user.story.liked;
-        const userDisliked = account.user.story.disliked;
+        let userLiked = account.user.story.liked;
+        let userDisliked = account.user.story.disliked;
 
         // 3 Different cases
+        console.log("Vote type: ", type);
+        console.log("userLiked: ", userLiked);
         if (userLiked.includes(post._id)) {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
                 userLiked = Utils.arrRemove(userLiked, post._id);
-                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 2;
                 postOwnerBeans -= 2;
 
-                postOwner.userDisliked.push(post._id);
+                userDisliked.push(post._id);
                 post.whoDisliked.push(req.userId);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
             else {
                 userLiked = Utils.arrRemove(userLiked, post._id);
-                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
             }
         }
         else if (userDisliked.includes(post._id)) {
-            if (type === types.VoteType.down) {
-                /* Do Nothing */
+            if (type == types.VoteType.down) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
                 userDisliked = Utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 2;
                 postOwnerBeans += 2;
 
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
             }
             else {
                 userDisliked = Utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 1;
                 postOwnerBeans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
                 userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                post.whoDisliked.push(account._id);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("Upvoting");
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
 
                 post.beans += 1;
                 postOwnerBeans += 1;
             }
             else {
-                /* Do nothing */
+                console.log("Doing nothing");
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
         }
 
         // Now we need to save all the information we updated into the database
         await post.save();
 
-        account.user.story.liked = userLiked;
-        account.user.story.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.disliked": userDisliked }
+        });
 
-        postOwner.user.story.beans = postOwnerBeans;
-        await postOwner.save();
+        //Update post owner beans
+        await schemas.Account.findByIdAndUpdate(postOwner._id, {
+            "$set": { "user.story.beans": postOwnerBeans }
+        });
 
         res.status(200).send();
     }
     catch (err) {
+        console.error(err);
         res.status(500).json({
             error: "Server issue with voting on post."
         });
@@ -2053,16 +2099,19 @@ StoryController.vote_forumPost = async function (req, res) {
             });
         }
 
-        const forumPostObj = forumOwner.user.story.forum;
+        const forumObj = forumOwner.user.story.forum;
 
-        if (!forumPostObj || !forumPostObj.active) {
+        if (!forumObj || !forumObj.active) {
             return res.status(500).json({
                 error: "Invalid request"
             });
         }
 
         // Get forum post that the voting is happening on
-        const post = Utils.findObjInArrayById(forumPostObj.posts, req.params.id);
+        console.log("Posts in this forum: ", forumObj.posts);
+        console.log("ID of forum post to vote on: ", req.params.id);
+        let post = Utils.findObjInArrayById(forumObj.posts, req.params.id);
+        const postIndex = forumObj.posts.indexOf(post);
 
         console.log("vfp:", post);
 
@@ -2073,90 +2122,111 @@ StoryController.vote_forumPost = async function (req, res) {
         }
 
         // Get the owner of the forum post
-        const postOwner = await schemas.Account.findOne({ _id: post.ownerId });
+        let postOwner = await schemas.Account.findOne({ _id: post.ownerId });
 
-        const userLiked = account.user.story.liked;
-        const userDisliked = account.user.story.disliked;
+        let userLiked = [...account.user.story.liked];
+        let userDisliked = [...account.user.story.disliked];
 
         // 3 Different cases
-        if (userLiked.includes(post._id)) {
-            if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, post._id);
-                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+        if (account.user.story.liked.includes(post._id)) {
+            if (type == types.VoteType.down) {
+                console.log("From upvote to downvote");
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 2;
                 postOwner.user.story.beans -= 2;
 
                 userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                post.whoDisliked.push(account._id);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
             else {
-                userLiked = arrRemove(userLiked, post._id);
-                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+                console.log("From upvote to neutral");
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 1;
                 postOwner.user.story.beans -= 1;
             }
         }
-        else if (userDisliked.includes(post._id)) {
-            if (type === types.VoteType.down) {
-                /* Do Nothing */
+        else if (account.user.story.disliked.includes(post._id)) {
+            if (type == types.VoteType.down) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
-            else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, post._id);
-                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+            else if (type == types.VoteType.up) {
+                console.log("From downvote to upvote");
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 2;
                 postOwner.user.story.beans += 2;
 
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
             }
             else {
-                userDisliked = arrRemove(userDisliked, post._id);
-                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+                console.log("From downvote to neutral");
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 1;
                 postOwner.user.story.beans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
+                console.log("From neutral to downvote");
                 userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                post.whoDisliked.push(account._id);
 
                 post.beans -= 1;
                 postOwner.user.story.beans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("From neutral to upvote")
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
 
                 post.beans += 1;
                 postOwner.user.story.beans += 1;
             }
             else {
-                /* Do nothing */
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
         }
+
+        let newPostsArr = forumObj.posts;
+        newPostsArr[postIndex] = post;
+        console.log("newPostsArr", newPostsArr);
 
         // Now we need to do the saving
         await postOwner.save();
 
-        account.user.story.liked = userLiked;
-        account.user.story.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.disliked": userDisliked }
+        });
 
-        // FIXME: Maybe we have to do some reasigning here??? Or is this fine???
-        console.log("forum Owner:", forumOwner);
-        await forumOwner.save();
+        await schemas.Account.findByIdAndUpdate(forumOwnerId, {
+            "$set": { "user.story.forum.posts": newPostsArr }
+        });
 
         res.status(200).send();
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({
             error: "Server issue with voting on forum post."
         });
@@ -2212,17 +2282,24 @@ StoryController.vote_comment = async function (req, res) {
         const account = await schemas.Account.findOne({ _id: req.userId });
 
         // Get the post
-        const post = await schemas.story.findOne({ _id: postId });
+        let post = await schemas.StoryPost.findOne({ _id: postId });
+
+        if (!post) {
+            return res.status(500).json({
+                error: "Post does not exist"
+            });
+        }
 
 
-        if (!account || !commentOwner) {
+        if (!account) {
             return res.status(500).json({
                 error: "Issue finding users"
             });
         }
 
         // Find the comment
-        const comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let commentIndex = post.comments.indexOf(comment);
 
         if (!comment) {
             return res.status(500).json({
@@ -2231,92 +2308,110 @@ StoryController.vote_comment = async function (req, res) {
         }
 
         // Get the owner of the comment
-        const commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+        let commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
 
-        const userLiked = account.user.story.liked;
-        const userDisliked = account.user.story.disliked;
+        let userLiked = [...account.user.story.liked];
+        let userDisliked = [...account.user.story.disliked];
 
         // 3 Different cases
-        if (userLiked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+        if (account.user.story.liked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
+                console.log("From like to dislike");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 2;
                 commentOwner.user.story.beans -= 2;
 
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
             else {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+                console.log("From like to neutral");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.story.beans -= 1;
             }
         }
-        else if (userDisliked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
+        else if (account.user.story.disliked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
                 /* Do Nothing */
             }
-            else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+            else if (type == types.VoteType.up) {
+                console.log("From dislike to like");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 2;
                 commentOwner.user.story.beans += 2;
 
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
             }
             else {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+                console.log("From dislike to neutral");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 1;
                 commentOwner.user.story.beans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
+                console.log("From neutral to dislike");
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.story.beans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("From neutral to like");
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
 
                 comment.beans += 1;
                 commentOwner.user.story.beans += 1;
             }
             else {
-                /* Do nothing */
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
         }
+
+        let newComments = [...post.comments];
+        newComments[commentIndex] = comment;
 
         // Now we need to do the saving
         await commentOwner.save();
 
-        account.user.story.liked = userLiked;
-        account.user.story.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.disliked": userDisliked }
+        });
 
-        // FIXME: Is this enough??
-        console.log("Does it include new comment upvotes...", post);
-        await post.save();
+        await schemas.StoryPost.findByIdAndUpdate(post._id, {
+            "$set": { "comments": newComments }
+        });
 
         res.status(200).send();
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({
-            error: "Server issue with voting on forum post."
+            error: "Server issue with voting on comment."
         });
     }
 }
@@ -2357,9 +2452,9 @@ StoryController.vote_forumpost_comment = async function (req, res) {
         });
     }
 
-    const type = body.type;
-    const forumPostId = body.forumPostId;
-    const forumOwnerId = body.forumOwnerId;
+    let type = body.type;
+    let forumPostId = body.forumPostId;
+    let forumOwnerId = body.forumOwnerId;
 
     if (!type || !forumPostId || !forumOwnerId) {
         return res.status(500).json({
@@ -2369,10 +2464,10 @@ StoryController.vote_forumpost_comment = async function (req, res) {
 
     try {
         // Get account that is doing the voting
-        const account = await schemas.Account.findOne({ _id: req.userId });
+        let account = await schemas.Account.findOne({ _id: req.userId });
 
         // Get the account that owns the forum
-        const forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
+        let forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
 
         if (!account || !forumOwner) {
             return res.status(500).json({
@@ -2388,7 +2483,8 @@ StoryController.vote_forumpost_comment = async function (req, res) {
         }
 
         // Now we must get the forum post
-        const post = Utils.findObjInArrayById(forumOwner.user.story.forum.posts, forumPostId);
+        let post = Utils.findObjInArrayById(forumOwner.user.story.forum.posts, forumPostId);
+        let postIndex = forumOwner.user.story.forum.posts.indexOf(post);
 
         if (!post) {
             return res.status(500).json({
@@ -2397,7 +2493,8 @@ StoryController.vote_forumpost_comment = async function (req, res) {
         }
 
         // Now we must get the comment
-        const comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let commentIndex = post.comments.indexOf(comment);
 
         if (!comment) {
             return res.status(500).json({
@@ -2405,7 +2502,8 @@ StoryController.vote_forumpost_comment = async function (req, res) {
             });
         }
 
-        const commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+        let commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+        console.log("Comment owner: ", commentOwner);
 
         if (!commentOwner) {
             return res.status(500).json({
@@ -2413,88 +2511,113 @@ StoryController.vote_forumpost_comment = async function (req, res) {
             });
         }
 
-        const userLiked = account.user.story.liked;
-        const userDisliked = account.user.story.disliked;
+        let userLiked = [...account.user.story.liked];
+        let userDisliked = [...account.user.story.disliked];
 
         // 3 Different cases
-        if (userLiked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+        if (account.user.story.liked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
+                console.log("From like to dislike");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 2;
                 commentOwner.user.story.beans -= 2;
 
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
             else {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+                console.log("From like to neutral");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.story.beans -= 1;
             }
         }
-        else if (userDisliked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
-                /* Do Nothing */
+        else if (account.user.story.disliked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
-            else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+            else if (type == types.VoteType.up) {
+                console.log("From dislike to like");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 2;
                 commentOwner.user.story.beans += 2;
 
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
             }
             else {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+                console.log("From dislike to neutral");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 1;
                 commentOwner.user.story.beans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
+                console.log("From neutral to dislike");
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.story.beans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("From neutral to like");
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
 
                 comment.beans += 1;
                 commentOwner.user.story.beans += 1;
             }
             else {
-                /* Do nothing */
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
         }
+
+        let newPostsArr = [...forumOwner.user.story.forum.posts];
+        let newCommentsArr = [...post.comments];
+        newCommentsArr[commentIndex] = comment;
+        post.comments = newCommentsArr;
+        newPostsArr[postIndex] = post;
 
         // Now we need to do the saving
         await commentOwner.save();
 
-        account.user.story.liked = userLiked;
-        account.user.story.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.story.disliked": userDisliked }
+        });
 
-        // FIXME: Is this enough: ???
-        console.log("Is this enough...or do we need to do more reassigning:", forumOwner.user.story.forum.posts);
-        await forumOwner.save();
+        await schemas.Account.findByIdAndUpdate(forumOwner._id, {
+            "$set": { "user.story.forum.posts": newPostsArr }
+        });
+
+        await account.save();
 
         res.status(200).send();
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({
             error: "Server issue with voting on forum post."
         });

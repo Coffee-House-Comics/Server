@@ -7,8 +7,7 @@
 const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 const Utils = require('../Utils');
-const { SubscriptionType } = require('../Schemas/types');
-const { arrRemove } = require('../Utils');
+const deepEqual = require('fast-deep-equal/es6');
 const types = require('../Schemas/types');
 
 // Variables -----------------------------------------------------
@@ -163,21 +162,27 @@ ComicController.subscriptions = async function (req, res) {
     }
     let user = account.user;
 
-    //Find all posts
-    let content = await schemas.ComicPost.find({});
+    //Find all users
+    let content = await schemas.Account.find({});
     if (!content) {
         return res.status(500).json({
             error: "Server error getting user from ID"
         });
     }
 
-    //Filter for subscribed posts
-    content = content.filter((post) => {
-        return user.comic.subscriptions.map((subscription) => subscription.id).includes(post._id);
-    });
+    //Filter for subscribed users and only keep their IDs (not the whole object)
+    let subscriptionsIds = user.comic.subscriptions;
+    console.log("Subscriptions IDs: ", subscriptionsIds);
+    let contentIds = content.filter((user) => {
+        for(subId of subscriptionsIds){
+            if(deepEqual(subId, user._id)){
+                return true;
+            }
+        }
+        return false;
+    }).map((user) => user._id);
 
-    //Get IDs to return instead of objects
-    contentIds = content.map((post) => post._id);
+    console.log("ContentIds: ", contentIds);
 
     return res.status(200).json({
         content: contentIds
@@ -737,7 +742,9 @@ ComicController.delete = async function (req, res) {
 
 ComicController.delete_forumPost = async function (req, res) {
     /* Delete a Forum Post------------
-        Request body: {}
+        Request body: {
+            forumUserId: ObjectId
+        }
     
         Response {
             status: 200 OK or 500 ERROR,
@@ -769,6 +776,16 @@ ComicController.delete_forumPost = async function (req, res) {
     //Get params
     let userId = req.userId;
     let postId = req.params.id;
+    console.log("ID of forum post to delete: " + postId);
+
+    if(!req.body || !req.body.forumUserId){
+        return res.status(500).json({
+            error: "ID of forum owner not provided"
+        });
+    }
+
+    let forumUserId = req.body.forumUserId;
+    console.log("Forum user ID: ", forumUserId);
 
     //Get user
     let account = await schemas.Account.findOne({ _id: userId });
@@ -778,11 +795,19 @@ ComicController.delete_forumPost = async function (req, res) {
         });
     }
 
+    let forumAccount = await schemas.Account.findOne({ _id: forumUserId});
+    if(!forumAccount){
+        return res.status(500).json({
+            error: "Forum user could not be found"
+        });
+    }
+
     //Get post
-    let post = Utils.findObjInArrayById(account.user.comic.forum.posts, postId);
+    console.log("Forum posts arr: ", forumAccount.user.comic.forum.posts);
+    let post = Utils.findObjInArrayById(forumAccount.user.comic.forum.posts, postId);
     if (!post) {
         return res.status(500).json({
-            error: "There is no forum post with the provided ID in this user's comic forum"
+            error: "There is no forum post with the provided ID in this forum user's comic forum"
         });
     }
 
@@ -857,8 +882,8 @@ ComicController.delete_forumPost = async function (req, res) {
 
     //Delete the post
     try {
-        let newForumPostsArray = Utils.arrRemove(account.user.comic.forum.posts, post);
-        await schemas.Account.findByIdAndUpdate(userId, {
+        let newForumPostsArray = Utils.arrRemove(forumAccount.user.comic.forum.posts, post);
+        await schemas.Account.findByIdAndUpdate(forumUserId, {
             "$set": { "user.comic.forum.posts": newForumPostsArray }
         });
         return res.status(200).send();
@@ -945,7 +970,7 @@ ComicController.delete_comment = async function (req, res) {
     await Utils.disconnectComment(comment)
 
     //Remove comment
-    Utils.arrRemove(comic.comments, comment);
+    comic.comments = Utils.arrRemove(comic.comments, comment);
 
     //Save changes
     try{
@@ -1024,6 +1049,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
 
     //Get post
     let post = Utils.findObjInArrayById(forumAccount.user.comic.forum.posts, postId);
+    let postIndex = forumAccount.user.comic.forum.posts.indexOf(post);
     if (!post) {
         return res.status(500).json({
             error: "There is no forum post with the provided ID in this forum user's comic forum"
@@ -1032,6 +1058,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
 
     //Get comment
     let comment = Utils.findObjInArrayById(post.comments, commentId);
+    let commentIndex = post.comments.indexOf(comment);
     if(!comment){
         return res.status(500).json({
             error: "The specified comment could not be found"
@@ -1042,18 +1069,21 @@ ComicController.delete_forumPost_comment = async function (req, res) {
     await Utils.disconnectComment(comment)
 
     //Remove comment
-    Utils.arrRemove(forumAccount.user.comic.forum.posts[posts.indexOf(post)].comments, comment);
+    let newPostsArr = [...forumAccount.user.comic.forum.posts];
+    post.comments = Utils.arrRemove([...post.comments], comment);
+    newPostsArr[postIndex] = post;
 
     //Save changes
     try{
-        await forumAccount.save();
+        await schemas.Account.findByIdAndUpdate(forumAccount._id, {
+            "$set": { "user.comic.forum.posts": newPostsArr }
+        });
         return res.status(200).send();
     } catch(err){
         return res.status(500).json({
             error: "Unable to save changes after deleting forum post comment"
         });
     }
-
 }
 
 ComicController.deleteSticker = async function (req, res) {
@@ -1775,21 +1805,21 @@ ComicController.vote = async function (req, res) {
 
         let postOwnerBeans = postOwner.user.comic.beans;
 
-        let userLiked = account.user.comic.liked;
-        let userDisliked = account.user.comic.disliked;
+        let userLiked = [...account.user.comic.liked];
+        let userDisliked = [...account.user.comic.disliked];
 
         // 3 Different cases
         console.log("Vote type: ", type);
         console.log("userLiked: ", userLiked);
-        if (userLiked.includes(post._id)) {
+        if (account.user.comic.liked.includes(post._id)) {
             if (type == types.VoteType.down) {
                 userLiked = Utils.arrRemove(userLiked, post._id);
-                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 2;
                 postOwnerBeans -= 2;
 
-                postOwner.userDisliked.push(post._id);
+                userDisliked.push(post._id);
                 post.whoDisliked.push(req.userId);
             }
             else if (type == types.VoteType.up) {
@@ -1799,13 +1829,13 @@ ComicController.vote = async function (req, res) {
             }
             else {
                 userLiked = Utils.arrRemove(userLiked, post._id);
-                post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
             }
         }
-        else if (userDisliked.includes(post._id)) {
+        else if (account.user.comic.disliked.includes(post._id)) {
             if (type == types.VoteType.down) {
                 return res.status(500).json({
                     error: "This vote has already been performed on this post for this user"
@@ -1813,17 +1843,17 @@ ComicController.vote = async function (req, res) {
             }
             else if (type == types.VoteType.up) {
                 userDisliked = Utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 2;
                 postOwnerBeans += 2;
 
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
             }
             else {
                 userDisliked = Utils.arrRemove(userDisliked, post._id);
-                post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 1;
                 postOwnerBeans += 1;
@@ -1832,7 +1862,7 @@ ComicController.vote = async function (req, res) {
         else {
             if (type == types.VoteType.down) {
                 userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                post.whoDisliked.push(account._id);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
@@ -1840,7 +1870,7 @@ ComicController.vote = async function (req, res) {
             else if (type == types.VoteType.up) {
                 console.log("Upvoting");
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
 
                 post.beans += 1;
                 postOwnerBeans += 1;
@@ -1857,10 +1887,10 @@ ComicController.vote = async function (req, res) {
         await post.save();
 
         //Update user liked/disliked lists
-        await schemas.Account.findByIdAndUpdate(req.userId, {
+        await schemas.Account.findByIdAndUpdate(account._id, {
             "$set": { "user.comic.liked": userLiked }
         });
-        await schemas.Account.findByIdAndUpdate(req.userId, {
+        await schemas.Account.findByIdAndUpdate(account._id, {
             "$set": { "user.comic.disliked": userDisliked }
         });
 
@@ -1934,16 +1964,19 @@ ComicController.vote_forumPost = async function (req, res) {
             });
         }
 
-        const forumPostObj = forumOwner.user.comic.forum;
+        const forumObj = forumOwner.user.comic.forum;
 
-        if (!forumPostObj || !forumPostObj.active) {
+        if (!forumObj || !forumObj.active) {
             return res.status(500).json({
                 error: "Invalid request"
             });
         }
 
         // Get forum post that the voting is happening on
-        const post = Utils.findObjInArrayById(forumPostObj.posts, req.params.id);
+        console.log("Posts in this forum: ", forumObj.posts);
+        console.log("ID of forum post to vote on: ", req.params.id);
+        let post = Utils.findObjInArrayById(forumObj.posts, req.params.id);
+        const postIndex = forumObj.posts.indexOf(post);
 
         console.log("vfp:", post);
 
@@ -1954,89 +1987,111 @@ ComicController.vote_forumPost = async function (req, res) {
         }
 
         // Get the owner of the forum post
-        const postOwner = await schemas.Account.findOne({ _id: post.ownerId });
+        let postOwner = await schemas.Account.findOne({ _id: post.ownerId });
 
-        const userLiked = account.user.comic.liked;
-        const userDisliked = account.user.comic.disliked;
+        let userLiked = [...account.user.comic.liked];
+        let userDisliked = [...account.user.comic.disliked];
 
         // 3 Different cases
-        if (userLiked.includes(post._id)) {
-            if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, post._id);
-                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+        if (account.user.comic.liked.includes(post._id)) {
+            if (type == types.VoteType.down) {
+                console.log("From upvote to downvote");
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 2;
                 postOwner.user.comic.beans -= 2;
 
                 userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                post.whoDisliked.push(account._id);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
             else {
-                userLiked = arrRemove(userLiked, post._id);
-                post.whoLiked = arrRemove(post.whoLiked, req.userId);
+                console.log("From upvote to neutral");
+                userLiked = Utils.arrRemove(userLiked, post._id);
+                post.whoLiked = Utils.arrRemove(post.whoLiked, account._id);
 
                 post.beans -= 1;
                 postOwner.user.comic.beans -= 1;
             }
         }
-        else if (userDisliked.includes(post._id)) {
-            if (type === types.VoteType.down) {
-                /* Do Nothing */
+        else if (account.user.comic.disliked.includes(post._id)) {
+            if (type == types.VoteType.down) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
-            else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, post._id);
-                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+            else if (type == types.VoteType.up) {
+                console.log("From downvote to upvote");
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 2;
                 postOwner.user.comic.beans += 2;
 
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
             }
             else {
-                userDisliked = arrRemove(userDisliked, post._id);
-                post.whoDisliked = arrRemove(post.whoDisliked, req.userId);
+                console.log("From downvote to neutral");
+                userDisliked = Utils.arrRemove(userDisliked, post._id);
+                post.whoDisliked = Utils.arrRemove(post.whoDisliked, account._id);
 
                 post.beans += 1;
                 postOwner.user.comic.beans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
+                console.log("From neutral to downvote");
                 userDisliked.push(post._id);
-                post.whoDisliked.push(req.userId);
+                post.whoDisliked.push(account._id);
 
                 post.beans -= 1;
                 postOwner.user.comic.beans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("From neutral to upvote")
                 userLiked.push(post._id);
-                post.whoLiked.push(req.userId);
+                post.whoLiked.push(account._id);
 
                 post.beans += 1;
                 postOwner.user.comic.beans += 1;
             }
             else {
-                /* Do nothing */
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
         }
+
+        let newPostsArr = forumObj.posts;
+        newPostsArr[postIndex] = post;
+        console.log("newPostsArr", newPostsArr);
 
         // Now we need to do the saving
         await postOwner.save();
 
-        account.user.comic.liked = userLiked;
-        account.user.comic.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.comic.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.comic.disliked": userDisliked }
+        });
 
-        // FIXME: Maybe we have to do some reasigning here??? Or is this fine???
-        await forumOwner.save();
+        await schemas.Account.findByIdAndUpdate(forumOwnerId, {
+            "$set": { "user.comic.forum.posts":newPostsArr}
+        });
 
         res.status(200).send();
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({
             error: "Server issue with voting on forum post."
         });
@@ -2091,17 +2146,24 @@ ComicController.vote_comment = async function (req, res) {
         const account = await schemas.Account.findOne({ _id: req.userId });
 
         // Get the post
-        const post = await schemas.comic.findOne({ _id: postId });
+        let post = await schemas.ComicPost.findOne({ _id: postId });
+
+        if(!post){
+            return res.status(500).json({
+                error: "Post does not exist"
+            });
+        }
 
 
-        if (!account || !commentOwner) {
+        if (!account) {
             return res.status(500).json({
                 error: "Issue finding users"
             });
         }
 
         // Find the comment
-        const comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let commentIndex = post.comments.indexOf(comment);
 
         if (!comment) {
             return res.status(500).json({
@@ -2110,92 +2172,110 @@ ComicController.vote_comment = async function (req, res) {
         }
 
         // Get the owner of the comment
-        const commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+        let commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
 
-        const userLiked = account.user.comic.liked;
-        const userDisliked = account.user.comic.disliked;
+        let userLiked = [...account.user.comic.liked];
+        let userDisliked = [...account.user.comic.disliked];
 
         // 3 Different cases
-        if (userLiked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+        if (account.user.comic.liked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
+                console.log("From like to dislike");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 2;
                 commentOwner.user.comic.beans -= 2;
 
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
             else {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+                console.log("From like to neutral");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.comic.beans -= 1;
             }
         }
-        else if (userDisliked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
+        else if (account.user.comic.disliked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
                 /* Do Nothing */
             }
-            else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+            else if (type == types.VoteType.up) {
+                console.log("From dislike to like");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 2;
                 commentOwner.user.comic.beans += 2;
 
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
             }
             else {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+                console.log("From dislike to neutral");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 1;
                 commentOwner.user.comic.beans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
+                console.log("From neutral to dislike");
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.comic.beans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("From neutral to like");
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
 
                 comment.beans += 1;
                 commentOwner.user.comic.beans += 1;
             }
             else {
-                /* Do nothing */
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
         }
+
+        let newComments = [...post.comments];
+        newComments[commentIndex] = comment;
 
         // Now we need to do the saving
         await commentOwner.save();
 
-        account.user.comic.liked = userLiked;
-        account.user.comic.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.comic.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.comic.disliked": userDisliked }
+        });
 
-        // FIXME: Is this enough??
-        console.log("Does it include new comment upvotes...", post);
-        await post.save();
+        await schemas.ComicPost.findByIdAndUpdate(post._id, {
+            "$set": { "comments" : newComments }
+        });
 
         res.status(200).send();
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({
-            error: "Server issue with voting on forum post."
+            error: "Server issue with voting on comment."
         });
     }
 }
@@ -2236,9 +2316,9 @@ ComicController.vote_forumpost_comment = async function (req, res) {
         });
     }
 
-    const type = body.type;
-    const forumPostId = body.forumPostId;
-    const forumOwnerId = body.forumOwnerId;
+    let type = body.type;
+    let forumPostId = body.forumPostId;
+    let forumOwnerId = body.forumOwnerId;
 
     if (!type || !forumPostId || !forumOwnerId) {
         return res.status(500).json({
@@ -2248,10 +2328,10 @@ ComicController.vote_forumpost_comment = async function (req, res) {
 
     try {
         // Get account that is doing the voting
-        const account = await schemas.Account.findOne({ _id: req.userId });
+        let account = await schemas.Account.findOne({ _id: req.userId });
 
         // Get the account that owns the forum
-        const forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
+        let forumOwner = await schemas.Account.findOne({ _id: forumOwnerId });
 
         if (!account || !forumOwner) {
             return res.status(500).json({
@@ -2267,7 +2347,8 @@ ComicController.vote_forumpost_comment = async function (req, res) {
         }
 
         // Now we must get the forum post
-        const post = Utils.findObjInArrayById(forumOwner.user.comic.forum.posts, forumPostId);
+        let post = Utils.findObjInArrayById(forumOwner.user.comic.forum.posts, forumPostId);
+        let postIndex = forumOwner.user.comic.forum.posts.indexOf(post);
 
         if (!post) {
             return res.status(500).json({
@@ -2276,7 +2357,8 @@ ComicController.vote_forumpost_comment = async function (req, res) {
         }
 
         // Now we must get the comment
-        const comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let comment = Utils.findObjInArrayById(post.comments, req.params.id);
+        let commentIndex = post.comments.indexOf(comment);
 
         if (!comment) {
             return res.status(500).json({
@@ -2284,7 +2366,8 @@ ComicController.vote_forumpost_comment = async function (req, res) {
             });
         }
 
-        const commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+        let commentOwner = await schemas.Account.findOne({ _id: comment.ownerId });
+        console.log("Comment owner: ", commentOwner);
 
         if (!commentOwner) {
             return res.status(500).json({
@@ -2292,88 +2375,113 @@ ComicController.vote_forumpost_comment = async function (req, res) {
             });
         }
 
-        const userLiked = account.user.comic.liked;
-        const userDisliked = account.user.comic.disliked;
+        let userLiked = [...account.user.comic.liked];
+        let userDisliked = [...account.user.comic.disliked];
 
         // 3 Different cases
-        if (userLiked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+        if (account.user.comic.liked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
+                console.log("From like to dislike");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 2;
                 commentOwner.user.comic.beans -= 2;
 
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
             else {
-                userLiked = arrRemove(userLiked, comment._id);
-                comment.whoLiked = arrRemove(comment.whoLiked, req.userId);
+                console.log("From like to neutral");
+                userLiked = Utils.arrRemove(userLiked, comment._id);
+                comment.whoLiked = Utils.arrRemove(comment.whoLiked, account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.comic.beans -= 1;
             }
         }
-        else if (userDisliked.includes(comment._id)) {
-            if (type === types.VoteType.down) {
-                /* Do Nothing */
+        else if (account.user.comic.disliked.includes(comment._id)) {
+            if (type == types.VoteType.down) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
-            else if (type === types.VoteType.up) {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+            else if (type == types.VoteType.up) {
+                console.log("From dislike to like");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 2;
                 commentOwner.user.comic.beans += 2;
 
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
             }
             else {
-                userDisliked = arrRemove(userDisliked, comment._id);
-                comment.whoDisliked = arrRemove(comment.whoDisliked, req.userId);
+                console.log("From dislike to neutral");
+                userDisliked = Utils.arrRemove(userDisliked, comment._id);
+                comment.whoDisliked = Utils.arrRemove(comment.whoDisliked, account._id);
 
                 comment.beans += 1;
                 commentOwner.user.comic.beans += 1;
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
+                console.log("From neutral to dislike");
                 userDisliked.push(comment._id);
-                comment.whoDisliked.push(req.userId);
+                comment.whoDisliked.push(account._id);
 
                 comment.beans -= 1;
                 commentOwner.user.comic.beans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("From neutral to like");
                 userLiked.push(comment._id);
-                comment.whoLiked.push(req.userId);
+                comment.whoLiked.push(account._id);
 
                 comment.beans += 1;
                 commentOwner.user.comic.beans += 1;
             }
             else {
-                /* Do nothing */
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
         }
+
+        let newPostsArr = [...forumOwner.user.comic.forum.posts];
+        let newCommentsArr = [...post.comments];
+        newCommentsArr[commentIndex] = comment;
+        post.comments = newCommentsArr;
+        newPostsArr[postIndex] = post;
 
         // Now we need to do the saving
         await commentOwner.save();
 
-        account.user.comic.liked = userLiked;
-        account.user.comic.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.comic.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(account._id, {
+            "$set": { "user.comic.disliked": userDisliked }
+        });
 
-        // FIXME: Is this enough: ???
-        console.log("Is this enough...or do we need to do more reassigning:", forumOwner.user.comic.forum.posts);
-        await forumOwner.save();
+        await schemas.Account.findByIdAndUpdate(forumOwner._id, {
+            "$set": { "user.comic.forum.posts" : newPostsArr}
+        });
+
+        await account.save();
 
         res.status(200).send();
     }
     catch (err) {
+        console.log(err);
         res.status(500).json({
             error: "Server issue with voting on forum post."
         });
@@ -2511,7 +2619,8 @@ ComicController.deleteBookmark = async function (req, res) {
     }
 
     //Comic is in bookmarks list. Remove it and update
-    let newBookmarksList = account.user.comic.saved.splice(account.user.comic.saved.indexOf(comicId), 1);
+    let newBookmarksList = [...account.user.comic.saved]
+    newBookmarksList.splice(account.user.comic.saved.indexOf(comicId), 1);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
             "$set": { "user.comic.saved": newBookmarksList }
@@ -2571,17 +2680,20 @@ ComicController.subscribe_user = async function (req, res) {
     }
 
     //Add the subscribee's ID to the user's subscriptions list
-    let subscriptions = account.user.comic.subscriptions;
+    let subscriptions = [...account.user.comic.subscriptions];
+    console.log("Subscriptions arr: ", subscriptions);
     if (!subscriptions) {
         subscriptions = [];
     }
-    subscriptions.push({ type: SubscriptionType.user, id: subscribeeId });
+    let subscriptionItem = subscribeeId;
+    subscriptions.push(subscriptionItem);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": { "user.comic.subsciptions": subscriptions }
+            "$set": { "user.comic.subscriptions": subscriptions }
         });
         return res.status(200).send();
     } catch (err) {
+        console.log(err);
         return res.status(500).json({
             error: "Error updating subscriber's list of subscriptions"
         });
@@ -2641,8 +2753,16 @@ ComicController.unsubscribe_user = async function (req, res) {
     }
 
     //Remove the subscription from the list
-    let newSubscriptions = Utils.arrRemove(subscriptions, { type: SubscriptionType.user, id: subscribeeId });
-    if (!newSubscriptions) {
+    console.log("ID of user to unsubscribe from: ", subscribeeId);
+    let newSubscriptions = [];
+    for(subscription of subscriptions){
+        if(subscription != subscribeeId){
+            newSubscriptions.push(subscription);
+        }
+    }
+    console.log("Subscriptions: ", subscriptions);
+    console.log("New Subscriptions: ", newSubscriptions);
+    if (newSubscriptions.length == subscriptions.length) {
         return res.status(500).json({
             error: "This user is not subscribed to the given item"
         });
@@ -2651,7 +2771,7 @@ ComicController.unsubscribe_user = async function (req, res) {
     //Update DB
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
-            "$set": { "user.comic.subsciptions": subscriptions }
+            "$set": { "user.comic.subscriptions": newSubscriptions }
         });
         return res.status(200).send();
     } catch (err) {

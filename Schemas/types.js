@@ -1,12 +1,5 @@
 const types = {};
 
-types.SubscriptionType = {
-    user: 0,
-    comic: 1,
-    story: 2,
-    Series: 3
-}
-
 types.VoteType = {
     down: -1,
     neutral: 0,

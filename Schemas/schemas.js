@@ -99,12 +99,7 @@ const appMetadata = ({
     disliked: [ObjectId],
     saved: [ObjectId],
 
-    subscriptions: [
-        {
-            type: Number, // Type is an enum in interfaces
-            id: Number  // Id of what is subscribed to
-        }
-    ],
+    subscriptions: [ObjectId],
 
     forum: {
         active: Boolean,

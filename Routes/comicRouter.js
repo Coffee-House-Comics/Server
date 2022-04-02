@@ -3,6 +3,7 @@ const router = express.Router()
 const auth = require('../Auth')
 const utils = require('../Utils')
 const ComicController = require('../Controllers/comicController')
+const CommonController = require('../Controllers/commonController')
 
 // Get the explore tab
 router.get('/explore', ComicController.explore);
@@ -12,9 +13,9 @@ router.get('/search', ComicController.search);
 router.get('/subscriptions', auth.verify, ComicController.subscriptions);
 
 // Get profile by ID
-router.get('/profile/:id', auth.verify, utils.verifyValidId, ComicController.getProfileById);
+router.get('/profile/:id', utils.verifyValidId, CommonController.getProfileById);
 // Get profile by Username (Unauthenticated)
-router.get('/profile/:userName', ComicController.getProfileByUserName);
+router.get('/profile/:userName', CommonController.getProfileByUserName);
 
 
 // Creating ------------------------------------------------

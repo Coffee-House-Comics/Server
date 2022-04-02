@@ -3,18 +3,6 @@
 */
 
 const schemas = require('../Schemas/schemas');
-const types = require('../Schemas/types');
-const utils = require('../Utils');
-
-// Helper functions ----------------------------------------------
-
-function arrRemove(arr, toRemove) {
-    return utils.arrRemove(arr, toRemove);
-}
-
-function findObjInArrayById(arr, id) {
-    return utils.findObjInArrayById(arr, id);
-}
 
 // Main functions ----------------------------------------------
 
@@ -118,48 +106,6 @@ CommonController.getProfileByUserName = async function (req, res) {
             err: "Server error getting profile by user Name"
         });
     }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-CommonController.publish = async function (req, res, mode) {
-    /* Publish Story ------------ 
-        Request body: {
-            series: {
-                isSeriesMember: Boolean,
-                seriesName: String,
-            },
-
-            Response {
-                status 200 OK or 500 ERROR
-            }
-        }
-    */
-
-
-
-
-
-
 }
 
 
