@@ -1074,16 +1074,6 @@ ComicController.deleteSticker = async function (req, res) {
             error: "No request provided"
         });
     }
-    if (!req.params) {
-        return res.status(500).json({
-            error: "No params provided"
-        });
-    }
-    if (!req.params.id) {
-        return res.status(500).json({
-            error: "No id provided"
-        });
-    }
     if (!req.userId) {
         return res.status(500).json({
             error: "User ID not found"
@@ -1468,16 +1458,6 @@ ComicController.content_saveSticker = async function (req, res) {
     if (!req) {
         return res.status(500).json({
             error: "No request provided"
-        });
-    }
-    if (!req.params) {
-        return res.status(500).json({
-            error: "No params provided"
-        });
-    }
-    if (!req.params.id) {
-        return res.status(500).json({
-            error: "No id provided"
         });
     }
     if (!req.userId) {
