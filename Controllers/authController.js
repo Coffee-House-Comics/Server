@@ -10,6 +10,7 @@ const utils = require('../Utils');
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 const auth = require('../Auth');
+const { constructProfileObjFromAccount } = require("../Utils");
 
 
 // Helper functions ----------------------------------------------
@@ -83,7 +84,7 @@ AuthController.registerUser = async function (req, res, next) {
         const body = req.body;
 
         if (!body) {
-            console.err("No body provided");
+            console.error("No body provided");
             return res.status(500).json({
                 error: "Malformed Body"
             });
@@ -98,7 +99,7 @@ AuthController.registerUser = async function (req, res, next) {
         const profileImage = Buffer.alloc(10); //TODO: Add profile image to req body
 
         if (!userName || !password || !confirmPassword || !email || !displayName || !bio) {
-            console.err("Malformed body");
+            console.error("Malformed body");
             return res.status(500).json({
                 error: "Malformed body"
             });
@@ -106,7 +107,7 @@ AuthController.registerUser = async function (req, res, next) {
 
         // Check if username is sufficient
         if (userName.trim() === "") {
-            console.err("Malformed username");
+            console.error("Malformed username");
             return res.status(500).json({
                 error: "Malformed Username"
             });
@@ -114,7 +115,7 @@ AuthController.registerUser = async function (req, res, next) {
 
         // If this username already exists
         if (await schemas.Account.findOne({ userName: userName })) {
-            console.err("Username already exists");
+            console.error("Username already exists");
             return res.status(500).json({
                 error: "Username already exists"
             });
@@ -122,7 +123,7 @@ AuthController.registerUser = async function (req, res, next) {
 
         // Check if password is good
         if (password.trim() === "" || password !== confirmPassword) {
-            console.err("Password insufficient or passwords do not match");
+            console.error("Password insufficient or passwords do not match");
             return res.status(500).json({
                 error: "Password insufficient or Passwords do not match."
             });
@@ -130,7 +131,7 @@ AuthController.registerUser = async function (req, res, next) {
 
         // Check if email is already registered
         if (await schemas.Account.findOne({ email: email })) {
-            console.err("Email already associated with an account");
+            console.error("Email already associated with an account");
             return res.status(500).json({
                 error: "This email is associated with an existing account."
             });
@@ -138,7 +139,7 @@ AuthController.registerUser = async function (req, res, next) {
 
         // Brief check on email
         if (email.trim() === "") {
-            console.err("Email is blank");
+            console.error("Email is blank");
             return res.status(500).json({
                 error: "Email is blank"
             });
@@ -146,7 +147,7 @@ AuthController.registerUser = async function (req, res, next) {
 
         // Confirm Display name
         if (displayName.trim() === "") {
-            console.err("Display name is blank");
+            console.error("Display name is blank");
             return res.status(500).json({
                 error: "Display name may not be blank"
             });
@@ -228,7 +229,7 @@ AuthController.registerUser = async function (req, res, next) {
         return res.status(200).json({});
     }
     catch (err) {
-        console.err("Create Account Error", err);
+        console.error("Create Account Error", err);
         return res.status(500).json({
             error: "Error creating the account."
         });
@@ -282,7 +283,7 @@ AuthController.loginUser = async function (req, res) {
         const targetAccount = await schemas.Account.findOne({ userName: userName });
 
         if (!targetAccount) {
-            console.err("Account does not exist");
+            console.error("Account does not exist");
             return res.status(500).json({
                 error: "Account does not exist."
             });
@@ -303,7 +304,7 @@ AuthController.loginUser = async function (req, res) {
         const isPasswordCorrect = await bcrypt.compare(password, targetAccount.passwordHash);
 
         if (!isPasswordCorrect) {
-            console.err("Incorrect password");
+            console.error("Incorrect password");
             return res.status(500).json({
                 error: "Password is incorrect."
             });
@@ -318,7 +319,7 @@ AuthController.loginUser = async function (req, res) {
         const responseJSON = utils.constructProfileObjFromAccount(targetAccount);
 
         if (!responseJSON) {
-            console.err("Invalid profile object");
+            console.error("Invalid profile object");
             return res.status(500).json({
                 error: "Error logging in."
             });
@@ -331,7 +332,7 @@ AuthController.loginUser = async function (req, res) {
         }).status(200).json(responseJSON);
     }
     catch (err) {
-        console.err("Login Error", err);
+        console.error("Login Error", err);
         return res.status(500).json({
             error: "Error logging in."
         });
@@ -367,6 +368,7 @@ AuthController.forgotPassword = async function (req, res) {
     const email = body.email;
 
     if (!userName || !email) {
+        console.erroror("Username or email not provided");
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -376,7 +378,7 @@ AuthController.forgotPassword = async function (req, res) {
         const account = await schemas.Account.findOne({ email: email });
 
         if (!account || account.userName !== userName) {
-            console.err("Either email or username is incorrect");
+            console.erroror("Incorrect username for this account");
             return res.status(500).json({
                 error: "Either email or username is incorrect"
             });
@@ -384,7 +386,7 @@ AuthController.forgotPassword = async function (req, res) {
 
         //Make sure email is verified
         if (!targetAccount.isverified) {
-            console.err("Email not yet verified");
+            console.erroror("Email not verified");
             return res.status(401).json({
                 error: "Email not yet verified"
             });
@@ -402,11 +404,12 @@ AuthController.forgotPassword = async function (req, res) {
         console.log("Sent password reset email");
 
         await account.save();
+        console.log("Temp password successfully saved");
 
         return res.status(200).send("<h4>Check your email for a temporary password to use. Most emails arrive within a few minutes</h4>");
     }
     catch (err) {
-        console.err("Error in forgot password:", err);
+        console.error("Error in forgot password:", err);
         return res.status(500).json({
             error: "Error resetting password."
         });
@@ -441,7 +444,7 @@ AuthController.logoutUser = async function (req, res) {
         const loggedInUser = await schemas.Account.findOne({ _id: req.userId });
 
         if (!loggedInUser) {
-            console.err("User to log out does not exist");
+            console.erroror("User does not exist");
             return res.status(400).json({
                 error: "User does not exist",
             });
@@ -460,11 +463,10 @@ AuthController.logoutUser = async function (req, res) {
             displayName: loggedInUser.user.displayName,
             bio: loggedInUser.user.bio,
             profileImage: loggedInUser.user.profileImage,
-
         });
     }
     catch (err) {
-        console.log("Login Error", err);
+        console.erroror("Logout Error", err);
         return res.status(500).json({
             error: "Error logging out."
         });
@@ -490,7 +492,7 @@ AuthController.confirmCode = async function (req, res) {
     const id = req.params.id;
     const code = req.params.code;
 
-    console.log("Trying to verify the code " + code + " for user id:", id);
+    console.log("Trying to verify the code: " + code + " for user id:", id);
 
     try {
         // Get the user by ID
@@ -503,6 +505,7 @@ AuthController.confirmCode = async function (req, res) {
         const savedCode = user.verificationCode;
 
         if (!savedCode) {
+            console.erroror("Failure to approve: " + savedCode);
             return res.status(500).send("Server error");
         }
 
@@ -515,9 +518,11 @@ AuthController.confirmCode = async function (req, res) {
 
         await user.save();
 
+        console.log("User email confirmed");
         return res.status(200).send("<h4>Thank you for confirming your email!  You may login now.</h4>");
     }
     catch (err) {
+        console.erroror("Failure to match the code");
         return res.status(500).send("Failure to match the code.");
     }
 }
@@ -546,7 +551,7 @@ AuthController.updateProfile = async function (req, res) {
         }
     */
 
-    console.log("Attempting to update profile.");
+    console.log("Attempting to update profile...");
 
     if (!req || !req.userId) {
         return res.status(500).send();

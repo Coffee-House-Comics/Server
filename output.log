@@ -1,3 +1,104 @@
 Initializing the database connection...
 Now serving the static webpage from /Static
 Server listening on port 3000!
+
+Verifying new request:
+ID of user making request: 6247d56dd5abd9798eba10db
+Entering vote on post (comic)
+Vote type:  1
+userLiked:  []
+Upvoting
+
+Verifying new request:
+ID of user making request: 6247d56dd5abd9798eba10db
+Entering vote on post (comic)
+Vote type:  1
+userLiked:  [ new ObjectId("6247d5f1d5abd9798eba10ee") ]
+
+Verifying new request:
+ID of user making request: 6247d56dd5abd9798eba10db
+Attempting to logout...
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjAsInVzZXJJZCI6bnVsbCwiaWF0IjoxNjQ4OTE5OTAxfQ.gC0ClfDa84gxKlU6CZ-ELD2awf9WNKTtzSjKinqJFOk
+Successfully logged out user
+Attempting to login...
+SKIPPING EMAIL VERIFICATION CHECK (FIX THIS!!!)
+Checking password
+Creating token: 
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2MjQ3ZDVhZWQ1YWJkOTc5OGViYTEwZTEiLCJpYXQiOjE2NDg5MTk5MDcsImV4cCI6MTY0OTA5MjcwN30.hbjor0XCpOVcumOSdPGBfoL1Mg92fIsEvpnho6RKSl0
+
+{
+  user: {
+    story: {
+      forum: [Object],
+      beans: 0,
+      posts: [],
+      series: [],
+      liked: [],
+      disliked: [],
+      saved: [],
+      subscriptions: []
+    },
+    comic: {
+      forum: [Object],
+      beans: 0,
+      posts: [],
+      series: [],
+      liked: [],
+      disliked: [],
+      saved: [Array],
+      subscriptions: [],
+      savedStickers: []
+    },
+    displayName: 'MJBroad',
+    bio: 'hi guys, its me matt.',
+    profileImage: new Binary(Buffer.from("00000000000000000000", "hex"), 0)
+  },
+  _id: new ObjectId("6247d5aed5abd9798eba10e1"),
+  userName: 'mattjb01',
+  email: 'mjbroadbent6@gmail.com',
+  passwordHash: '$2b$15$lr8tCelyI84XiPQ6DcE0FuNspXBefv.I/wqg6Y1KzgXJQ0jgjN8iG',
+  isverified: false,
+  verificationCode: '4031e194ba834a8a2367ce9e9630aea23067b0f1d495',
+  __v: 0
+}
+
+Verifying new request:
+ID of user making request: 6247d5aed5abd9798eba10e1
+Entering vote on post (comic)
+Vote type:  1
+userLiked:  []
+Upvoting
+
+Verifying new request:
+ID of user making request: 6247d5aed5abd9798eba10e1
+Entering vote on post (comic)
+Vote type:  0
+userLiked:  [ new ObjectId("6247d5f1d5abd9798eba10ee") ]
+newarr [ new ObjectId("6247d5f1d5abd9798eba10ee") ]
+index -1
+newarr [
+  new ObjectId("6247d56dd5abd9798eba10db"),
+  new ObjectId("6247d5aed5abd9798eba10e1")
+]
+index -1
+
+Verifying new request:
+ID of user making request: 6247d5aed5abd9798eba10e1
+Attempting to logout...
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjAsInVzZXJJZCI6bnVsbCwiaWF0IjoxNjQ4OTIwMTA0fQ.SHUTukMSHbW9_69OqyESFv4beOoR16gb_OVbQhOphfU
+Successfully logged out user
+
+Verifying new request:
+TokenExpiredError: jwt expired
+    at /home/ubuntu/CHC/Server/node_modules/jsonwebtoken/verify.js:152:21
+    at getSecret (/home/ubuntu/CHC/Server/node_modules/jsonwebtoken/verify.js:90:14)
+    at Object.module.exports [as verify] (/home/ubuntu/CHC/Server/node_modules/jsonwebtoken/verify.js:94:10)
+    at verify (/home/ubuntu/CHC/Server/Auth/index.js:18:34)
+    at Layer.handle [as handle_request] (/home/ubuntu/CHC/Server/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/ubuntu/CHC/Server/node_modules/express/lib/router/route.js:137:13)
+    at Route.dispatch (/home/ubuntu/CHC/Server/node_modules/express/lib/router/route.js:112:3)
+    at Layer.handle [as handle_request] (/home/ubuntu/CHC/Server/node_modules/express/lib/router/layer.js:95:5)
+    at /home/ubuntu/CHC/Server/node_modules/express/lib/router/index.js:281:22
+    at Function.process_params (/home/ubuntu/CHC/Server/node_modules/express/lib/router/index.js:341:12) {
+  expiredAt: 1970-01-01T00:00:00.000Z
+}

@@ -482,7 +482,8 @@ StoryController.unpublished = async function (req, res) {
     }
 
     //Make sure user owns this story
-    if (story.authorID !== userId) {
+    if (story.authorID != userId) {
+        console.error("The user does not this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -554,7 +555,8 @@ StoryController.publish = async function (req, res) {
     }
 
     //Make sure user owns this story
-    if (story.authorID !== userId) {
+    if (story.authorID != userId) {
+        console.error("User does not own this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -623,7 +625,8 @@ StoryController.delete = async function (req, res) {
     }
 
     //Make sure user owns this story
-    if (story.authorID !== userId) {
+    if (story.authorID != userId) {
+        console.error("User does not own this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -1215,7 +1218,8 @@ StoryController.metadata_update = async function (req, res) {
     }
 
     //Make sure user owns this story
-    if (story.authorID !== userId) {
+    if (story.authorID != userId) {
+        console.error("User does not own this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -1318,13 +1322,15 @@ StoryController.content_save = async function (req, res) {
     //Get post
     const story = await schemas.StoryPost.findOne({ _id: storyId });
     if (!story) {
+        console.error("Story could not be found");
         return res.status(500).json({
             error: "Story could not be found"
         });
     }
 
     //Make sure user owns this story
-    if (story.authorID !== userId) {
+    if (story.authorID != userId) {
+        console.error("User does not own this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -1332,6 +1338,7 @@ StoryController.content_save = async function (req, res) {
 
     //Make sure story is unpublished
     if (story.isPublished) {
+        console.error("User attempted to edit a published story.");
         return res.status(400).json({
             error: "A published story cannot be edited"
         });
@@ -1344,8 +1351,10 @@ StoryController.content_save = async function (req, res) {
     //Save changes to DB
     try {
         await story.save();
+        console.log("Successfully saved story changes");
         return res.status(200).send();
     } catch (err) {
+        console.error("Error saving story content");
         return res.status(500).json({
             error: "Error saving story content changes"
         });

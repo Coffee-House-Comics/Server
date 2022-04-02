@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 function authManager() {
     verify = function (req, res, next) {
-        console.log("Who called verify?");
+        console.log("\nVerifying new request:");
         try {
             const token = req.cookies.token;
             if (!token) {
@@ -16,13 +16,13 @@ function authManager() {
             }
 
             const verified = jwt.verify(token, process.env.JWT_SECRET)
-            console.log("verified.userId: " + verified.userId);
+            console.log("ID of user making request: " + verified.userId);
             req.userId = verified.userId;
 
             // Get the expiration time
             const time = req.exp;
             const currentTime = Math.floor(Date.now() / 1000);
-            console.log("Time, current Time:", time, currentTime);
+            //console.log("Time, current Time:", time, currentTime);
             const isExpired = time <= currentTime;
 
             if (isExpired) {

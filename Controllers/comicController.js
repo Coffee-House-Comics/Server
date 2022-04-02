@@ -8,8 +8,8 @@ const schemas = require('../Schemas/schemas');
 const common = require('./commonController');
 const Utils = require('../Utils');
 const { SubscriptionType } = require('../Schemas/types');
-const { json } = require('body-parser');
 const { arrRemove } = require('../Utils');
+const types = require('../Schemas/types');
 
 // Variables -----------------------------------------------------
 
@@ -114,10 +114,10 @@ ComicController.search = async function (req, res) {
 
     //Filter results by search
     if (req.body && req.body.searchCriteria) {
-        for (let query of searchCriteria) {
+        for (let query of req.body.searchCriteria) {
             //Filter posts
             posts = posts.filter((post) => {
-                return (post.name.includes(query) || post.author.includes(query) || post.series.includes(query));
+                return (post.name.includes(query) || post.author.includes(query) || (post.series && post.series.includes(query)));
             });
 
             //Filter authors
@@ -579,7 +579,7 @@ ComicController.publish = async function (req, res) {
     }
 
     //Make sure user owns this comic
-    if (comic.authorID !== userId) {
+    if (comic.authorID != userId) {
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -648,7 +648,8 @@ ComicController.delete = async function (req, res) {
     }
 
     //Make sure user owns this comic
-    if (comic.authorID !== userId) {
+    if (comic.authorID != userId) {
+        console.error("User does not own this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -1092,6 +1093,7 @@ ComicController.deleteSticker = async function (req, res) {
     }
 
     let sticker = req.body.sticker;
+    console.log("Sticker to delete: ", sticker);
 
     //Get user
     let account = await schemas.Account.findOne({ _id: userId });
@@ -1109,14 +1111,17 @@ ComicController.deleteSticker = async function (req, res) {
 
     //Remove sticker from list of stickers
     let newStickers = Utils.arrRemove(stickers, sticker);
-    if (!newStickers) {
+    console.log("New stickers array: ", newStickers);
+    if (newStickers.length === stickers.length) {
+        console.error("The provided sticker is not in the list of saved stickers");
         return res.status(500).json({
             error: "The provided sticker is not in the saved stickers list"
         });
     }
 
     //Update DB
-    account.user.comic.stickers = newStickers;
+    account.user.comic.savedStickers = newStickers;
+    console.log("New account object: ", account);
     try {
         await account.save();
         return res.status(200).send();
@@ -1157,12 +1162,11 @@ ComicController.user_saved = async function (req, res) {
     }
 
     //Filter for bookmarked (saved) posts
-    content = content.filter((post) => {
+    contentIds = content.map((post) => post._id);
+    contentIds = contentIds.filter((post) => {
         return user.comic.saved.includes(post);
     });
-
-    //Extract post IDs to return array of IDs
-    contentIds = content.map((post) => post._id);
+    console.log("Bookmarked posts: ", contentIds);
 
     return res.status(200).json({
         content: contentIds
@@ -1307,7 +1311,8 @@ ComicController.metadata_update = async function (req, res) {
     }
 
     //Make sure user owns this comic
-    if (comic.authorID !== userId) {
+    if (comic.authorID != userId) {
+        console.log("User does not own this post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -1396,7 +1401,7 @@ ComicController.content_save = async function (req, res) {
         });
     }
 
-    let pages = req.body.pages;
+    const pages = req.body.pages;
 
     //Get user
     let account = await schemas.Account.findOne({ _id: userId });
@@ -1428,12 +1433,11 @@ ComicController.content_save = async function (req, res) {
         });
     }
 
-    //Make changes
-    comic.pages = pages;
-
     //Save changes to DB
     try {
-        await comic.save();
+        await schemas.ComicPost.findByIdAndUpdate(comic._id, {
+            "$set": { "pages": pages }
+        });
         return res.status(200).send();
     } catch (err) {
         return res.status(500).json({
@@ -1755,7 +1759,7 @@ ComicController.vote = async function (req, res) {
 
     try {
         // Get account that is doing the voting
-        const account = await schemas.Account({ _id: req.userId });
+        const account = await schemas.Account.findOne({ _id: req.userId });
 
         // Get post that the voting is happening on
         const post = await schemas.ComicPost.findOne({ _id: req.params.id });
@@ -1769,14 +1773,16 @@ ComicController.vote = async function (req, res) {
         // Get the owner of the post
         const postOwner = await schemas.Account.findOne({ _id: post.authorID });
 
-        const postOwnerBeans = postOwner.user.comic.beans;
+        let postOwnerBeans = postOwner.user.comic.beans;
 
-        const userLiked = userLiked = account.user.comic.liked;
-        const userDisliked = account.user.comic.disliked;
+        let userLiked = account.user.comic.liked;
+        let userDisliked = account.user.comic.disliked;
 
         // 3 Different cases
+        console.log("Vote type: ", type);
+        console.log("userLiked: ", userLiked);
         if (userLiked.includes(post._id)) {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
                 userLiked = Utils.arrRemove(userLiked, post._id);
                 post.whoLiked = Utils.arrRemove(post.whoLiked, req.userId);
 
@@ -1786,8 +1792,10 @@ ComicController.vote = async function (req, res) {
                 postOwner.userDisliked.push(post._id);
                 post.whoDisliked.push(req.userId);
             }
-            else if (type === types.VoteType.up) {
-                /* Do Nothing */
+            else if (type == types.VoteType.up) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                });
             }
             else {
                 userLiked = Utils.arrRemove(userLiked, post._id);
@@ -1798,10 +1806,12 @@ ComicController.vote = async function (req, res) {
             }
         }
         else if (userDisliked.includes(post._id)) {
-            if (type === types.VoteType.down) {
-                /* Do Nothing */
+            if (type == types.VoteType.down) {
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
                 userDisliked = Utils.arrRemove(userDisliked, post._id);
                 post.whoDisliked = Utils.arrRemove(post.whoDisliked, req.userId);
 
@@ -1820,14 +1830,15 @@ ComicController.vote = async function (req, res) {
             }
         }
         else {
-            if (type === types.VoteType.down) {
+            if (type == types.VoteType.down) {
                 userDisliked.push(post._id);
                 post.whoDisliked.push(req.userId);
 
                 post.beans -= 1;
                 postOwnerBeans -= 1;
             }
-            else if (type === types.VoteType.up) {
+            else if (type == types.VoteType.up) {
+                console.log("Upvoting");
                 userLiked.push(post._id);
                 post.whoLiked.push(req.userId);
 
@@ -1835,23 +1846,33 @@ ComicController.vote = async function (req, res) {
                 postOwnerBeans += 1;
             }
             else {
-                /* Do nothing */
+                console.log("Doing nothing");
+                return res.status(500).json({
+                    error: "This vote has already been performed on this post for this user"
+                })
             }
         }
 
         // Now we need to save all the information we updated into the database
         await post.save();
 
-        account.user.comic.liked = userLiked;
-        account.user.comic.disliked = userDisliked;
-        await account.save();
+        //Update user liked/disliked lists
+        await schemas.Account.findByIdAndUpdate(req.userId, {
+            "$set": { "user.comic.liked": userLiked }
+        });
+        await schemas.Account.findByIdAndUpdate(req.userId, {
+            "$set": { "user.comic.disliked": userDisliked }
+        });
 
-        postOwner.user.comic.beans = postOwnerBeans;
-        await postOwner.save();
+        //Update post owner beans
+        await schemas.Account.findByIdAndUpdate(postOwner._id, {
+            "$set": { "user.comic.beans": postOwnerBeans }
+        });
 
         res.status(200).send();
     }
     catch (err) {
+        console.error(err);
         res.status(500).json({
             error: "Server issue with voting on post."
         });
@@ -2420,7 +2441,10 @@ ComicController.bookmark = async function (req, res) {
     }
 
     //Comic is published. Add its ID to user bookmarks list
-    let newBookmarksList = account.user.comic.saved.push(comicId);
+    
+    let newBookmarksList = [...account.user.comic.saved];
+    newBookmarksList.push(comicId);
+    console.log("New bookmarks list: ", newBookmarksList);
     try {
         await schemas.Account.findByIdAndUpdate(userId, {
             "$set": { "user.comic.saved": newBookmarksList }

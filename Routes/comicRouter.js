@@ -34,12 +34,12 @@ router.get('/unpublished/:id', auth.verify, utils.verifyValidId, ComicController
 router.post('/publish/:id', auth.verify, utils.verifyValidId, ComicController.publish);
 
 // Deleting
-// Delete a comic by ID
-router.delete('/:id', auth.verify, utils.verifyValidId, ComicController.delete);
-// Delete a forum post by ID
-router.delete('/forumPost/:id', auth.verify, utils.verifyValidId, ComicController.delete_forumPost);
 // Delete a Sticker
 router.delete('/sticker', auth.verify, ComicController.deleteSticker);
+// Delete a forum post by ID
+router.delete('/forumPost/:id', auth.verify, utils.verifyValidId, ComicController.delete_forumPost);
+// Delete a comic by ID
+router.delete('/:id', auth.verify, utils.verifyValidId, ComicController.delete);
 
 // User related Content
 // Get a users saved content

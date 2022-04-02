@@ -14,6 +14,7 @@ utils.verifyValidId = function(req, res, next){
             mongoose.Types.ObjectId(req.params.id)
             next();
         } catch(err) {
+            console.error("Invalid ID in request params: " + req.params.id);
             return res.status(500).json({
                 error: "Invalid ID in request params"
             });
@@ -22,6 +23,7 @@ utils.verifyValidId = function(req, res, next){
 }
 
 utils.constructProfileObjFromAccount = function (account) {
+    console.log(account);
     if (!account || !account._id || !account.user || !account.user.displayName ||
         (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
         (account.user.comic.beans === null)) {
@@ -47,7 +49,10 @@ utils.findObjInArrayById = function (arr, id) {
 }
 
 utils.arrRemove = function (arr, toRemove) {
-    return arr.filter(item => item !== toRemove);
+    let newArr = [].concat(arr)
+    console.log("newarr", newArr);
+    console.log("index", newArr.indexOf(toRemove));
+    return newArr.splice(newArr.indexOf(toRemove), 1);
 }
 
 /**
