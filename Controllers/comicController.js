@@ -505,7 +505,9 @@ ComicController.unpublished = async function (req, res) {
     }
 
     //Make sure user owns this comic
-    if (comic.authorID !== userId) {
+    console.log("Author ID: " + typeof comic.authorID + "  |  User ID: " + typeof userId);
+    if (comic.authorID != userId) {
+        console.log("Requesting user does not own the requested post");
         return res.status(403).json({
             error: "This user does not own this post"
         });
@@ -1413,7 +1415,7 @@ ComicController.content_save = async function (req, res) {
     }
 
     //Make sure user owns this comic
-    if (comic.authorID !== userId) {
+    if (comic.authorID != userId) {
         return res.status(403).json({
             error: "This user does not own this post"
         });

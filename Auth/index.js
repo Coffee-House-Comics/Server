@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const schemas = require('../Schemas/schemas');
+const mongoose = require('mongoose');
 
 function authManager() {
     verify = function (req, res, next) {
@@ -45,7 +46,7 @@ function authManager() {
         return jwt.sign({
             exp: 0,
             userId: null
-        }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        }, process.env.JWT_SECRET);
     }
 
     verifyUser = function (req) {

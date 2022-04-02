@@ -9,6 +9,7 @@ const schemas = require('../Schemas/schemas');
 const utils = require('../Utils');
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
+const auth = require('../Auth');
 
 
 // Helper functions ----------------------------------------------
@@ -30,6 +31,7 @@ async function sendConfirmationEmail(Recepient, userId, confirmationCode) {
 
     const emailMessage = emailController.generateMail(Recepient, subject, message);
     await emailController.sendMail(emailMessage);
+    console.log("Sent confirmation email");
 }
 
 async function sendPasswordResetEmail(Recepient, password) {
@@ -42,6 +44,7 @@ async function sendPasswordResetEmail(Recepient, password) {
 
     const emailMessage = emailController.generateMail(Recepient, subject, message);
     await emailController.sendMail(emailMessage);
+    console.log("Sent verification email");
 }
 
 async function generatePassHash(password) {
@@ -74,6 +77,7 @@ AuthController.registerUser = async function (req, res, next) {
         }
     */
 
+    console.log("Starting to register new user...");
     try {
         // First we need to confirm all the credentials of the soon-to-be user
         const body = req.body;
@@ -90,6 +94,7 @@ AuthController.registerUser = async function (req, res, next) {
         const email = body.email;
         const displayName = body.displayName;
         const bio = body.bio;
+        const profileImage = Buffer.alloc(10); //TODO: Add profile image to req body
 
         if (!userName || !password || !confirmPassword || !email || !displayName || !bio) {
             return res.status(500).json({
@@ -143,9 +148,11 @@ AuthController.registerUser = async function (req, res, next) {
 
         // Generate a verification code
         const code = generateCode();
+        console.log("Generated verification code");
 
         // Generate Password Hash
         const passwordHash = await generatePassHash(password);
+        console.log("Generated password hash");
 
         // Create the user object
         const newAccount = new schemas.Account({
@@ -159,7 +166,7 @@ AuthController.registerUser = async function (req, res, next) {
             user: {
                 displayName: displayName,
                 bio: (bio) ? bio : "This user likes to keep things secret.",
-                profileImage: null,
+                profileImage: profileImage,
 
                 story: {
                     beans: 0,
@@ -198,6 +205,7 @@ AuthController.registerUser = async function (req, res, next) {
                 },
             }
         });
+        console.log("Created new account object");
 
         //  ...and place it into the database
 
@@ -272,18 +280,21 @@ AuthController.loginUser = async function (req, res) {
         }
 
         //Make sure email is verified
-        console.log("Checking if email is verified");
-        if (!targetAccount.isverified) {
-            return res.status(401).json({
-                userId: userId,
-                error: "Email not yet verified"
-            });
-        }
+        console.log("SKIPPING EMAIL VERIFICATION CHECK (FIX THIS!!!)");
+        // console.log("Checking if email is verified");
+        // if (!targetAccount.isverified) {
+        //     console.log("Email is not verified");
+        //     return res.status(401).json({
+        //         error: "Email not yet verified"
+        //     });
+        // }
 
         // Now get the password hash
+        console.log("Checking password");
         const isPasswordCorrect = await bcrypt.compare(password, targetAccount.passwordHash);
 
         if (!isPasswordCorrect) {
+            console.log("Incorrect password");
             return res.status(500).json({
                 error: "Password is incorrect."
             });
@@ -292,8 +303,10 @@ AuthController.loginUser = async function (req, res) {
         // By now the user exists and the password has been verified
 
         // Now create the cookie for the user and return it
+        console.log("Creating token: ");
         const token = auth.signToken(targetAccount._id);
         console.log(token);
+        console.log();
 
         const responseJSON = utils.constructProfileObjFromAccount(targetAccount);
 
@@ -364,7 +377,6 @@ AuthController.forgotPassword = async function (req, res) {
         console.log("Checking if email is verified");
         if (!targetAccount.isverified) {
             return res.status(401).json({
-                userId: userId,
                 error: "Email not yet verified"
             });
         }
@@ -432,10 +444,10 @@ AuthController.logoutUser = async function (req, res) {
             secure: true,
             sameSite: true
         }).status(200).json({
-            id: targetAccount._id,
-            displayName: targetAccount.user.displayName,
-            bio: targetAccount.user.bio,
-            profileImage: targetAccount.user.profileImage,
+            id: loggedInUser._id,
+            displayName: loggedInUser.user.displayName,
+            bio: loggedInUser.user.bio,
+            profileImage: loggedInUser.user.profileImage,
 
         });
     }

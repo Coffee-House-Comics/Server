@@ -1,11 +1,31 @@
 const schemas = require('../Schemas/schemas');
-
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
 const utils = {};
 
+utils.verifyValidId = function(req, res, next){
+    if(!req.params || !req.params.id){
+        return res.status(500).json({
+            error: "No ID provided in request params"
+        });
+    } else {
+        try{
+            mongoose.Types.ObjectId(req.params.id)
+            next();
+        } catch(err) {
+            return res.status(500).json({
+                error: "Invalid ID in request params"
+            });
+        }
+    }
+}
+
 utils.constructProfileObjFromAccount = function (account) {
+    console.log(account);
     if (!account || !account._id || !account.user || !account.user.displayName ||
-        !account.user.bio || !account.user.profileImage || !account.user.story.beans ||
-        !account.user.comic.beans) {
+        (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
+        (account.user.comic.beans === null)) {
         return null;
     }
 
