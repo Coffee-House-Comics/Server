@@ -1,5 +1,6 @@
 const schemas = require('../Schemas/schemas');
 const mongoose = require('mongoose');
+const deepEqual = require('fast-deep-equal/es6');
 const Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 const utils = {};
@@ -49,10 +50,7 @@ utils.findObjInArrayById = function (arr, id) {
 }
 
 utils.arrRemove = function (arr, toRemove) {
-    let newArr = [].concat(arr)
-    console.log("newarr", newArr);
-    console.log("index", newArr.indexOf(toRemove));
-    return newArr.splice(newArr.indexOf(toRemove), 1);
+    return arr.filter(item => !deepEqual(item, toRemove));
 }
 
 /**
