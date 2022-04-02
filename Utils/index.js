@@ -24,7 +24,6 @@ utils.verifyValidId = function(req, res, next){
 }
 
 utils.constructProfileObjFromAccount = function (account) {
-    console.log(account);
     if (!account || !account._id || !account.user || !account.user.displayName ||
         (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
         (account.user.comic.beans === null)) {
