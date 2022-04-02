@@ -14,6 +14,7 @@ utils.verifyValidId = function(req, res, next){
             mongoose.Types.ObjectId(req.params.id)
             next();
         } catch(err) {
+            console.error("Invalid ID in request params: " + req.params.id);
             return res.status(500).json({
                 error: "Invalid ID in request params"
             });
@@ -48,7 +49,10 @@ utils.findObjInArrayById = function (arr, id) {
 }
 
 utils.arrRemove = function (arr, toRemove) {
-    return arr.filter(item => item !== toRemove);
+    let newArr = [].concat(arr)
+    console.log("newarr", newArr);
+    console.log("index", newArr.indexOf(toRemove));
+    return newArr.splice(newArr.indexOf(toRemove), 1);
 }
 
 /**

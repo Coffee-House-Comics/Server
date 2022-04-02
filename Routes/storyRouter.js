@@ -32,10 +32,10 @@ router.get('/unpublished/:id', auth.verify, utils.verifyValidId, StoryController
 router.post('/publish/:id', auth.verify, utils.verifyValidId, StoryController.publish);
 
 // Deleting
-router.delete('/:id', auth.verify, utils.verifyValidId, StoryController.delete);
 router.delete('/forumPost/:id', auth.verify, utils.verifyValidId, StoryController.delete_forumPost);
 router.delete('/comment/:id', auth.verify, utils.verifyValidId, StoryController.delete_comment);
 router.delete('/forumPost/comment/:id', auth.verify, utils.verifyValidId, StoryController.delete_forumPost_comment);
+router.delete('/:id', auth.verify, utils.verifyValidId, StoryController.delete);
 
 // User related Content
 router.get('/user/saved', auth.verify, StoryController.user_saved);

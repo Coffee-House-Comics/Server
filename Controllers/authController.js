@@ -10,6 +10,7 @@ const utils = require('../Utils');
 const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 const auth = require('../Auth');
+const { constructProfileObjFromAccount } = require("../Utils");
 
 
 // Helper functions ----------------------------------------------
@@ -359,6 +360,7 @@ AuthController.forgotPassword = async function (req, res) {
     const email = body.email;
 
     if (!userName || !email) {
+        console.error("Username or email not provided");
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -368,14 +370,15 @@ AuthController.forgotPassword = async function (req, res) {
         const account = await schemas.Account.findOne({ email: email });
 
         if (!account || account.userName !== userName) {
+            console.error("Incorrect username for this account");
             return res.status(500).json({
                 error: "Either email or username is incorrect"
             });
         }
 
         //Make sure email is verified
-        console.log("Checking if email is verified");
         if (!targetAccount.isverified) {
+            console.error("Email not verified");
             return res.status(401).json({
                 error: "Email not yet verified"
             });
@@ -391,6 +394,7 @@ AuthController.forgotPassword = async function (req, res) {
         sendPasswordResetEmail(account.email, tempPass);
 
         await account.save();
+        console.log("Temp password successfully saved");
 
         return res.status(200).send("<h4>Check your email for a temporary password to use. Most emails arrive within a few minutes</h4>");
     }
@@ -415,7 +419,7 @@ AuthController.logoutUser = async function (req, res) {
         }
     */
 
-    console.log("Attempting to logout.");
+    console.log("Attempting to logout...");
 
     if (!req || !req.userId) {
         return res.status(500).send();
@@ -430,6 +434,7 @@ AuthController.logoutUser = async function (req, res) {
         const loggedInUser = await schemas.Account.findOne({ _id: req.userId });
 
         if (!loggedInUser) {
+            console.error("User does not exist");
             return res.status(400).json({
                 error: "User does not exist",
             });
@@ -439,6 +444,7 @@ AuthController.logoutUser = async function (req, res) {
         const token = auth.expireToken();
         console.log(token);
 
+        console.log("Successfully logged out user");
         return res.cookie("token", token, {
             httpOnly: true,
             secure: true,
@@ -448,11 +454,10 @@ AuthController.logoutUser = async function (req, res) {
             displayName: loggedInUser.user.displayName,
             bio: loggedInUser.user.bio,
             profileImage: loggedInUser.user.profileImage,
-
         });
     }
     catch (err) {
-        console.log("Login Error", err);
+        console.error("Logout Error", err);
         return res.status(500).json({
             error: "Error logging out."
         });
@@ -478,7 +483,7 @@ AuthController.confirmCode = async function (req, res) {
     const id = req.params.id;
     const code = req.params.code;
 
-    console.log("Trying to verify the code " + code + " for user id:", id);
+    console.log("Trying to verify the code: " + code + " for user id:", id);
 
     try {
         // Get the user by ID
@@ -491,6 +496,7 @@ AuthController.confirmCode = async function (req, res) {
         const savedCode = user.verificationCode;
 
         if (!savedCode) {
+            console.error("Failure to approve: " + savedCode);
             return res.status(500).send("Server error");
         }
 
@@ -503,9 +509,11 @@ AuthController.confirmCode = async function (req, res) {
 
         await user.save();
 
+        console.log("User email confirmed");
         return res.status(200).send("<h4>Thank you for confirming your email!  You may login now.</h4>");
     }
     catch (err) {
+        console.error("Failure to match the code");
         return res.status(500).send("Failure to match the code.");
     }
 }
@@ -534,7 +542,7 @@ AuthController.updateProfile = async function (req, res) {
         }
     */
 
-    console.log("Attempting to update profile.");
+    console.log("Attempting to update profile...");
 
     if (!req || !req.userId) {
         return res.status(500).send();
