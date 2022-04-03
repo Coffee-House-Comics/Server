@@ -96,8 +96,7 @@ AuthController.registerUser = async function (req, res, next) {
         const email = body.email;
         const displayName = body.displayName;
         const bio = body.bio;
-        const profileImage = Buffer.alloc(10); //TODO: Add profile image to req body
-
+        const profileImage = Buffer.alloc(10); // TODO: Init with some specific image
         if (!userName || !password || !confirmPassword || !email || !displayName || !bio) {
             console.error("Malformed body");
             return res.status(500).json({
@@ -290,14 +289,13 @@ AuthController.loginUser = async function (req, res) {
         }
 
         //Make sure email is verified
-        console.log("SKIPPING EMAIL VERIFICATION CHECK (FIX THIS!!!)");
-        // console.log("Checking if email is verified");
-        // if (!targetAccount.isverified) {
-        //     console.log("Email is not verified");
-        //     return res.status(401).json({
-        //         error: "Email not yet verified"
-        //     });
-        // }
+        console.log("Checking if email is verified");
+        if (!targetAccount.isverified) {
+            console.log("Email is not verified");
+            return res.status(401).json({
+                error: "Email not yet verified"
+            });
+        }
 
         // Now get the password hash
         console.log("Checking password");
