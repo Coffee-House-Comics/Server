@@ -30,7 +30,7 @@ router.get('/published/:id', utils.verifyValidId, ComicController.published);
 // view an unpublished comic (to edit it)
 router.get('/unpublished/:id', auth.verify, utils.verifyValidId, ComicController.unpublished);
 // Get forum posts for a user by id
-router.get('/allForumPosts/:id', ComicController.getAllForumPosts);
+router.get('/allForumPosts/:id', utils.verifyValidId, ComicController.getAllForumPosts);
 
 // Publishing
 // Publish a comic
