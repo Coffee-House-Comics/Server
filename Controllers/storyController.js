@@ -2624,4 +2624,48 @@ StoryController.vote_forumpost_comment = async function (req, res) {
     }
 }
 
+StoryController.getAllForumPosts = function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+
+            body: {
+                forumPosts: [ForumPostObjects]
+            }
+        }
+    */
+
+    console.log("Entering get all Forum Posts for stories");
+
+    if (!req || !req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "Invalid request params"
+        });
+    }
+
+    const userId = req.params.id;
+
+    const account = await schemas.Account.findOne({ _id: userId });
+
+    if (!account) {
+        return res.status(500).json({
+            error: "This user does not exist."
+        });
+    }
+
+    if (!account.user.story.forum.active) {
+        return res.status(500).json({
+            error: "Forum not active"
+        });
+    }
+
+    const forumPosts = account.user.story.forum.posts;
+
+    return res.status(200).json({
+        forumPosts: forumPosts
+    });
+}
+
 module.exports = StoryController;

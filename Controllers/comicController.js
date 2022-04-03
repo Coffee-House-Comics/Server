@@ -174,8 +174,8 @@ ComicController.subscriptions = async function (req, res) {
     let subscriptionsIds = user.comic.subscriptions;
     console.log("Subscriptions IDs: ", subscriptionsIds);
     let contentIds = content.filter((user) => {
-        for(subId of subscriptionsIds){
-            if(deepEqual(subId, user._id)){
+        for (subId of subscriptionsIds) {
+            if (deepEqual(subId, user._id)) {
                 return true;
             }
         }
@@ -778,7 +778,7 @@ ComicController.delete_forumPost = async function (req, res) {
     let postId = req.params.id;
     console.log("ID of forum post to delete: " + postId);
 
-    if(!req.body || !req.body.forumUserId){
+    if (!req.body || !req.body.forumUserId) {
         return res.status(500).json({
             error: "ID of forum owner not provided"
         });
@@ -795,8 +795,8 @@ ComicController.delete_forumPost = async function (req, res) {
         });
     }
 
-    let forumAccount = await schemas.Account.findOne({ _id: forumUserId});
-    if(!forumAccount){
+    let forumAccount = await schemas.Account.findOne({ _id: forumUserId });
+    if (!forumAccount) {
         return res.status(500).json({
             error: "Forum user could not be found"
         });
@@ -960,7 +960,7 @@ ComicController.delete_comment = async function (req, res) {
 
     //Get comment
     let comment = Utils.findObjInArrayById(comic.comments, commentId);
-    if(!comment){
+    if (!comment) {
         return res.status(500).json({
             error: "The specified comment could not be found"
         });
@@ -973,10 +973,10 @@ ComicController.delete_comment = async function (req, res) {
     comic.comments = Utils.arrRemove(comic.comments, comment);
 
     //Save changes
-    try{
+    try {
         await comic.save();
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Unable to save changes after deleting comment"
         });
@@ -1059,7 +1059,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
     //Get comment
     let comment = Utils.findObjInArrayById(post.comments, commentId);
     let commentIndex = post.comments.indexOf(comment);
-    if(!comment){
+    if (!comment) {
         return res.status(500).json({
             error: "The specified comment could not be found"
         });
@@ -1074,12 +1074,12 @@ ComicController.delete_forumPost_comment = async function (req, res) {
     newPostsArr[postIndex] = post;
 
     //Save changes
-    try{
+    try {
         await schemas.Account.findByIdAndUpdate(forumAccount._id, {
             "$set": { "user.comic.forum.posts": newPostsArr }
         });
         return res.status(200).send();
-    } catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Unable to save changes after deleting forum post comment"
         });
@@ -2085,7 +2085,7 @@ ComicController.vote_forumPost = async function (req, res) {
         });
 
         await schemas.Account.findByIdAndUpdate(forumOwnerId, {
-            "$set": { "user.comic.forum.posts":newPostsArr}
+            "$set": { "user.comic.forum.posts": newPostsArr }
         });
 
         res.status(200).send();
@@ -2148,7 +2148,7 @@ ComicController.vote_comment = async function (req, res) {
         // Get the post
         let post = await schemas.ComicPost.findOne({ _id: postId });
 
-        if(!post){
+        if (!post) {
             return res.status(500).json({
                 error: "Post does not exist"
             });
@@ -2267,7 +2267,7 @@ ComicController.vote_comment = async function (req, res) {
         });
 
         await schemas.ComicPost.findByIdAndUpdate(post._id, {
-            "$set": { "comments" : newComments }
+            "$set": { "comments": newComments }
         });
 
         res.status(200).send();
@@ -2473,7 +2473,7 @@ ComicController.vote_forumpost_comment = async function (req, res) {
         });
 
         await schemas.Account.findByIdAndUpdate(forumOwner._id, {
-            "$set": { "user.comic.forum.posts" : newPostsArr}
+            "$set": { "user.comic.forum.posts": newPostsArr }
         });
 
         await account.save();
@@ -2549,7 +2549,7 @@ ComicController.bookmark = async function (req, res) {
     }
 
     //Comic is published. Add its ID to user bookmarks list
-    
+
     let newBookmarksList = [...account.user.comic.saved];
     newBookmarksList.push(comicId);
     console.log("New bookmarks list: ", newBookmarksList);
@@ -2755,8 +2755,8 @@ ComicController.unsubscribe_user = async function (req, res) {
     //Remove the subscription from the list
     console.log("ID of user to unsubscribe from: ", subscribeeId);
     let newSubscriptions = [];
-    for(subscription of subscriptions){
-        if(subscription != subscribeeId){
+    for (subscription of subscriptions) {
+        if (subscription != subscribeeId) {
             newSubscriptions.push(subscription);
         }
     }
@@ -2779,6 +2779,50 @@ ComicController.unsubscribe_user = async function (req, res) {
             error: "Error updating user's list of subscriptions"
         });
     }
+}
+
+ComicController.getAllForumPosts = function (req, res) {
+    /*
+        Request body { }
+
+        Response {
+            status: 200 OK or 500 ERROR,
+
+            body: {
+                forumPosts: [ForumPostObjects]
+            }
+        }
+    */
+
+    console.log("Entering get all Forum Posts for comics");
+
+    if (!req || !req.params || !req.params.id) {
+        return res.status(500).json({
+            error: "Invalid request params"
+        });
+    }
+
+    const userId = req.params.id;
+
+    const account = await schemas.Account.findOne({ _id: userId });
+
+    if (!account) {
+        return res.status(500).json({
+            error: "This user does not exist."
+        });
+    }
+
+    if (!account.user.comic.forum.active) {
+        return res.status(500).json({
+            error: "Forum not active"
+        });
+    }
+
+    const forumPosts = account.user.comic.forum.posts;
+
+    return res.status(200).json({
+        forumPosts: forumPosts
+    });
 }
 
 

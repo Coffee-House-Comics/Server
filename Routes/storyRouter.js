@@ -27,6 +27,8 @@ router.post('/forumPost/:id', auth.verify, utils.verifyValidId, StoryController.
 router.get('/published/:id', utils.verifyValidId, StoryController.published);
 // Get unpublished post 
 router.get('/unpublished/:id', auth.verify, utils.verifyValidId, StoryController.unpublished);
+// Get forum posts for a user by id
+router.get('/allForumPosts/:id', StoryController.getAllForumPosts);
 
 // Publishing
 router.post('/publish/:id', auth.verify, utils.verifyValidId, StoryController.publish);
