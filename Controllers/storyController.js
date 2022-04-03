@@ -2624,7 +2624,7 @@ StoryController.vote_forumpost_comment = async function (req, res) {
     }
 }
 
-StoryController.getAllForumPosts = function (req, res) {
+StoryController.getAllForumPosts = async function (req, res) {
     /*
         Request body { }
 

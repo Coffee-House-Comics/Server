@@ -2781,7 +2781,7 @@ ComicController.unsubscribe_user = async function (req, res) {
     }
 }
 
-ComicController.getAllForumPosts = function (req, res) {
+ComicController.getAllForumPosts = async function (req, res) {
     /*
         Request body { }
 
