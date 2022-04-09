@@ -21,5 +21,7 @@ router.put('/changePassword', auth.verify, AuthController.changePassword);
 
 router.put('/changeUserName', auth.verify, AuthController.changeUserName);
 
+router.post('/changeEmail', auth.verify, AuthController.changeEmail);
+
 
 module.exports = router

@@ -35,6 +35,17 @@ async function sendConfirmationEmail(Recepient, userId, confirmationCode) {
     console.log("Sent confirmation email");
 }
 
+async function sendChangeEmail(Recepient, userId, confirmationCode) {
+    const authLink = generateEmailAuthLink(userId, confirmationCode);
+
+    const subject = "Confirm your Coffee House Comics Account";
+    const message = "You have recently changed the email associated with your account, press this link to verify your new email:" + authLink;
+
+    const emailMessage = emailController.generateMail(Recepient, subject, message);
+    await emailController.sendMail(emailMessage);
+    console.log("Sent change email email");
+}
+
 async function sendPasswordResetEmail(Recepient, password) {
     const subject = "You have reset the password for your Coffee House Comics Account";
     const message = "You have reset the password for your Coffee House Comics Account <br/> \
@@ -451,7 +462,7 @@ AuthController.logoutUser = async function (req, res) {
         // Now create the cookie for the user (with the expired token) and return it
         const token = auth.expireToken();
         console.log("Created token: ", token);
-        
+
         return res.cookie("token", token, {
             httpOnly: true,
             secure: true,
@@ -752,6 +763,46 @@ AuthController.changeUserName = async function (req, res) {
             error: "Error changing userName"
         });
     }
+}
+
+AuthController.changeEmail = async function (req, res) {
+    /* Chanage Email ------------
+        Request body: {
+            newEmail: String
+        }
+    
+        Response {
+            status: 200 OK or 500 ERROR
+            body: { }
+        }
+    */
+
+    if (!req || !req.body || !req.body.newEmail || !req.userId) {
+        return res.status(500).json({
+            error: "Error changing Email"
+        });
+    }
+
+    const targetAccount = await schemas.Account.findOne({ _id: req.userId });
+
+    if (!targetAccount) {
+        return res.status(500).json({
+            error: "Error changing Email"
+        });
+    }
+
+    const code = generateCode();
+
+    targetAccount.email = newEmail;
+    // The user must confirm the new email before logging in again
+    targetAccount.isverified = false;
+    targetAccount.verificationCode = code;
+
+    targetAccount.save();
+
+    sendChangeEmail(newEmail, req.userId, code);
+
+    return res.status(200).send();
 }
 
 module.exports = AuthController;
