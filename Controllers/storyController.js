@@ -41,6 +41,8 @@ StoryController.explore = async function (req, res) {
         }
     */
 
+    console.log("Getting explore content");
+
     let recentContent = [];
     let likedContent = [];
 
@@ -87,6 +89,8 @@ StoryController.search = async function (req, res) {
             }
         }
     */
+
+    console.log("Performing content search");
 
     //Find all posts
     let posts = await schemas.StoryPost.find({});
@@ -151,6 +155,8 @@ StoryController.subscriptions = async function (req, res) {
         }
     */
 
+    console.log("Getting subscribed content");
+
     //Get the user that made the request
     let account = await schemas.Account.findOne({ _id: req.userId });
 
@@ -210,6 +216,8 @@ StoryController.create = async function (req, res) {
             }
         }
     */
+
+    console.log("Creating new story");
 
     //Check params
     if (!req) {
@@ -304,6 +312,9 @@ StoryController.createForumPost = async function (req, res) {
             }
         }
      */
+
+    console.log("Creating new forum post");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -403,6 +414,8 @@ StoryController.published = async function (req, res) {
         }
     */
 
+    console.log("Getting published story");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -454,6 +467,8 @@ StoryController.unpublished = async function (req, res) {
             }
         }
     */
+
+    console.log("Getting unpublished story");
 
     //Check params
     if (!req) {
@@ -523,6 +538,8 @@ StoryController.publish = async function (req, res) {
             status 200 OK or 500 ERROR or 403 FORBIDDEN
         }
     */
+
+    console.log("Publishing story");
 
     //Check params
     if (!req) {
@@ -597,6 +614,8 @@ StoryController.delete = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Deleting story");
 
     //Check params
     if (!req) {
@@ -731,6 +750,8 @@ StoryController.delete_forumPost = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Deleting forum post");
 
     //Check params
     if (!req) {
@@ -873,6 +894,9 @@ StoryController.delete_comment = async function (req, res) {
             }
         }
     */
+
+    console.log("Deleting comment");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -961,6 +985,8 @@ StoryController.delete_forumPost_comment = async function (req, res) {
             }
         }
     */
+    console.log("Deleting forum post comment");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1065,6 +1091,8 @@ StoryController.user_saved = async function (req, res) {
         }
     */
 
+    console.log("Getting bookmarked content");
+
     //Get the user that made the request
     let account = await schemas.Account.findOne({ _id: req.userId });
 
@@ -1110,6 +1138,8 @@ StoryController.user_toggleForum = async function (req, res) {
             }
         }
     */
+
+    console.log("Toggling user forum state");
 
     //Check params
     if (!req) {
@@ -1179,6 +1209,8 @@ StoryController.metadata_update = async function (req, res) {
             }
         }
     */
+
+    console.log("Changing story metadata");
 
     //Check params
     if (!req) {
@@ -1292,6 +1324,9 @@ StoryController.content_save = async function (req, res) {
             status: 200 OK or 500 ERROR
         }
     */
+
+    console.log("Changing story content");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1388,6 +1423,9 @@ StoryController.comment = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Commenting on story");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1486,6 +1524,9 @@ StoryController.comment_forumPost = async function (req, res) {
             }
         }
     */
+
+    console.log("Commenting on forum post");
+
     //Check params
     if (!req) {
         return res.status(500).json({

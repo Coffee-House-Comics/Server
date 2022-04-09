@@ -41,6 +41,8 @@ ComicController.explore = async function (req, res) {
         }
     */
 
+    console.log("Getting explore content");
+
     let recentContent = [];
     let likedContent = [];
 
@@ -87,6 +89,8 @@ ComicController.search = async function (req, res) {
             }
         }
     */
+
+    console.log("Performing content search");
 
     //Find all posts
     let posts = await schemas.ComicPost.find({});
@@ -151,6 +155,8 @@ ComicController.subscriptions = async function (req, res) {
         }
     */
 
+    console.log("Getting subscribed content");
+
     //Get the user that made the request
     let account = await schemas.Account.findOne({ _id: req.userId });
 
@@ -189,38 +195,6 @@ ComicController.subscriptions = async function (req, res) {
     });
 }
 
-ComicController.getProfileById = async function (req, res) {
-    /* Get profile By ID ------------
-        Request body: {}
-
-        Response {
-            status 200 OK or 500 ERROR
-            body: {
-                id: ObjectId
-                displayName: String,
-                bio: String,
-                profileImage: Image,
-            }
-        }
-    */
-}
-
-ComicController.getProfileByUserName = async function (req, res) {
-    /* Get profile By userName ------------
-        Request body: {}
-
-        Response {
-            status 200 OK or 500 ERROR
-            body: {
-                id: ObjectId
-                displayName: String,
-                bio: String,
-                profileImage: Image,
-            }
-        }
-    */
-}
-
 
 // Need Authentication ------------------------------------------------
 
@@ -242,6 +216,8 @@ ComicController.create = async function (req, res) {
             }
         }
     */
+
+    console.log("Creating new comic");
 
     //Check params
     if (!req) {
@@ -334,6 +310,9 @@ ComicController.createForumPost = async function (req, res) {
             }
         }
      */
+
+    console.log("Creating new forum post");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -433,6 +412,8 @@ ComicController.published = async function (req, res) {
         }
     */
 
+    console.log("Getting published comic");
+
     //Get params
     let comicId = req.params.id;
 
@@ -471,6 +452,8 @@ ComicController.unpublished = async function (req, res) {
             }
         }
     */
+
+    console.log("Getting unpublished comic");
 
     //Check params
     if (!req) {
@@ -541,6 +524,8 @@ ComicController.publish = async function (req, res) {
             status 200 OK or 500 ERROR or 403 FORBIDDEN
         }
     */
+
+    console.log("Publishing comic");
 
     //Check params
     if (!req) {
@@ -614,6 +599,8 @@ ComicController.delete = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Deleting comic");
 
     //Check params
     if (!req) {
@@ -750,6 +737,8 @@ ComicController.delete_forumPost = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Deleting forum post");
 
     //Check params
     if (!req) {
@@ -910,6 +899,9 @@ ComicController.delete_comment = async function (req, res) {
             }
         }
     */
+
+    console.log("Deleting comment");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -998,6 +990,9 @@ ComicController.delete_forumPost_comment = async function (req, res) {
             }
         }
     */
+
+    console.log("Deleting forum post comment");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1101,6 +1096,8 @@ ComicController.deleteSticker = async function (req, res) {
             }
         }
     */
+
+    console.log("Deleting sticker");
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1172,6 +1169,8 @@ ComicController.user_saved = async function (req, res) {
         }
     */
 
+    console.log("Getting bookmarked content");
+
     //Get the user that made the request
     let account = await schemas.Account.findOne({ _id: req.userId });
 
@@ -1217,6 +1216,8 @@ ComicController.user_toggleForum = async function (req, res) {
             }
         }
     */
+
+    console.log("Toggling user forum state");
 
     //Check params
     if (!req) {
@@ -1286,6 +1287,8 @@ ComicController.metadata_update = async function (req, res) {
             }
         }
     */
+
+    console.log("Changing comic metadata");
 
     //Check params
     if (!req) {
@@ -1399,6 +1402,9 @@ ComicController.content_save = async function (req, res) {
             }
         }
     */
+
+    console.log("Changing comic content");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1490,6 +1496,9 @@ ComicController.content_saveSticker = async function (req, res) {
             }
         }
     */
+
+    console.log("Saving sticker");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1553,6 +1562,9 @@ ComicController.comment = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Commenting on comic");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1651,6 +1663,9 @@ ComicController.comment_forumPost = async function (req, res) {
             }
         }
     */
+
+    console.log("Commenting on forum post");
+
     //Check params
     if (!req) {
         return res.status(500).json({

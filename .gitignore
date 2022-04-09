@@ -1,4 +1,5 @@
 /Static
+/Old_Static
 /node_modules
 .env
 *.log
