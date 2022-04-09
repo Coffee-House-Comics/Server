@@ -54,8 +54,15 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'))
 
 // Serving the static website pages ------------------------------------------------
 console.log("Now serving the static webpage from /Static");
-app.use(express.static(path.join(__dirname, 'Static')));
+const dirPath = path.join(__dirname, 'Static');
 
+app.use(express.static(dirPath));
+
+// Handle 404
+app.use(function (req, res) {
+    res.status(404).sendFile(dirPath + '/404.html')
+})
+console.log("Now serving custom 404 for slick routing stuff");
 
 // Start the webserver ------------------------------------------------
 app.listen(port, () => console.log(`Server listening on port ${port}!`));
