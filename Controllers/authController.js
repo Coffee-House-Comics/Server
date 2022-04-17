@@ -852,7 +852,7 @@ AuthController.getCurrentProfile = async function(req, res){
             });
         }
 
-        const responseJSON = utils.constructProfileObjFromAccount(targetAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(targetAccount);
 
         if (!responseJSON) {
             console.error("Invalid profile object");
@@ -861,6 +861,7 @@ AuthController.getCurrentProfile = async function(req, res){
             });
         }
 
+        console.log("Returning current profile object:", responseJSON);
         return res.status(200).json(responseJSON);
     }
     catch (err) {
