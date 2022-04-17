@@ -5,16 +5,16 @@ const Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 const utils = {};
 
-utils.verifyValidId = function(req, res, next){
-    if(!req.params || !req.params.id){
+utils.verifyValidId = function (req, res, next) {
+    if (!req.params || !req.params.id) {
         return res.status(500).json({
             error: "No ID provided in request params"
         });
     } else {
-        try{
+        try {
             mongoose.Types.ObjectId(req.params.id)
             next();
-        } catch(err) {
+        } catch (err) {
             console.error("Invalid ID in request params: " + req.params.id);
             return res.status(500).json({
                 error: "Invalid ID in request params"
@@ -23,7 +23,28 @@ utils.verifyValidId = function(req, res, next){
     }
 }
 
-utils.constructProfileObjFromAccount = function (account) {
+utils.generatePostSnapshot = async function (isComic, posts) {
+    console.log("Posts:", posts);
+    const snapshots = await Promise.all(posts.flatMap(async function (value) {
+        // Get the post data
+        const post = (isComic) ? await schemas.ComicPost.findOne({ _id: value }) : await schemas.StoryPost.find({ _id: value });
+
+        // console.log("post:", post);
+
+        return (post && posts.isPublished) ? [{
+            name: post.name,
+            author: post.author,
+            series: post.series,
+            beans: post.beans
+        }] : [];
+    }));
+
+    console.log("GPS:", snapshots);
+
+    return snapshots;
+}
+
+utils.constructProfileObjFromAccount = async function (account) {
     if (!account || !account._id || !account.user || !account.user.displayName ||
         (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
         (account.user.comic.beans === null)) {
@@ -33,11 +54,19 @@ utils.constructProfileObjFromAccount = function (account) {
     return {
         id: account._id,
         displayName: account.user.displayName,
+        userName: account.userName,
         bio: account.user.bio,
         profileImage: account.user.profileImage,
 
         storyBeans: account.user.story.beans,
         comicBeans: account.user.story.beans,
+
+        storySnapshots: await utils.generatePostSnapshot(false, account.user.story.posts),
+        comicSnapshots: await utils.generatePostSnapshot(true, account.user.comic.posts),
+
+        // TODO: Fix this - we dont actually store this information
+        storySubscribers: 0,
+        comicSubscribers: 0,
 
         storyForum: (account.user.story.forum.active) ? account.user.story.forum.posts : null,
         comicForum: (account.user.comic.forum.active) ? account.user.comic.forum.posts : null,

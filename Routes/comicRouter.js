@@ -27,8 +27,12 @@ router.post('/forumPost/:id', auth.verify, utils.verifyValidId, ComicController.
 //Viewing
 // View a published comic by id
 router.get('/published/:id', utils.verifyValidId, ComicController.published);
+// Fetch all the published posts of a user
+// router.get('/all/published', ComicController.getAll);
 // view an unpublished comic (to edit it)
 router.get('/unpublished/:id', auth.verify, utils.verifyValidId, ComicController.unpublished);
+// Get all the unpublished comics the user owns
+// router.get('/all/unpublished', auth.verify, ComicController.getAllUnPublishec);
 // Get forum posts for a user by id
 router.get('/allForumPosts/:id', utils.verifyValidId, ComicController.getAllForumPosts);
 

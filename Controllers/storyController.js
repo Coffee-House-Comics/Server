@@ -386,12 +386,14 @@ StoryController.createForumPost = async function (req, res) {
     }
 
     //Add the post to the user's forum
-    forumAccount.user.story.forum.posts.push(forumPost);
+    const index = forumAccount.user.story.forum.posts.push(forumPost) - 1;
 
     //Save changes to DB
     try {
-        await forumAccount.save();
-        return res.status(200).send();
+        const acc = await forumAccount.save();
+        return res.status(200).json({
+            id: acc.user.story.forum.posts[index]._id
+        });
     } catch (err) {
         return res.status(500).json({
             error: "Error saving forum posts to DB"

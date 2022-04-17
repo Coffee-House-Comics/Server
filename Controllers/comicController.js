@@ -305,6 +305,7 @@ ComicController.createForumPost = async function (req, res) {
         Response {
             status: 200 OK or 500 ERROR,
             body: {
+                id: 
                 //If error
                 error: String
             }
@@ -381,15 +382,20 @@ ComicController.createForumPost = async function (req, res) {
         comments: [],
         whoLiked: [],
         whoDisliked: []
-    }
+    };
 
     //Add the post to the user's forum
-    forumAccount.user.comic.forum.posts.push(forumPost);
+    const index = forumAccount.user.comic.forum.posts.push(forumPost) - 1;
 
     //Save changes to DB
     try {
-        await forumAccount.save();
-        return res.status(200).send();
+        const acc = await forumAccount.save();
+
+        console.log("FP we just added:", acc.user.comic.forum.posts[index]);
+
+        return res.status(200).json({
+            id: acc.user.comic.forum.posts[index]._id
+        });
     } catch (err) {
         return res.status(500).json({
             error: "Error saving forum posts to DB"
@@ -2838,6 +2844,14 @@ ComicController.getAllForumPosts = async function (req, res) {
     return res.status(200).json({
         forumPosts: forumPosts
     });
+}
+
+// Get all the published comics of a user (un authenticated)
+ComicController.getAll = async function (req, res) {
+
+
+
+
 }
 
 

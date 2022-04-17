@@ -3,6 +3,7 @@
 */
 
 const schemas = require('../Schemas/schemas');
+const utils = require('../Utils');
 
 // Main functions ----------------------------------------------
 
@@ -46,12 +47,9 @@ CommonController.getProfileById = async function (req, res) {
             });
         }
 
-        return res.status(200).json({
-            id: account._id,
-            displayName: account.user.displayName,
-            bio: account.user.bio,
-            profileImage: account.user.profileImage
-        });
+        const response = await utils.constructProfileObjFromAccount(account);
+
+        return res.status(200).json(response);
 
     }
     catch (err) {
@@ -93,13 +91,9 @@ CommonController.getProfileByUserName = async function (req, res) {
             });
         }
 
-        return res.status(200).json({
-            id: account._id,
-            displayName: account.user.displayName,
-            bio: account.user.bio,
-            profileImage: account.user.profileImage
-        });
+        const response = utils.constructProfileObjFromAccount(account);
 
+        return res.status(200).json(response);
     }
     catch (err) {
         return res.status(500).json({
