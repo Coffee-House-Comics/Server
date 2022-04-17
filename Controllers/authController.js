@@ -337,8 +337,8 @@ AuthController.loginUser = async function (req, res) {
         console.log("About to respond...");
         return res.cookie("token", token, {
             httpOnly: true,
-            secure: false,
-            // sameSite: true
+            secure: true,
+            sameSite: true
         }).status(200).json(responseJSON);
     }
     catch (err) {
