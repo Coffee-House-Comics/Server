@@ -377,20 +377,28 @@ AuthController.forgotPassword = async function (req, res) {
     const userName = body.userName;
     const email = body.email;
 
-    if (!userName || !email) {
-        console.error("Username or email not provided");
+    if (!userName && !email) {
+        console.error("Username and email not provided");
         return res.status(500).json({
             error: "Malformed Body"
         });
     }
 
     try {
-        const account = await schemas.Account.findOne({ email: email });
+        // Reset by Email
+        let account;
+        if (email) {
+            account = await schemas.Account.findOne({ email: email });
+        }
+        // Reset by Username
+        else {
+            account = await schemas.Account.findOne({ userName: userName });
+        }
 
-        if (!account || account.userName !== userName) {
-            console.error("Incorrect username for this account");
+        if (!account) {
+            console.error("User does not exist");
             return res.status(500).json({
-                error: "Either email or username is incorrect"
+                error: "User does not exist"
             });
         }
 
