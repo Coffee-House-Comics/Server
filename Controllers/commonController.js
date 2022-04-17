@@ -5,6 +5,7 @@ const formidable = require('formidable')
 
 const schemas = require('../Schemas/schemas');
 const utils = require('../Utils');
+const path = require('path');
 
 // Main functions ----------------------------------------------
 
@@ -135,9 +136,9 @@ CommonController.uploadImage = async function (req, res) {
         console.log("MIME type ", mimeType)
 
         let fileExtension = ""
-        if(mimeType.includes("png")){
+        if (mimeType.includes("png")) {
             fileExtension = ".png"
-        } else if(mimeType.includes("jpeg")){
+        } else if (mimeType.includes("jpeg")) {
             fileExtension = ".jpg"
         } else {
             console.log("Uploads should only work for PNGs and JPEGs");
@@ -162,6 +163,25 @@ CommonController.uploadImage = async function (req, res) {
             imageURL: imageURL
         });
     });
+}
+
+CommonController.fetchImage = async function (req, res) {
+    if (!req || !req.params || !req.params.imgName) {
+        return res.status(500).json({
+            error: true,
+            message: "What image?"
+        });
+    }
+
+    const imageName = req.params.imageName;
+
+    console.log("Trying to get image with imageName:", imageName);
+
+    const dirPath = path.join(__dirname, "Images/" + image.name);
+
+    console.log("This resolved to dir path:", dirPath);
+
+    res.status(200).sendFile(dirPath)
 }
 
 

@@ -46,6 +46,9 @@ app.use('/comic', comicRouter);
 const storyRouter = require('./Routes/storyRouter');
 app.use('/story', storyRouter);
 
+const imageRouter = require('./Routes/imageRouter');
+app.use('/images', imageRouter);
+
 
 // Database object ------------------------------------------------
 console.log("Initializing the database connection...");

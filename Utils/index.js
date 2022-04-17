@@ -27,11 +27,11 @@ utils.generatePostSnapshot = async function (isComic, posts) {
     console.log("Posts:", posts);
     const snapshots = await Promise.all(posts.flatMap(async function (value) {
         // Get the post data
-        const post = (isComic) ? await schemas.ComicPost.findOne({ _id: value }) : await schemas.StoryPost.find({ _id: value });
+        const [post] = (isComic) ? await schemas.ComicPost.find({ _id: value }) : await schemas.StoryPost.find({ _id: value });
 
         // console.log("post:", post);
 
-        return (post && posts.isPublished) ? [{
+        return (post && post.isPublished) ? [{
             name: post.name,
             author: post.author,
             series: post.series,
