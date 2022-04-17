@@ -1640,12 +1640,16 @@ ComicController.comment = async function (req, res) {
     };
 
     //Add the comment to the post
-    comic.comments.push(comment);
+    let commentIndex = comic.comments.push(comment)-1;
 
     //Save changes to DB
     try {
-        await comic.save();
-        return res.status(200).send();
+        let newComic = await comic.save();
+        let commentId = newComic.comments[commentIndex]._id;
+        console.log("ID of newly created comment on comic: ", commentId)
+        return res.status(200).json({
+            id: commentId
+        });
     } catch (err) {
         return res.status(500).json({
             error: "Error saving forum posts to DB"
@@ -1670,7 +1674,7 @@ ComicController.comment_forumPost = async function (req, res) {
         }
     */
 
-    console.log("Commenting on forum post");
+    console.log("Commenting on comic forum post");
 
     //Check params
     if (!req) {
@@ -1747,7 +1751,7 @@ ComicController.comment_forumPost = async function (req, res) {
     };
 
     //Add the comment to the post
-    post.comments.push(comment);
+    let commentIndex = post.comments.push(comment)-1;
 
     //Update the array of posts
     forumPosts[postIndex] = post;
@@ -1757,8 +1761,14 @@ ComicController.comment_forumPost = async function (req, res) {
         await schemas.Account.findByIdAndUpdate(forumUserId, {
             "$set": { "user.comic.forum.posts": forumPosts }
         });
-        return res.status(200).send();
+        let newAcc = await schemas.Account.findById(forumUserId);
+        let commentId = newAcc.user.comic.forum.posts[postIndex].comments[commentIndex]._id;
+        console.log("ID of newly created forum post comment: ", commentId);
+        return res.status(200).json({
+            id: commentId
+        });
     } catch (err) {
+        console.log("Error updating account in DB to add forum post comment\n", err)
         return res.status(500).json({
             error: "Error saving forum posts to DB"
         });

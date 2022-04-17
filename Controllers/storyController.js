@@ -360,6 +360,7 @@ StoryController.createForumPost = async function (req, res) {
     //Get forum user
     let forumAccount = await schemas.Account.findOne({ _id: forumUserId });
     if (!forumAccount) {
+        console.log("Forum user with id: " + forumUserId + " not found");
         return res.status(500).json({
             error: "Forum user could not be found"
         });
@@ -367,6 +368,7 @@ StoryController.createForumPost = async function (req, res) {
 
     //Make sure the forum user's forum is enabled
     if (!forumAccount.user.story.forum.active) {
+        console.log("Forum not enabled");
         return res.status(500).json({
             error: "This user's forum is not enabled"
         });
@@ -1497,12 +1499,16 @@ StoryController.comment = async function (req, res) {
     };
 
     //Add the comment to the post
-    story.comments.push(comment);
+    let commentIndex = story.comments.push(comment)-1;
 
     //Save changes to DB
     try {
-        await story.save();
-        return res.status(200).send();
+        let newStory = await story.save();
+        let commentId = newStory.comments[commentIndex]._id;
+        console.log("ID of newly created story comment: ", commentId);
+        return res.status(200).json({
+            id: commentId
+        });
     } catch (err) {
         return res.status(500).json({
             error: "Error saving forum posts to DB"
@@ -1604,7 +1610,7 @@ StoryController.comment_forumPost = async function (req, res) {
     };
 
     //Add the comment to the post
-    post.comments.push(comment);
+    let commentIndex = post.comments.push(comment)-1;
 
     //Update the array of posts
     forumPosts[postIndex] = post;
@@ -1614,7 +1620,12 @@ StoryController.comment_forumPost = async function (req, res) {
         await schemas.Account.findByIdAndUpdate(forumUserId, {
             "$set": { "user.story.forum.posts": forumPosts }
         });
-        return res.status(200).send();
+        let newAcc = await schemas.Account.findById(forumUserId);
+        let commentId = Utils.findObjInArrayById(newAcc.user.story.forum.posts, forumPostId).comments[commentIndex]._id;
+        console.log("ID of newly created comment on forum post: ", commentId);
+        return res.status(200).json({
+            id: commentId
+        });
     } catch (err) {
         return res.status(500).json({
             error: "Error saving forum posts to DB"

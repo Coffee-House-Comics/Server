@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 
 // ------------------------------------------------------------
 
@@ -21,14 +22,19 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(cookieParser())
 app.use(bodyParser.urlencoded({ extended: true }));
-// Setup Cors
+// Setup very relevant info
 app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    // res.header("Access-Control-Allow-Origin", "*");
+    // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    // res.header("Access-Control-Allow-Credentials", true);
     res.header("Best-Dog", "SHADOW"); // :D
     next();
 });
 
+app.use(cors({
+    origin: ['https://coffeehousecomics.com', 'http://test.localhost.com:3000'],
+    credentials: true,
+}));
 
 // Endpoint Routers ------------------------------------------------
 const authRouter = require('./Routes/authRouter');
