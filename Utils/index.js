@@ -57,6 +57,7 @@ utils.constructProfileObjFromAccount = async function (account) {
         userName: account.userName,
         bio: account.user.bio,
         profileImage: account.user.profileImage,
+        email: account.email,
 
         storyBeans: account.user.story.beans,
         comicBeans: account.user.story.beans,

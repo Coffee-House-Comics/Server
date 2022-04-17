@@ -543,7 +543,7 @@ AuthController.confirmCode = async function (req, res) {
 AuthController.updateProfile = async function (req, res) {
     /* Update Profile ------------
         Request body: {
-            image: Image,
+            profileImage: String,
             displayName: String,
             bio: String,
         }
@@ -554,7 +554,7 @@ AuthController.updateProfile = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,
+                profileImage: Buffer,
                 storyBeans: Number,
                 comicBeans: Number
 
@@ -578,15 +578,15 @@ AuthController.updateProfile = async function (req, res) {
         });
     }
 
-    const image = body.image;
-    const displayName = body.displayName;
-    const bio = body.bio;
-
-    if (!image || !displayName || !bio) {
+    if (!body.profileImage || !body.displayName || !body.bio) {
         return res.status(500).json({
             error: "Malformed Body"
         });
     }
+
+    const profileImage = Buffer.from(body.profileImage, 'base64');
+    const displayName = body.displayName;
+    const bio = body.bio;
 
     try {
         let account = await schemas.Account.findOne({ _id: req.userId });
@@ -599,7 +599,7 @@ AuthController.updateProfile = async function (req, res) {
 
         account.user.displayName = displayName;
         account.user.bio = bio;
-        account.user.profileImage = image;
+        account.user.profileImage = profileImage;
 
         // Now save the updated account
         const savedAccount = await account.save();
