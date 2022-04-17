@@ -813,4 +813,61 @@ AuthController.changeEmail = async function (req, res) {
     return res.status(200).send();
 }
 
+AuthController.getCurrentProfile = async function(req, res){
+    /* Gets the profile of the currently logged in user (GET) ------------
+        Request body: {}
+
+        Response {
+            status: 200 OK or 500 ERROR
+            body: {
+                id: ObjectId
+                displayName: String,
+                bio: String,
+                profileImage: Image,    
+                storyBeans: Number, 
+                comicBeans: Number
+                
+                // If error:
+                error: String
+            }
+        }
+    */
+
+    if(!req || !req.userId){
+        console.log("Cannot return currently logged in user profile because user is not logged in");
+        return res.status(401).json({
+            error: "Not logged in"
+        });
+    }
+
+    console.log("Getting currently logged in user...");
+    try {
+        const targetAccount = await schemas.Account.findById(req.userId);
+
+        if (!targetAccount) {
+            console.error("Account does not exist");
+            return res.status(500).json({
+                error: "Account does not exist"
+            });
+        }
+
+        const responseJSON = utils.constructProfileObjFromAccount(targetAccount);
+
+        if (!responseJSON) {
+            console.error("Invalid profile object");
+            return res.status(500).json({
+                error: "Error logging in."
+            });
+        }
+
+        return res.status(200).json(responseJSON);
+    }
+    catch (err) {
+        console.error("Error sending currently logged in user", err);
+        return res.status(500).json({
+            error: "Error logging in."
+        });
+    }
+}
+
 module.exports = AuthController;

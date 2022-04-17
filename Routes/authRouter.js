@@ -23,5 +23,8 @@ router.put('/changeUserName', auth.verify, AuthController.changeUserName);
 
 router.post('/changeEmail', auth.verify, AuthController.changeEmail);
 
+//Get the profile for the logged in user
+router.get('/currentProfile', auth.verify, AuthController.getCurrentProfile);
+
 
 module.exports = router
