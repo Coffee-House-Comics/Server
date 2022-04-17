@@ -157,7 +157,7 @@ CommonController.uploadImage = async function (req, res) {
                 });
             }
         });
-        let imageURL = "https://coffeehousecomics.com/images/fetch/" + imgName;
+        let imageURL = "https://coffeehousecomics.com/images/fetch/" + imgName + fileExtension;
 
         return res.status(200).json({
             imageURL: imageURL
