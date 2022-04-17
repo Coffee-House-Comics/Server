@@ -301,9 +301,9 @@ AuthController.loginUser = async function (req, res) {
 
         //Make sure email is verified
         console.log("Checking if email is verified");
-        if (!targetAccount.isverified) {
+        if (targetAccount.isverified === false) {
             console.log("Email is not verified");
-            return res.status(401).json({
+            return res.status(500).json({
                 error: "Email not yet verified"
             });
         }
@@ -325,7 +325,7 @@ AuthController.loginUser = async function (req, res) {
         const token = auth.signToken(targetAccount._id);
         console.log("Created token: " + token);
 
-        const responseJSON = utils.constructProfileObjFromAccount(targetAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(targetAccount);
 
         if (!responseJSON) {
             console.error("Invalid profile object");
@@ -334,6 +334,7 @@ AuthController.loginUser = async function (req, res) {
             });
         }
 
+        console.log("About to respond...");
         return res.cookie("token", token, {
             httpOnly: true,
             secure: true,
@@ -603,7 +604,7 @@ AuthController.updateProfile = async function (req, res) {
         // Now save the updated account
         const savedAccount = await account.save();
 
-        const responseJSON = utils.constructProfileObjFromAccount(savedAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(savedAccount);
 
         if (!responseJSON) {
             return res.status(500).json({
@@ -755,7 +756,7 @@ AuthController.changeUserName = async function (req, res) {
 
         let savedAccount = await targetAccount.save();
 
-        const responseJSON = utils.constructProfileObjFromAccount(savedAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(savedAccount);
 
         if (!responseJSON) {
             return res.status(500).json({
