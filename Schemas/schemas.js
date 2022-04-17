@@ -138,11 +138,11 @@ const Account = model('Account', AccountSchema);
 const ComicPost = model('ComicPost', ComicPostSchema);
 const StoryPost = model('StoryPost', StoryPostSchema);
 
-const Image = model('Image', ImageSchema);
+//const Image = model('Image', ImageSchema);
 
 module.exports = {
     Account,
     ComicPost,
     StoryPost,
-    Image
+    //Image
 };
