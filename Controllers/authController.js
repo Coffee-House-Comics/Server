@@ -260,7 +260,7 @@ AuthController.loginUser = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,    
+                profileImage: String,    
                 storyBeans: Number, 
                 comicBeans: Number
                 
@@ -554,7 +554,7 @@ AuthController.updateProfile = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Buffer,
+                profileImage: String,
                 storyBeans: Number,
                 comicBeans: Number
 
@@ -584,7 +584,7 @@ AuthController.updateProfile = async function (req, res) {
         });
     }
 
-    const profileImage = Buffer.from(body.profileImage, 'base64');
+    const profileImage = body.profileImage;
     const displayName = body.displayName;
     const bio = body.bio;
 
@@ -708,7 +708,7 @@ AuthController.changeUserName = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,
+                profileImage: String,
                 storyBeans: Number,
                 comicBeans: Numver
 
@@ -824,7 +824,7 @@ AuthController.getCurrentProfile = async function(req, res){
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,    
+                profileImage: String,    
                 storyBeans: Number, 
                 comicBeans: Number
                 

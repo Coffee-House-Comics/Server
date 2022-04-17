@@ -1,6 +1,7 @@
 /*
     ** This controller hosts methods that are the same for both comic and story such as get profile by id **
 */
+const formidable = require('formidable')
 
 const schemas = require('../Schemas/schemas');
 const utils = require('../Utils');
@@ -19,7 +20,7 @@ CommonController.getProfileById = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,
+                profileImage: String,
 
                 storyBeans: Number,
                 comicBeans: Number,
@@ -69,7 +70,7 @@ CommonController.getProfileByUserName = async function (req, res) {
                 id: ObjectId
                 displayName: String,
                 bio: String,
-                profileImage: Image,
+                profileImage: String,
             }
         }
     */
@@ -100,6 +101,67 @@ CommonController.getProfileByUserName = async function (req, res) {
             err: "Server error getting profile by user Name"
         });
     }
+}
+
+CommonController.uploadImage = async function (req, res) {
+    let form = new formidable.IncomingForm();
+    console.log("Media form: ", form);
+    form.parse(req, function (err, fields, files) {
+        console.log("Form req: ", req)
+        console.log("Files: ", files)
+        if (err) {
+            console.log("Error handling image upload")
+            console.error(err)
+            return res.status(500).json({
+                error: true,
+                message: "Error handling image upload"
+            });
+        }
+        let fileUploaded = files.file
+        console.log("File uploaded: ", fileUploaded)
+
+        if (!fileUploaded) {
+            console.log("Image not received")
+            return res.status(500).json({
+                error: true,
+                message: "Image not received"
+            });
+        }
+
+        //Get properties
+        let imgName = fileUploaded.newFilename;
+        let mimeType = fileUploaded.mimetype;
+        console.log("imgName ", imgName)
+        console.log("MIME type ", mimeType)
+
+        let fileExtension = ""
+        if(mimeType.includes("png")){
+            fileExtension = ".png"
+        } else if(mimeType.includes("jpeg")){
+            fileExtension = ".jpg"
+        } else {
+            console.log("Uploads should only work for PNGs and JPEGs");
+            return res.status(400).json({
+                error: true,
+                message: "Image must be either PNG or JPEG"
+            });
+        }
+
+        //Copy file to image folder
+        fs.copyFile(fileUploaded.filepath, __dirname + "/Images/" + imgName + fileExtension, (err) => {
+            if (err) {
+                console.error("Error copying image to new location", err)
+                return res.status(500).json({
+                    error: "Error copying image to new location"
+                });
+            }
+        });
+        let imageURL = "https://coffeehousecomics.com/images/fetch/" + imgName;
+
+        return res.status(200).json({
+            imageURL: imageURL
+        });
+    });
 }
 
 

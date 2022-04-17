@@ -44,7 +44,7 @@ const PostMetadata = ({
     isPublished: Boolean,
     publishedDate: Date,
     beans: Number,
-    coverPhoto: Buffer,
+    coverPhoto: String,
 
     series: String,
 
@@ -117,7 +117,7 @@ const AccountSchema = new Schema({
     user: {
         displayName: String,
         bio: String,
-        profileImage: Buffer,
+        profileImage: String,
 
         story: {
             ...appMetadata
@@ -138,8 +138,11 @@ const Account = model('Account', AccountSchema);
 const ComicPost = model('ComicPost', ComicPostSchema);
 const StoryPost = model('StoryPost', StoryPostSchema);
 
+const Image = model('Image', ImageSchema);
+
 module.exports = {
     Account,
     ComicPost,
     StoryPost,
+    Image
 };
