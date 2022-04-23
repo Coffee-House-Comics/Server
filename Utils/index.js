@@ -86,10 +86,11 @@ utils.arrRemove = function (arr, toRemove) {
  * Removes all "effects" of a comment
  * Updates bean count and liked/disliked lists of all users involved in comment.
  * 
+ * @param {Boolean} isComic true 
  * @param {CommentSchema} comment The comment to disconnect
  * @returns A string error if one occurred, null if successful
  */
-utils.disconnectComment = async function (comment) {
+utils.disconnectComment = async function (isComic, comment) {
     //Find the user who made this comment
     let commenter = await schemas.Account.findOne({ _id: comment.ownerId });
     if (!commenter) {
@@ -99,30 +100,54 @@ utils.disconnectComment = async function (comment) {
     //Find all users who liked this comment
     for (let likerID of comment.whoLiked) {
         //Find the user for this ID
-        let liker = await schemas.Account.findOneById(likerID);
+        let liker = await schemas.Account.findOne({ _id: likerID });
         if (!liker) {
             return "Liker could not be found";
         }
 
-        //Change the commenter's reputation
-        let currentBeanCount = commenter.user.story.beans;
-        try {
-            await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": { "user.story.beans": currentBeanCount - 1 }
-            });
-        } catch (err) {
-            return "Error updating commenter's bean count (was " + currentBeanCount +")";
+        if (isComic) {
+            //Change the commenter's reputation
+            let currentBeanCount = commenter.user.comic.beans;
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.comic.beans": currentBeanCount - 1 }
+                });
+            } catch (err) {
+                return "Error updating commenter's bean count (was " + currentBeanCount + "). ID: " + comment.ownerId;
+            }
+
+            //Remove this comment from the user's list of liked things
+            let likedIds = utils.arrRemove(liker.user.comic.liked, comment._id);
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.comic.liked": likedIds }
+                });
+            } catch (err) {
+                return "Error updating comment liker's list of liked objects";
+            }
+
+        } else {
+            //Change the commenter's reputation
+            let currentBeanCount = commenter.user.story.beans;
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.story.beans": currentBeanCount - 1 }
+                });
+            } catch (err) {
+                return "Error updating commenter's bean count (was " + currentBeanCount + ")";
+            }
+
+            //Remove this comment from the user's list of liked things
+            let likedIds = utils.arrRemove(liker.user.story.liked, comment._id);
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.story.liked": likedIds }
+                });
+            } catch (err) {
+                return "Error updating comment liker's list of liked objects";
+            }
         }
 
-        //Remove this comment from the user's list of liked things
-        let likedIds = Utils.arrRemove(liker.user.story.liked, comment._id);
-        try {
-            await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": { "user.story.liked": likedIds }
-            });
-        } catch (err) {
-            return "Error updating comment liker's list of liked objects";
-        }
     }
 
     //Find all users who disliked this comment
@@ -133,25 +158,48 @@ utils.disconnectComment = async function (comment) {
             return "Disliker could not be found";
         }
 
-        //Change the commenter's reputation
-        let currentBeanCount = commenter.user.story.beans;
-        try {
-            await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": { "user.story.beans": currentBeanCount + 1 }
-            });
-        } catch (err) {
-            return "Error updating commenter's bean count";
+        if (isComic) {
+            //Change the commenter's reputation
+            let currentBeanCount = commenter.user.comic.beans;
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.comic.beans": currentBeanCount + 1 }
+                });
+            } catch (err) {
+                return "Error updating commenter's bean count";
+            }
+
+            //Remove this comment from the user's list of disliked things
+            let dislikedIds = utils.arrRemove(disliker.user.comic.disliked, comment._id);
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.comic.disliked": dislikedIds }
+                });
+            } catch (err) {
+                return "Error updating comment disliker's list of disliked objects";
+            }
+        } else {
+            //Change the commenter's reputation
+            let currentBeanCount = commenter.user.story.beans;
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.story.beans": currentBeanCount + 1 }
+                });
+            } catch (err) {
+                return "Error updating commenter's bean count";
+            }
+
+            //Remove this comment from the user's list of disliked things
+            let dislikedIds = utils.arrRemove(disliker.user.story.disliked, comment._id);
+            try {
+                await schemas.Account.findByIdAndUpdate(comment.ownerId, {
+                    "$set": { "user.story.disliked": dislikedIds }
+                });
+            } catch (err) {
+                return "Error updating comment disliker's list of disliked objects";
+            }
         }
 
-        //Remove this comment from the user's list of disliked things
-        let dislikedIds = Utils.arrRemove(disliker.user.story.disliked, comment._id);
-        try {
-            await schemas.Account.findByIdAndUpdate(userId, {
-                "$set": { "user.story.disliked": dislikedIds }
-            });
-        } catch (err) {
-            return "Error updating comment disliker's list of disliked objects";
-        }
     }
     return null;
 }

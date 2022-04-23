@@ -491,6 +491,7 @@ ComicController.unpublished = async function (req, res) {
     }
 
     //Get post
+    console.log("Attempting to get comic with ID:", comicId);
     let comic = await schemas.ComicPost.findOne({ _id: comicId });
     if (!comic) {
         return res.status(500).json({
@@ -656,7 +657,7 @@ ComicController.delete = async function (req, res) {
     //Disconnect comments
     for (let comment of comic.comments) {
         //Disconnect comment from all users
-        let err = await Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(true, comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -809,7 +810,7 @@ ComicController.delete_forumPost = async function (req, res) {
     //Disconnect comments
     for (let comment of post.comments) {
         //Disconnect comment from all users
-        let err = await Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(true, comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -965,7 +966,7 @@ ComicController.delete_comment = async function (req, res) {
     }
 
     //Disconnect comment
-    await Utils.disconnectComment(comment)
+    await Utils.disconnectComment(true, comment)
 
     //Remove comment
     comic.comments = Utils.arrRemove(comic.comments, comment);
@@ -1067,7 +1068,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
     }
 
     //Disconnect comment
-    await Utils.disconnectComment(comment)
+    await Utils.disconnectComment(true, comment)
 
     //Remove comment
     let newPostsArr = [...forumAccount.user.comic.forum.posts];
@@ -1090,7 +1091,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
 ComicController.deleteSticker = async function (req, res) {
     /* Delete a sticker ------------
         Request body: {
-            sticker: JSON
+            sticker: String
         }
 
         Response {
@@ -1491,7 +1492,7 @@ ComicController.content_save = async function (req, res) {
 ComicController.content_saveSticker = async function (req, res) {
     /* Save a Sticker ------------
         Request body: {
-            sticker: JSON
+            sticker: String
         }
 
         Response {

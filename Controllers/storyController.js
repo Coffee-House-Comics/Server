@@ -669,7 +669,7 @@ StoryController.delete = async function (req, res) {
     //Disconnect comments
     for (let comment of story.comments) {
         //Disconnect comment from all users
-        let err = await Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(false, comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -802,7 +802,7 @@ StoryController.delete_forumPost = async function (req, res) {
     //Disconnect comments
     for (let comment of post.comments) {
         //Disconnect comment from all users
-        let err = await Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(false, comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -958,7 +958,7 @@ StoryController.delete_comment = async function (req, res) {
     }
 
     //Disconnect comment
-    await Utils.disconnectComment(comment)
+    await Utils.disconnectComment(false, comment)
 
     //Remove comment
     story.comments = Utils.arrRemove(story.comments, comment);
@@ -1059,7 +1059,7 @@ StoryController.delete_forumPost_comment = async function (req, res) {
     }
 
     //Disconnect comment
-    await Utils.disconnectComment(comment)
+    await Utils.disconnectComment(false, comment)
 
     //Remove comment
     let newPostsArr = [...forumAccount.user.story.forum.posts];

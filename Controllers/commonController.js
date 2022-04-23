@@ -107,7 +107,6 @@ CommonController.getProfileByUserName = async function (req, res) {
 
 CommonController.uploadImage = async function (req, res) {
     let form = new formidable.IncomingForm();
-    console.log("Media form: ", form);
     form.parse(req, function (err, fields, files) {
         if (err) {
             console.log("Error handling image upload")

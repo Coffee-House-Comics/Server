@@ -125,7 +125,7 @@ const AccountSchema = new Schema({
 
         comic: {
             ...appMetadata,
-            savedStickers: [JSON],
+            savedStickers: [String],
         },
     }
 });
