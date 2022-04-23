@@ -107,7 +107,7 @@ AuthController.registerUser = async function (req, res, next) {
         const email = body.email;
         const displayName = body.displayName;
         const bio = body.bio;
-        const profileImage = Buffer.alloc(10); // TODO: Init with some specific image
+        const profileImage = 'https://coffeehousecomics.com/images/fetch/default_profile.png' 
         if (!userName || !password || !confirmPassword || !email || !displayName || !bio) {
             console.error("Malformed body");
             return res.status(500).json({
@@ -416,6 +416,8 @@ AuthController.forgotPassword = async function (req, res) {
         const passHash = await generatePassHash(tempPass);
 
         account.passwordHash = passHash;
+
+        console.log("mwahahahaha:", tempPass);
 
         // Send the email with the new password (no need to await)
         sendPasswordResetEmail(account.email, tempPass);

@@ -6,6 +6,7 @@ const formidable = require('formidable')
 const schemas = require('../Schemas/schemas');
 const utils = require('../Utils');
 const path = require('path');
+const fs = require('fs');
 
 // Main functions ----------------------------------------------
 
@@ -108,8 +109,6 @@ CommonController.uploadImage = async function (req, res) {
     let form = new formidable.IncomingForm();
     console.log("Media form: ", form);
     form.parse(req, function (err, fields, files) {
-        console.log("Form req: ", req)
-        console.log("Files: ", files)
         if (err) {
             console.log("Error handling image upload")
             console.error(err)
@@ -119,7 +118,6 @@ CommonController.uploadImage = async function (req, res) {
             });
         }
         let fileUploaded = files.file
-        console.log("File uploaded: ", fileUploaded)
 
         if (!fileUploaded) {
             console.log("Image not received")
@@ -138,7 +136,7 @@ CommonController.uploadImage = async function (req, res) {
         let fileExtension = ""
         if (mimeType.includes("png")) {
             fileExtension = ".png"
-        } else if (mimeType.includes("jpeg")) {
+        } else if (mimeType.includes("jpeg") || (mimeType.includes("jpg"))) {
             fileExtension = ".jpg"
         } else {
             console.log("Uploads should only work for PNGs and JPEGs");
@@ -148,19 +146,23 @@ CommonController.uploadImage = async function (req, res) {
             });
         }
 
+        const dirName = '/home/ubuntu/CHC/Server/Images/' + imgName + fileExtension + "";
+
+        console.log("->", dirName);
+
         //Copy file to image folder
-        fs.copyFile(fileUploaded.filepath, __dirname + "/Images/" + imgName + fileExtension, (err) => {
+        fs.copyFile(fileUploaded.filepath, dirName, (err) => {
             if (err) {
                 console.error("Error copying image to new location", err)
                 return res.status(500).json({
                     error: "Error copying image to new location"
                 });
             }
-        });
-        let imageURL = "https://coffeehousecomics.com/images/fetch/" + imgName + fileExtension;
+            let imageURL = "https://coffeehousecomics.com/images/fetch/" + imgName + fileExtension;
 
-        return res.status(200).json({
-            imageURL: imageURL
+            return res.status(200).json({
+                imageURL: imageURL
+            });
         });
     });
 }
@@ -173,15 +175,15 @@ CommonController.fetchImage = async function (req, res) {
         });
     }
 
-    const imageName = req.params.imageName;
+    const imageName = req.params.imgName;
 
     console.log("Trying to get image with imageName:", imageName);
 
-    const dirPath = path.join(__dirname, "Images/" + image.name);
+    const dirName = '/home/ubuntu/CHC/Server/Images/' + imageName + "";
 
-    console.log("This resolved to dir path:", dirPath);
+    console.log("This resolved to dir path:", dirName);
 
-    res.status(200).sendFile(dirPath)
+    res.status(200).sendFile(dirName)
 }
 
 
