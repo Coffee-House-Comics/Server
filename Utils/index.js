@@ -99,7 +99,7 @@ utils.disconnectComment = async function (comment) {
     //Find all users who liked this comment
     for (let likerID of comment.whoLiked) {
         //Find the user for this ID
-        let liker = await schemas.Account.findOne({ _id: likerID });
+        let liker = await schemas.Account.findOneById(likerID);
         if (!liker) {
             return "Liker could not be found";
         }
@@ -111,7 +111,7 @@ utils.disconnectComment = async function (comment) {
                 "$set": { "user.story.beans": currentBeanCount - 1 }
             });
         } catch (err) {
-            return "Error updating commenter's bean count";
+            return "Error updating commenter's bean count (was " + currentBeanCount +")";
         }
 
         //Remove this comment from the user's list of liked things
