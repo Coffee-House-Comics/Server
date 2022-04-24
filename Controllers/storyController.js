@@ -259,9 +259,14 @@ StoryController.create = async function (req, res) {
             isPublished: false,
             publishedDate: null,
             beans: 0,
+            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.jpg",
             series: null,
             comments: [],
             authorID: userId,
+
+            whoLiked: [],
+            whoDisliked: [],
+
             pages: [],
             ReactFlowJSON: null
 

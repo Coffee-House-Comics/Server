@@ -259,9 +259,12 @@ ComicController.create = async function (req, res) {
             isPublished: false,
             publishedDate: null,
             beans: 0,
-            series: null,
+            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.jpg",
+            series: "",
             comments: [],
             authorID: userId,
+            whoLiked: [],
+            whoDisliked: [],
             pages: [
                 {
                     index: 0,
