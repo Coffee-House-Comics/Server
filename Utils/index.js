@@ -34,11 +34,13 @@ utils.generatePostSnapshot = async function (isComic, posts, isMy) {
 
         return (post && (isMy || post.isPublished)) ? [{
             name: post.name,
+            id: post._id,
             author: post.author,
             series: post.series,
             beans: post.beans,
             coverPhoto: post.coverPhoto,
-            isPublished: post.isPublished
+            isPublished: post.isPublished,
+            publishedDate: Date,
         }] : [];
     }));
 
