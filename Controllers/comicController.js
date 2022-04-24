@@ -262,7 +262,15 @@ ComicController.create = async function (req, res) {
             series: null,
             comments: [],
             authorID: userId,
-            pages: []
+            pages: [
+                {
+                    index: 0,
+                    data: {
+                        backgroundColor: 'white',
+                        serialization: []
+                    }
+                }
+            ]
         });
     } catch (err) {
         return res.status(500).json({
@@ -1641,7 +1649,7 @@ ComicController.comment = async function (req, res) {
     };
 
     //Add the comment to the post
-    let commentIndex = comic.comments.push(comment)-1;
+    let commentIndex = comic.comments.push(comment) - 1;
 
     //Save changes to DB
     try {
@@ -1752,7 +1760,7 @@ ComicController.comment_forumPost = async function (req, res) {
     };
 
     //Add the comment to the post
-    let commentIndex = post.comments.push(comment)-1;
+    let commentIndex = post.comments.push(comment) - 1;
 
     //Update the array of posts
     forumPosts[postIndex] = post;
