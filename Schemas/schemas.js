@@ -62,8 +62,11 @@ const ComicPostSchema = new Schema({
 
     pages: [
         {
-            title: String,
-            konvaPage: JSON
+            index: Number,
+            data: {
+                backgroundColor: String,
+                serialization: [Object]
+            }
         }
     ],
 
