@@ -37,7 +37,8 @@ utils.generatePostSnapshot = async function (isComic, posts, isMy) {
             author: post.author,
             series: post.series,
             beans: post.beans,
-            coverPhoto: post.coverPhoto
+            coverPhoto: post.coverPhoto,
+            isPublished: post.isPublished
         }] : [];
     }));
 

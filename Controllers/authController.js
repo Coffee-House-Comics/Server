@@ -766,6 +766,16 @@ AuthController.changeUserName = async function (req, res) {
             });
         }
 
+        // Now we must change the username shown on all of this users comic/story posts
+
+        // savedAccount.user.story.posts.foreach(async function (element) {
+        //     const tp = await schemas.StoryPost.findById(element);
+        //     tp.author = 
+        // });
+
+
+
+
         return res.status(200).json(responseJSON);
     }
     catch (err) {
