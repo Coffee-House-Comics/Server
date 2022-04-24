@@ -23,35 +23,73 @@ utils.verifyValidId = function (req, res, next) {
     }
 }
 
-utils.generatePostSnapshot = async function (isComic, posts) {
+utils.generatePostSnapshot = async function (isComic, posts, isMy) {
     console.log("Posts:", posts);
-    const snapshots = await Promise.all(posts.flatMap(async function (value) {
+    let snapshots = await Promise.all(posts.flatMap(async function (value) {
         // Get the post data
-        const [post] = (isComic) ? await schemas.ComicPost.find({ _id: value }) : await schemas.StoryPost.find({ _id: value });
+        // console.log("ID?", value);
+        const post = (isComic) ? await schemas.ComicPost.findById(value) : await schemas.StoryPost.findById(value);
 
         // console.log("post:", post);
 
-        return (post && post.isPublished) ? [{
+        return (post && (isMy || post.isPublished)) ? [{
             name: post.name,
             author: post.author,
             series: post.series,
-            beans: post.beans
+            beans: post.beans,
+            coverPhoto: post.coverPhoto
         }] : [];
     }));
 
-    console.log("GPS:", snapshots);
+    snapshots = snapshots.filter(elem => { return elem.length > 0 });
+
+    console.log("GPS:", JSON.stringify(snapshots));
 
     return snapshots;
 }
 
-utils.constructProfileObjFromAccount = async function (account) {
+utils.constructSeriesRepresentation = function (allPosts) {
+    // First get all the different types of series
+    const seriesMap = new Map();
+
+    allPosts.forEach(([element]) => {
+        // console.log("csr elem:", JSON.stringify(element));
+
+        if (seriesMap.has(element.series)) {
+            const entry = seriesMap.get(element.series);
+            // console.log("Entry:", JSON.stringify(entry));
+
+            entry.posts = [...entry.posts, element];
+            seriesMap.set(element.series, entry);
+        }
+        else {
+            seriesMap.set(element.series, {
+                name: element.series,
+                posts: [element]
+            });
+        }
+    });
+
+    // console.log("map:", JSON.stringify(seriesMap));
+
+    const out = [...seriesMap.values()];
+
+    // console.log("csr:", JSON.stringify(out));
+
+    return out;
+}
+
+utils.constructProfileObjFromAccount = async function (account, isMy) {
     if (!account || !account._id || !account.user || !account.user.displayName ||
         (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
         (account.user.comic.beans === null)) {
         return null;
     }
 
-    return {
+    const storySnaps = await utils.generatePostSnapshot(false, account.user.story.posts, isMy);
+    const comicSnaps = await utils.generatePostSnapshot(true, account.user.comic.posts, isMy);
+
+    const out = {
         id: account._id,
         displayName: account.user.displayName,
         userName: account.userName,
@@ -62,8 +100,8 @@ utils.constructProfileObjFromAccount = async function (account) {
         storyBeans: account.user.story.beans,
         comicBeans: account.user.story.beans,
 
-        storySnapshots: await utils.generatePostSnapshot(false, account.user.story.posts),
-        comicSnapshots: await utils.generatePostSnapshot(true, account.user.comic.posts),
+        storySnapshots: utils.constructSeriesRepresentation(storySnaps),
+        comicSnapshots: utils.constructSeriesRepresentation(comicSnaps),
 
         // TODO: Fix this - we dont actually store this information
         storySubscribers: 0,
@@ -72,6 +110,10 @@ utils.constructProfileObjFromAccount = async function (account) {
         storyForum: (account.user.story.forum.active) ? account.user.story.forum.posts : null,
         comicForum: (account.user.comic.forum.active) ? account.user.comic.forum.posts : null,
     };
+
+    console.log("out:", out.comicSnapshots);
+
+    return out;
 }
 
 utils.findObjInArrayById = function (arr, id) {

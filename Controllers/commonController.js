@@ -50,7 +50,7 @@ CommonController.getProfileById = async function (req, res) {
             });
         }
 
-        const response = await utils.constructProfileObjFromAccount(account);
+        const response = await utils.constructProfileObjFromAccount(account, false);
 
         return res.status(200).json(response);
 
@@ -94,7 +94,7 @@ CommonController.getProfileByUserName = async function (req, res) {
             });
         }
 
-        const response = utils.constructProfileObjFromAccount(account);
+        const response = utils.constructProfileObjFromAccount(account, false);
 
         return res.status(200).json(response);
     }

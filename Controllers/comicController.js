@@ -252,7 +252,7 @@ ComicController.create = async function (req, res) {
     //Create comic and save to DB
     let createdComic = null;
     try {
-        createdComic = await schemas.ComicPost.create({
+        createdComic = new schemas.ComicPost({
             name: name,
             description: description,
             author: account.user.displayName,
@@ -275,6 +275,8 @@ ComicController.create = async function (req, res) {
                 }
             ]
         });
+
+        createdComic = await createdComic.save(createdComic);
     } catch (err) {
         return res.status(500).json({
             error: "Error saving new comic"
@@ -286,6 +288,8 @@ ComicController.create = async function (req, res) {
     if (!currentPosts) {
         currentPosts = [];
     }
+
+
 
     //Add post to user's posts array
     currentPosts.push(createdComic._id);
