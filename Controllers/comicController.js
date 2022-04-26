@@ -532,7 +532,8 @@ ComicController.unpublished = async function (req, res) {
 
     //The user does own this comic and it is published. Now send it in response body
     return res.status(200).json({
-        content: comic
+        content: comic,
+        stickers: account.user.comic.savedStickers
     });
 }
 
@@ -1409,10 +1410,7 @@ ComicController.metadata_update = async function (req, res) {
 ComicController.content_save = async function (req, res) {
     /* Update the content of a comic ------------
         Request body: {
-            pages: [{
-                title: String,
-                konvaPage: JSON
-            }]
+            pages: [ ]
         }
 
         Response {
