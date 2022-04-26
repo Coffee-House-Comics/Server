@@ -62,8 +62,11 @@ const ComicPostSchema = new Schema({
 
     pages: [
         {
-            title: String,
-            konvaPage: JSON
+            index: Number,
+            data: {
+                backgroundColor: String,
+                serialization: [Object]
+            }
         }
     ],
 
@@ -125,7 +128,7 @@ const AccountSchema = new Schema({
 
         comic: {
             ...appMetadata,
-            savedStickers: [JSON],
+            savedStickers: [String],
         },
     }
 });

@@ -252,18 +252,31 @@ ComicController.create = async function (req, res) {
     //Create comic and save to DB
     let createdComic = null;
     try {
-        createdComic = await schemas.ComicPost.create({
+        createdComic = new schemas.ComicPost({
             name: name,
             description: description,
             author: account.user.displayName,
             isPublished: false,
             publishedDate: null,
             beans: 0,
-            series: null,
+            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.jpg",
+            series: "",
             comments: [],
             authorID: userId,
-            pages: []
+            whoLiked: [],
+            whoDisliked: [],
+            pages: [
+                {
+                    index: 0,
+                    data: {
+                        backgroundColor: 'white',
+                        serialization: []
+                    }
+                }
+            ]
         });
+
+        createdComic = await createdComic.save(createdComic);
     } catch (err) {
         return res.status(500).json({
             error: "Error saving new comic"
@@ -275,6 +288,8 @@ ComicController.create = async function (req, res) {
     if (!currentPosts) {
         currentPosts = [];
     }
+
+
 
     //Add post to user's posts array
     currentPosts.push(createdComic._id);
@@ -491,6 +506,7 @@ ComicController.unpublished = async function (req, res) {
     }
 
     //Get post
+    console.log("Attempting to get comic with ID:", comicId);
     let comic = await schemas.ComicPost.findOne({ _id: comicId });
     if (!comic) {
         return res.status(500).json({
@@ -656,7 +672,7 @@ ComicController.delete = async function (req, res) {
     //Disconnect comments
     for (let comment of comic.comments) {
         //Disconnect comment from all users
-        let err = await Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(true, comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -809,7 +825,7 @@ ComicController.delete_forumPost = async function (req, res) {
     //Disconnect comments
     for (let comment of post.comments) {
         //Disconnect comment from all users
-        let err = await Utils.disconnectComment(comment);
+        let err = await Utils.disconnectComment(true, comment);
         if (err) {
             return res.status(500).json({
                 error: err
@@ -965,7 +981,7 @@ ComicController.delete_comment = async function (req, res) {
     }
 
     //Disconnect comment
-    await Utils.disconnectComment(comment)
+    await Utils.disconnectComment(true, comment)
 
     //Remove comment
     comic.comments = Utils.arrRemove(comic.comments, comment);
@@ -1067,7 +1083,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
     }
 
     //Disconnect comment
-    await Utils.disconnectComment(comment)
+    await Utils.disconnectComment(true, comment)
 
     //Remove comment
     let newPostsArr = [...forumAccount.user.comic.forum.posts];
@@ -1090,7 +1106,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
 ComicController.deleteSticker = async function (req, res) {
     /* Delete a sticker ------------
         Request body: {
-            sticker: JSON
+            sticker: String
         }
 
         Response {
@@ -1491,7 +1507,7 @@ ComicController.content_save = async function (req, res) {
 ComicController.content_saveSticker = async function (req, res) {
     /* Save a Sticker ------------
         Request body: {
-            sticker: JSON
+            sticker: String
         }
 
         Response {
@@ -1640,7 +1656,7 @@ ComicController.comment = async function (req, res) {
     };
 
     //Add the comment to the post
-    let commentIndex = comic.comments.push(comment)-1;
+    let commentIndex = comic.comments.push(comment) - 1;
 
     //Save changes to DB
     try {
@@ -1751,7 +1767,7 @@ ComicController.comment_forumPost = async function (req, res) {
     };
 
     //Add the comment to the post
-    let commentIndex = post.comments.push(comment)-1;
+    let commentIndex = post.comments.push(comment) - 1;
 
     //Update the array of posts
     forumPosts[postIndex] = post;

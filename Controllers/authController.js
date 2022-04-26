@@ -325,7 +325,7 @@ AuthController.loginUser = async function (req, res) {
         const token = auth.signToken(targetAccount._id);
         console.log("Created token: " + token);
 
-        const responseJSON = await utils.constructProfileObjFromAccount(targetAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(targetAccount, true);
 
         if (!responseJSON) {
             console.error("Invalid profile object");
@@ -606,7 +606,7 @@ AuthController.updateProfile = async function (req, res) {
         // Now save the updated account
         const savedAccount = await account.save();
 
-        const responseJSON = await utils.constructProfileObjFromAccount(savedAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(savedAccount, true);
 
         if (!responseJSON) {
             return res.status(500).json({
@@ -758,13 +758,23 @@ AuthController.changeUserName = async function (req, res) {
 
         let savedAccount = await targetAccount.save();
 
-        const responseJSON = await utils.constructProfileObjFromAccount(savedAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(savedAccount, true);
 
         if (!responseJSON) {
             return res.status(500).json({
                 error: "Error changing userName"
             });
         }
+
+        // Now we must change the username shown on all of this users comic/story posts
+
+        // savedAccount.user.story.posts.foreach(async function (element) {
+        //     const tp = await schemas.StoryPost.findById(element);
+        //     tp.author = 
+        // });
+
+
+
 
         return res.status(200).json(responseJSON);
     }
@@ -854,7 +864,7 @@ AuthController.getCurrentProfile = async function(req, res){
             });
         }
 
-        const responseJSON = await utils.constructProfileObjFromAccount(targetAccount);
+        const responseJSON = await utils.constructProfileObjFromAccount(targetAccount, true);
 
         if (!responseJSON) {
             console.error("Invalid profile object");
