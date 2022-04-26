@@ -47,10 +47,10 @@ ComicController.explore = async function (req, res) {
     let likedContent = [];
 
     //Find most recent posts
-    recentContent = await schemas.ComicPost.find({}).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
+    recentContent = await schemas.ComicPost.find({isPublished: true}).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
 
     //Find most liked posts
-    likedContent = await schemas.ComicPost.find({}).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
+    likedContent = await schemas.ComicPost.find({isPublished: true}).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
 
     //Convert lists from Post objects to IDs
     recentIds = recentContent.map((post) => post._id);
