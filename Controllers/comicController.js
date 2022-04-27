@@ -108,7 +108,7 @@ ComicController.search = async function (req, res) {
     //Build custom author objects
     authors = authors.map((account) => {
         return {
-            id: account._id,
+            _id: account._id,
             displayName: account.user.displayName,
             bio: account.user.bio,
             profileImage: account.user.profileImage
@@ -132,7 +132,7 @@ ComicController.search = async function (req, res) {
 
     //Get lists of IDs to return
     let postIds = posts.map((post) => post._id);
-    let authorIds = authors.map((author) => author.id);
+    let authorIds = authors.map((author) => author._id);
 
     return res.status(200).json({
         posts: postIds,
@@ -306,7 +306,7 @@ ComicController.create = async function (req, res) {
     }
 
     res.status(200).json({
-        id: createdComic._id
+        _id: createdComic._id
     });
 }
 
@@ -409,7 +409,7 @@ ComicController.createForumPost = async function (req, res) {
         console.log("FP we just added:", acc.user.comic.forum.posts[index]);
 
         return res.status(200).json({
-            id: acc.user.comic.forum.posts[index]._id
+            _id: acc.user.comic.forum.posts[index]._id
         });
     } catch (err) {
         return res.status(500).json({
@@ -1662,7 +1662,7 @@ ComicController.comment = async function (req, res) {
         let commentId = newComic.comments[commentIndex]._id;
         console.log("ID of newly created comment on comic: ", commentId)
         return res.status(200).json({
-            id: commentId
+            _id: commentId
         });
     } catch (err) {
         return res.status(500).json({
@@ -1779,7 +1779,7 @@ ComicController.comment_forumPost = async function (req, res) {
         let commentId = newAcc.user.comic.forum.posts[postIndex].comments[commentIndex]._id;
         console.log("ID of newly created forum post comment: ", commentId);
         return res.status(200).json({
-            id: commentId
+            _id: commentId
         });
     } catch (err) {
         console.log("Error updating account in DB to add forum post comment\n", err)
