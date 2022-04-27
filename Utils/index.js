@@ -34,7 +34,7 @@ utils.generatePostSnapshot = async function (isComic, posts, isMy) {
 
         return (post && (isMy || post.isPublished)) ? [{
             name: post.name,
-            _id: post._id,
+            id: post._id,
             author: post.author,
             series: post.series,
             beans: post.beans,
@@ -93,7 +93,7 @@ utils.constructProfileObjFromAccount = async function (account, isMy) {
     const comicSnaps = await utils.generatePostSnapshot(true, account.user.comic.posts, isMy);
 
     const out = {
-        _id: account._id,
+        id: account._id,
         displayName: account.user.displayName,
         userName: account.userName,
         bio: account.user.bio,

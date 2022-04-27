@@ -19,7 +19,7 @@ CommonController.getProfileById = async function (req, res) {
         Response {
             status 200 OK or 500 ERROR
             body: {
-                _id: ObjectId
+                id: ObjectId
                 displayName: String,
                 bio: String,
                 profileImage: String,
@@ -69,7 +69,7 @@ CommonController.getProfileByUserName = async function (req, res) {
         Response {
             status 200 OK or 500 ERROR
             body: {
-                _id: ObjectId
+                id: ObjectId
                 displayName: String,
                 bio: String,
                 profileImage: String,

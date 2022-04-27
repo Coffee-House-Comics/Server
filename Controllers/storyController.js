@@ -108,7 +108,7 @@ StoryController.search = async function (req, res) {
     //Build custom author objects
     authors = authors.map((account) => {
         return {
-            _id: account._id,
+            id: account._id,
             displayName: account.user.displayName,
             bio: account.user.bio,
             profileImage: account.user.profileImage
@@ -132,7 +132,7 @@ StoryController.search = async function (req, res) {
 
     //Get lists of IDs to return
     let postIds = posts.map((post) => post._id);
-    let authorIds = authors.map((author) => author._id);
+    let authorIds = authors.map((author) => author.id);
 
     return res.status(200).json({
         posts: postIds,
@@ -298,7 +298,7 @@ StoryController.create = async function (req, res) {
     }
 
     res.status(200).json({
-        _id: createdStory._id
+        id: createdStory._id
     });
 }
 
@@ -399,7 +399,7 @@ StoryController.createForumPost = async function (req, res) {
     try {
         const acc = await forumAccount.save();
         return res.status(200).json({
-            _id: acc.user.story.forum.posts[index]._id
+            id: acc.user.story.forum.posts[index]._id
         });
     } catch (err) {
         return res.status(500).json({
@@ -1512,7 +1512,7 @@ StoryController.comment = async function (req, res) {
         let commentId = newStory.comments[commentIndex]._id;
         console.log("ID of newly created story comment: ", commentId);
         return res.status(200).json({
-            _id: commentId
+            id: commentId
         });
     } catch (err) {
         return res.status(500).json({
@@ -1629,7 +1629,7 @@ StoryController.comment_forumPost = async function (req, res) {
         let commentId = Utils.findObjInArrayById(newAcc.user.story.forum.posts, forumPostId).comments[commentIndex]._id;
         console.log("ID of newly created comment on forum post: ", commentId);
         return res.status(200).json({
-            _id: commentId
+            id: commentId
         });
     } catch (err) {
         return res.status(500).json({
