@@ -453,21 +453,58 @@ ComicController.published = async function (req, res) {
         });
     }
 
+    const userID = require('../Auth').verifyUser(req);
+
+    // Handle the comments
+    comic.comments = comic.comments.map(comment => {
+        let myCommentVote = 0;
+
+        if (userID) {
+            if (comment.whoLiked.includes(userID))
+                myCommentVote = 1;
+            else if (comment.whoDisliked.includes(userID))
+                myCommentVote = -1;
+        }
+
+        return ({
+            ownerId: comment.ownerId,
+            user: comment.user,
+            date: comment.date,
+            text: comment.text,
+            beans: comment.beans,
+            myVote: myCommentVote
+        });
+    });
+
+    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: wholiked, ...updatedComic } = comic;
+
+    let myPostVote = 0;
+
+    if (userID) {
+        if (whoLiked.includes(userID))
+            myPostVote = 1;
+        else if (whoDisliked.includes(userID))
+            myPostVote = -1;
+    }
+
+    updatedComic.myVote = myPostVote;
+
+
     //The comic is published. Now send it in response
     return res.status(200).json({
-        content: comic
+        content: updatedComic
     });
 }
 
 ComicController.unpublished = async function (req, res) {
     /* Get UNpublished comic by id  ------------
         Request body: {}
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
             body: {
                 content: ComicPost object
-
+ 
                 //If error
                 error: String
             }
@@ -617,7 +654,7 @@ ComicController.publish = async function (req, res) {
 ComicController.delete = async function (req, res) {
     /* Deleting a Comic ------------
         Request body: {}
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
         }
@@ -911,7 +948,7 @@ ComicController.delete_comment = async function (req, res) {
         Request body: {
             postId: ObjectID
         }
-
+ 
         Response {
             status 200 OK or 500 ERROR
             body: {
@@ -1004,7 +1041,7 @@ ComicController.delete_forumPost_comment = async function (req, res) {
             forumUserId: ObjectID,
             forumPostId: ObjectID
         }
-
+ 
         Response {
             status 200 OK or 500 ERROR
             body: {
@@ -1109,10 +1146,10 @@ ComicController.deleteSticker = async function (req, res) {
         Request body: {
             sticker: String
         }
-
+ 
         Response {
             status: 200 OK or 500 ERROR
-
+ 
             body: {
                 //If error
                 error: String
@@ -1186,7 +1223,7 @@ ComicController.deleteSticker = async function (req, res) {
 ComicController.user_saved = async function (req, res) {
     /* Get user's saved comics ------------
         Request body: {}
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
         }
@@ -1233,7 +1270,7 @@ ComicController.user_toggleForum = async function (req, res) {
             status: 200 OK or 500 ERROR,
             body: {
                 isForumEnabled: Boolean
-
+ 
                 //If error
                 error: String
             }
@@ -1301,7 +1338,7 @@ ComicController.metadata_update = async function (req, res) {
             coverPhoto: String,
             series: String
         }
-
+ 
         Response {
             status: 200 OK or 500 ERROR
             body:{
@@ -1412,10 +1449,10 @@ ComicController.content_save = async function (req, res) {
         Request body: {
             pages: [ ]
         }
-
+ 
         Response {
             status: 200 OK or 500 ERROR
-
+ 
             body: {
                 //If error
                 error: String
@@ -1507,7 +1544,7 @@ ComicController.content_saveSticker = async function (req, res) {
         Request body: {
             sticker: String
         }
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
             body: {
@@ -1577,7 +1614,7 @@ ComicController.comment = async function (req, res) {
         Request body: {
             text: String
         }
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
         }
@@ -1680,7 +1717,7 @@ ComicController.comment_forumPost = async function (req, res) {
     
         Response {
             status: 200 OK or 500 ERROR,
-
+ 
             body:{ 
                 //If error
                 error: String
@@ -2147,7 +2184,7 @@ ComicController.vote_comment = async function (req, res) {
     /* Vote on a Comment ------------
         Request body: {
             type: Integer
-
+ 
             // The id of the post
             postId: String
         }
@@ -2329,7 +2366,7 @@ ComicController.vote_forumpost_comment = async function (req, res) {
     /* Vote on a Comment ------------
         Request body: {
             type: Integer
-
+ 
             // The id of the forum post
             forumPostId: String,
             // The id of the owner of the forum
@@ -2682,7 +2719,7 @@ ComicController.deleteBookmark = async function (req, res) {
 ComicController.subscribe_user = async function (req, res) {
     /*
         Request body { }
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
         }
@@ -2748,7 +2785,7 @@ ComicController.subscribe_user = async function (req, res) {
 ComicController.unsubscribe_user = async function (req, res) {
     /*
         Request body { }
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
         }
@@ -2829,10 +2866,10 @@ ComicController.unsubscribe_user = async function (req, res) {
 ComicController.getAllForumPosts = async function (req, res) {
     /*
         Request body { }
-
+ 
         Response {
             status: 200 OK or 500 ERROR,
-
+ 
             body: {
                 forumPosts: [ForumPostObjects]
             }
@@ -2887,6 +2924,28 @@ ComicController.getAllForumPosts = async function (req, res) {
                 usersVote = -1;
         }
 
+        // Now resolve all the comments
+
+        const newComments = post.comments.map(comment => {
+            let myCommentVote = 0;
+
+            if (userID) {
+                if (comment.whoLiked.includes(userID))
+                    myCommentVote = 1;
+                else if (comment.whoDisliked.includes(userID))
+                    myCommentVote = -1;
+            }
+
+            return ({
+                ownerId: comment.ownerId,
+                user: comment.user,
+                date: comment.date,
+                text: comment.text,
+                beans: comment.beans,
+                myVote: myCommentVote
+            });
+        });
+
         return {
             ownerId: post.ownerId,
             title: post.title,
@@ -2894,7 +2953,7 @@ ComicController.getAllForumPosts = async function (req, res) {
             user: post.user,
             date: post.date,
             beans: post.beans,
-            comments: post.comments,
+            comments: newComments,
             myVote: usersVote
         };
     });

@@ -455,9 +455,46 @@ StoryController.published = async function (req, res) {
         });
     }
 
-    //The story is published. Now send it in response
+    const userID = require('../Auth').verifyUser(req);
+
+    // Handle the comments
+    story.comments = story.comments.map(comment => {
+        let myCommentVote = 0;
+
+        if (userID) {
+            if (comment.whoLiked.includes(userID))
+                myCommentVote = 1;
+            else if (comment.whoDisliked.includes(userID))
+                myCommentVote = -1;
+        }
+
+        return ({
+            ownerId: comment.ownerId,
+            user: comment.user,
+            date: comment.date,
+            text: comment.text,
+            beans: comment.beans,
+            myVote: myCommentVote
+        });
+    });
+
+    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: wholiked, ...updatedStory } = story;
+
+    let myPostVote = 0;
+
+    if (userID) {
+        if (whoLiked.includes(userID))
+            myPostVote = 1;
+        else if (whoDisliked.includes(userID))
+            myPostVote = -1;
+    }
+
+    updatedStory.myVote = myPostVote;
+
+
+    //The comic is published. Now send it in response
     return res.status(200).json({
-        content: story
+        content: updatedStory
     });
 }
 
@@ -1504,7 +1541,7 @@ StoryController.comment = async function (req, res) {
     };
 
     //Add the comment to the post
-    let commentIndex = story.comments.push(comment)-1;
+    let commentIndex = story.comments.push(comment) - 1;
 
     //Save changes to DB
     try {
@@ -1615,7 +1652,7 @@ StoryController.comment_forumPost = async function (req, res) {
     };
 
     //Add the comment to the post
-    let commentIndex = post.comments.push(comment)-1;
+    let commentIndex = post.comments.push(comment) - 1;
 
     //Update the array of posts
     forumPosts[postIndex] = post;
@@ -2744,6 +2781,28 @@ StoryController.getAllForumPosts = async function (req, res) {
                 usersVote = -1;
         }
 
+        // Now resolve all the comments
+
+        const newComments = post.comments.map(comment => {
+            let myCommentVote = 0;
+
+            if (userID) {
+                if (comment.whoLiked.includes(userID))
+                    myCommentVote = 1;
+                else if (comment.whoDisliked.includes(userID))
+                    myCommentVote = -1;
+            }
+
+            return ({
+                ownerId: comment.ownerId,
+                user: comment.user,
+                date: comment.date,
+                text: comment.text,
+                beans: comment.beans,
+                myVote: myCommentVote
+            });
+        });
+
         return {
             ownerId: post.ownerId,
             title: post.title,
@@ -2751,7 +2810,7 @@ StoryController.getAllForumPosts = async function (req, res) {
             user: post.user,
             date: post.date,
             beans: post.beans,
-            comments: post.comments,
+            comments: newComments,
             myVote: usersVote
         };
     });
