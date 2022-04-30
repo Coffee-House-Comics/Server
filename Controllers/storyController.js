@@ -2720,7 +2720,41 @@ StoryController.getAllForumPosts = async function (req, res) {
         });
     }
 
-    const forumPosts = account.user.story.forum.posts;
+    const userID = require('../Auth').verifyUser(req);
+
+    // const forumPost = {
+    //     ownerId: userId,
+    //     title: postTitle,
+    //     body: postBody,
+    //     user: account.user.displayName,
+    //     date: new Date(),
+    //     beans: 0,
+    //     comments: [],
+    //     whoLiked: [],
+    //     whoDisliked: []
+    // };
+
+    const forumPosts = account.user.story.forum.posts.map(post => {
+        let usersVote = 0;
+
+        if (userID) {
+            if (post.whoLiked.includes(userID))
+                usersVote = 1;
+            else if (post.whoDisliked.includes(userID))
+                usersVote = -1;
+        }
+
+        return {
+            ownerId: post.ownerId,
+            title: post.title,
+            body: post.body,
+            user: post.user,
+            date: post.date,
+            beans: post.beans,
+            comments: post.comments,
+            myVote: usersVote
+        };
+    });
 
     return res.status(200).json({
         forumPosts: forumPosts

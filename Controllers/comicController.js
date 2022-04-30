@@ -47,10 +47,10 @@ ComicController.explore = async function (req, res) {
     let likedContent = [];
 
     //Find most recent posts
-    recentContent = await schemas.ComicPost.find({isPublished: true}).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
+    recentContent = await schemas.ComicPost.find({ isPublished: true }).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
 
     //Find most liked posts
-    likedContent = await schemas.ComicPost.find({isPublished: true}).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
+    likedContent = await schemas.ComicPost.find({ isPublished: true }).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
 
     //Convert lists from Post objects to IDs
     recentIds = recentContent.map((post) => post._id);
@@ -2863,14 +2863,41 @@ ComicController.getAllForumPosts = async function (req, res) {
         });
     }
 
-    const forumPosts = account.user.comic.forum.posts;
-
     const userID = require('../Auth').verifyUser(req);
 
+    // const forumPost = {
+    //     ownerId: userId,
+    //     title: postTitle,
+    //     body: postBody,
+    //     user: account.user.displayName,
+    //     date: new Date(),
+    //     beans: 0,
+    //     comments: [],
+    //     whoLiked: [],
+    //     whoDisliked: []
+    // };
 
+    const forumPosts = account.user.comic.forum.posts.map(post => {
+        let usersVote = 0;
 
+        if (userID) {
+            if (post.whoLiked.includes(userID))
+                usersVote = 1;
+            else if (post.whoDisliked.includes(userID))
+                usersVote = -1;
+        }
 
-
+        return {
+            ownerId: post.ownerId,
+            title: post.title,
+            body: post.body,
+            user: post.user,
+            date: post.date,
+            beans: post.beans,
+            comments: post.comments,
+            myVote: usersVote
+        };
+    });
 
     return res.status(200).json({
         forumPosts: forumPosts
