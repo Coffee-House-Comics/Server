@@ -21,7 +21,7 @@ utils.verifyValidId = function (req, res, next) {
             });
         }
     }
-}
+};
 
 utils.generatePostSnapshot = async function (isComic, posts, isMy) {
     console.log("Posts:", posts);

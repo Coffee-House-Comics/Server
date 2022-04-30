@@ -147,5 +147,4 @@ module.exports = {
     Account,
     ComicPost,
     StoryPost,
-    //Image
 };

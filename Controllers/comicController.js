@@ -2865,6 +2865,13 @@ ComicController.getAllForumPosts = async function (req, res) {
 
     const forumPosts = account.user.comic.forum.posts;
 
+    const userID = require('../Auth').verifyUser(req);
+
+
+
+
+
+
     return res.status(200).json({
         forumPosts: forumPosts
     });
