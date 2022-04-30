@@ -476,7 +476,7 @@ ComicController.published = async function (req, res) {
         });
     });
 
-    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: wholiked, ...updatedComic } = comic;
+    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: whoLiked, ...updatedComic } = comic;
 
     let myPostVote = 0;
 

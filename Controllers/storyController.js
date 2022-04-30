@@ -478,7 +478,7 @@ StoryController.published = async function (req, res) {
         });
     });
 
-    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: wholiked, ...updatedStory } = story;
+    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: whoLiked, ...updatedStory } = story;
 
     let myPostVote = 0;
 
