@@ -2922,7 +2922,7 @@ ComicController.getAllForumPosts = async function (req, res) {
     //     whoDisliked: []
     // };
 
-    const forumPosts = account.user.comic.forum.posts.map(post => {
+    const forumPosts = account.user.comic.forum.posts.map(async (post) => {
         let usersVote = 0;
 
         if (userID) {
@@ -2954,11 +2954,13 @@ ComicController.getAllForumPosts = async function (req, res) {
             });
         });
 
+        const newUser = await Utils.constructProfileSnapShot(post.ownerId);
+
         return {
             ownerId: post.ownerId,
             title: post.title,
             body: post.body,
-            user: post.user,
+            user: newUser,
             date: post.date,
             beans: post.beans,
             comments: newComments,
@@ -2967,7 +2969,7 @@ ComicController.getAllForumPosts = async function (req, res) {
     });
 
     return res.status(200).json({
-        forumPosts: forumPosts
+        forumPosts: await Promise.all(forumPosts)
     });
 }
 

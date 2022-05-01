@@ -2779,7 +2779,7 @@ StoryController.getAllForumPosts = async function (req, res) {
     //     whoDisliked: []
     // };
 
-    const forumPosts = account.user.story.forum.posts.map(post => {
+    const forumPosts = account.user.story.forum.posts.map(async function (post) {
         let usersVote = 0;
 
         if (userID) {
@@ -2811,11 +2811,13 @@ StoryController.getAllForumPosts = async function (req, res) {
             });
         });
 
+        const newUser = await Utils.constructProfileSnapShot(post.ownerId);
+
         return {
             ownerId: post.ownerId,
             title: post.title,
             body: post.body,
-            user: post.user,
+            user: newUser,
             date: post.date,
             beans: post.beans,
             comments: newComments,
@@ -2824,7 +2826,7 @@ StoryController.getAllForumPosts = async function (req, res) {
     });
 
     return res.status(200).json({
-        forumPosts: forumPosts
+        forumPosts: await Promise.all(forumPosts)
     });
 }
 

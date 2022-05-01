@@ -82,6 +82,19 @@ utils.constructSeriesRepresentation = function (allPosts) {
     return out;
 }
 
+utils.constructProfileSnapShot = async function (accountID) {
+    if (!accountID)
+        return null;
+
+    const account = await schemas.Account.findById(accountID);
+
+    return {
+        name: account.user.displayName,
+        bio: account.user.bio,
+        profileImage: account.user.profileImage
+    };
+}
+
 utils.constructProfileObjFromAccount = async function (account, isMy) {
     if (!account || !account._id || !account.user || !account.user.displayName ||
         (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
