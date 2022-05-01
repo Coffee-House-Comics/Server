@@ -455,6 +455,8 @@ ComicController.published = async function (req, res) {
 
     const userID = require('../Auth').verifyUser(req);
 
+    console.log("Comments before: %j", comic.comments);
+
     // Handle the comments
     comic.comments = comic.comments.map(comment => {
         let myCommentVote = 0;
@@ -467,6 +469,7 @@ ComicController.published = async function (req, res) {
         }
 
         return ({
+            _id: comment._id,
             ownerId: comment.ownerId,
             user: comment.user,
             date: comment.date,
@@ -476,23 +479,28 @@ ComicController.published = async function (req, res) {
         });
     });
 
-    const { ["whoDisliked"]: whoDisliked, ["whoLiked"]: whoLiked, ...updatedComic } = comic;
+    console.log("Comments After: %j", comic.comments);
 
     let myPostVote = 0;
 
     if (userID) {
-        if (whoLiked.includes(userID))
+        if (comic.whoLiked.includes(userID))
             myPostVote = 1;
-        else if (whoDisliked.includes(userID))
+        else if (comic.whoDisliked.includes(userID))
             myPostVote = -1;
     }
 
-    updatedComic.myVote = myPostVote;
+    comic = { ...comic.toObject(), myVote: myPostVote };
+
+    comic.whoDisliked = undefined;
+    comic.whoLiked = undefined;
+
+    console.log("Updated Comic:", comic);
 
 
     //The comic is published. Now send it in response
     return res.status(200).json({
-        content: updatedComic
+        content: comic
     });
 }
 
