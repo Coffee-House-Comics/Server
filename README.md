@@ -17,6 +17,4 @@ Please note that this server uses environment variables that can be given at sta
 6. Shadow is the cutest dog - BAR NONE
 
 ## TODO
-1. Set Compression in nginx
-2. Set /etc/mongod.conf bind ip back to original eventually
-3. Minify and bundle the front end code
+1. Set /etc/mongod.conf bind ip back to original eventually
