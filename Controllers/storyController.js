@@ -268,10 +268,36 @@ StoryController.create = async function (req, res) {
             whoDisliked: [],
 
             pages: [],
-            ReactFlowJSON: null
-
+            ReactFlowJSON: {
+                nodes: [
+                    {
+                        id: '1',
+                        type: 'input',
+                        data: { label: 'Start' },
+                        position: { x: 0, y: 0 },
+                    },
+                    {
+                        id: '2',
+                        data: { label: 'Page 1', payload: 'This is a template page. Edit as you see fit.' },
+                        position: { x: 0, y: 90 },
+                    }
+                ],
+                edges: [
+                    {
+                        id: 'e1-2',
+                        label: 'Begin',
+                        source: '1',
+                        target: '2',
+                        labelBgPadding: [8, 4],
+                        labelBgBorderRadius: 4,
+                        style: { strokeWidth: 3 },
+                        labelBgStyle: { fill: "#72AD7D" }
+                    }
+                ],
+            }
         });
     } catch (err) {
+        console.error("ERR creating story:", err);
         return res.status(500).json({
             error: "Error saving new story"
         })
