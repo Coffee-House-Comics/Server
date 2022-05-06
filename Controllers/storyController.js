@@ -511,6 +511,8 @@ StoryController.published = async function (req, res) {
 
     let myPostVote = 0;
 
+    const profileSnapshot = await Utils.constructProfileSnapShot(story.authorID);
+
     if (userID) {
         if (story.whoLiked.includes(userID))
             myPostVote = 1;
@@ -518,7 +520,13 @@ StoryController.published = async function (req, res) {
             myPostVote = -1;
     }
 
-    story = { ...story.toObject(), myVote: myPostVote };
+    story = {
+        ...story.toObject(),
+        myVote: myPostVote,
+        author: profileSnapshot.name,
+        authorBio: profileSnapshot.bio,
+        authorImage: profileSnapshot.profileImage
+    };
 
     story.whoDisliked = undefined;
     story.whoLiked = undefined;

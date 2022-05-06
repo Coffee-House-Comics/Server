@@ -483,6 +483,8 @@ ComicController.published = async function (req, res) {
 
     let myPostVote = 0;
 
+    const profileSnapshot = await Utils.constructProfileSnapShot(comic.authorID);
+
     if (userID) {
         if (comic.whoLiked.includes(userID))
             myPostVote = 1;
@@ -490,7 +492,13 @@ ComicController.published = async function (req, res) {
             myPostVote = -1;
     }
 
-    comic = { ...comic.toObject(), myVote: myPostVote };
+    comic = {
+        ...comic.toObject(),
+        myVote: myPostVote,
+        author: profileSnapshot.name,
+        authorBio: profileSnapshot.bio,
+        authorImage: profileSnapshot.profileImage
+    };
 
     comic.whoDisliked = undefined;
     comic.whoLiked = undefined;
