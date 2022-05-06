@@ -32,10 +32,14 @@ utils.generatePostSnapshot = async function (isComic, posts, isMy) {
 
         // console.log("post:", post);
 
+        const authorSnapshot = await utils.constructProfileSnapShot(post.accountID);
+
         return (post && (isMy || post.isPublished)) ? [{
             name: post.name,
             id: post._id,
-            author: post.author,
+            author: authorSnapshot.name,
+            authorImage: authorSnapshot.profileImage,
+            authorBio: authorSnapshot.bio,
             series: post.series,
             beans: post.beans,
             coverPhoto: post.coverPhoto,
