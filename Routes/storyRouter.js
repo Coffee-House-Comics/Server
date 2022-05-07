@@ -64,8 +64,8 @@ router.post('/bookmark/:id', auth.verify, utils.verifyValidId, StoryController.b
 router.delete('/bookmark/:id', auth.verify, utils.verifyValidId, StoryController.deleteBookmark);
 
 // Subscribing to a user
-router.post('/subscribe/user/:id', auth.verify, utils.verifyValidId, StoryController.subscribe_user);
-router.delete('/subscribe/user/:id', auth.verify, utils.verifyValidId, StoryController.unsubscribe_user);
+router.post('/subscribe/user/:id', auth.verify, StoryController.subscribe_user);
+router.delete('/subscribe/user/:id', auth.verify, StoryController.unsubscribe_user);
 
 
 module.exports = router
