@@ -109,6 +109,15 @@ utils.constructProfileObjFromAccount = async function (account, isMy) {
     const storySnaps = await utils.generatePostSnapshot(false, account.user.story.posts, isMy);
     const comicSnaps = await utils.generatePostSnapshot(true, account.user.comic.posts, isMy);
 
+    const subscriptions = {};
+
+    if (isMy) {
+        subscriptions = {
+            storySubscriptions: account.user.story.subscriptions,
+            comicSubscriptions: account.user.comic.subscriptions
+        };
+    }
+
     const out = {
         id: account._id,
         displayName: account.user.displayName,
@@ -126,6 +135,8 @@ utils.constructProfileObjFromAccount = async function (account, isMy) {
         // TODO: Fix this - we dont actually store this information
         storySubscribers: 0,
         comicSubscribers: 0,
+
+        ...subscriptions,
 
         storyForum: (account.user.story.forum.active) ? account.user.story.forum.posts : null,
         comicForum: (account.user.comic.forum.active) ? account.user.comic.forum.posts : null,
