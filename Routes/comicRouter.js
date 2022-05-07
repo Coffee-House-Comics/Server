@@ -79,7 +79,7 @@ router.post('/bookmark/:id', auth.verify, utils.verifyValidId, ComicController.b
 router.delete('/bookmark/:id', auth.verify, utils.verifyValidId, ComicController.deleteBookmark);
 
 // Subscribing to a user
-router.post('/subscribe/user/:id', auth.verify, ComicController.subscribe_user);
-router.delete('/subscribe/user/:id', auth.verify, ComicController.unsubscribe_user);
+router.post('/subscribe/user/:id', auth.verify, utils.verifyValidId, ComicController.subscribe_user);
+router.delete('/subscribe/user/:id', auth.verify, utils.verifyValidId, ComicController.unsubscribe_user);
 
 module.exports = router

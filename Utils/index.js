@@ -12,7 +12,9 @@ utils.verifyValidId = function (req, res, next) {
         });
     } else {
         try {
-            mongoose.Types.ObjectId(req.params.id)
+            req.params.id = mongoose.Types.ObjectId(req.params.id);
+            
+            // mongoose.Types.ObjectId(req.params.id);
             next();
         } catch (err) {
             console.error("Invalid ID in request params: " + req.params.id);
