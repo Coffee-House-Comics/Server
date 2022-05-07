@@ -1945,6 +1945,9 @@ StoryController.unsubscribe_user = async function (req, res) {
             status: 200 OK or 500 ERROR,
         }
     */
+
+    console.log("Story unsubscribe...");
+
     //Check params
     if (!req) {
         return res.status(500).json({
@@ -1990,15 +1993,18 @@ StoryController.unsubscribe_user = async function (req, res) {
 
     //Remove the subscription from the list
     console.log("ID of user to unsubscribe from: ", subscribeeId);
-    let newSubscriptions = [];
-    for (subscription of subscriptions) {
-        if (subscription != subscribeeId) {
-            newSubscriptions.push(subscription);
-        }
-    }
+    const newSubscriptions = subscriptions.filter(elem => {
+        return subscribeeId != elem;
+    });
+
+    // for (subscription of subscriptions) {
+    //     if (subscription != subscribeeId) {
+    //         newSubscriptions.push(subscription);
+    //     }
+    // }
     console.log("Subscriptions: ", subscriptions);
     console.log("New Subscriptions: ", newSubscriptions);
-    if (newSubscriptions.length == subscriptions.length) {
+    if (newSubscriptions.length === subscriptions.length) {
         return res.status(500).json({
             error: "This user is not subscribed to the given item"
         });
