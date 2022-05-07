@@ -109,7 +109,7 @@ utils.constructProfileObjFromAccount = async function (account, isMy) {
     const storySnaps = await utils.generatePostSnapshot(false, account.user.story.posts, isMy);
     const comicSnaps = await utils.generatePostSnapshot(true, account.user.comic.posts, isMy);
 
-    const subscriptions = {};
+    let subscriptions = {};
 
     if (isMy) {
         subscriptions = {
