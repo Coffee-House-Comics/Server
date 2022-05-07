@@ -7,6 +7,8 @@ const ObjectId = Schema.Types.ObjectId;
 
 // ---------------------------------------------------
 
+mongoose.ObjectId.get((v) => v == null ? v : v.toString());
+
 // Needs to be separate schema so we can search for it by id
 const CommentSchema = new Schema({
     ownerId: ObjectId,
