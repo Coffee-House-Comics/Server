@@ -1997,11 +1997,6 @@ StoryController.unsubscribe_user = async function (req, res) {
         return subscribeeId.toString() !== elem.toString();
     });
 
-    // for (subscription of subscriptions) {
-    //     if (subscription != subscribeeId) {
-    //         newSubscriptions.push(subscription);
-    //     }
-    // }
     console.log("Subscriptions: ", subscriptions);
     console.log("New Subscriptions: ", newSubscriptions);
     if (newSubscriptions.length === subscriptions.length) {
