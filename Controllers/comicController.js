@@ -2852,15 +2852,14 @@ ComicController.unsubscribe_user = async function (req, res) {
 
     //Remove the subscription from the list
     console.log("ID of user to unsubscribe from: ", subscribeeId);
-    let newSubscriptions = [];
-    for (subscription of subscriptions) {
-        if (subscription != subscribeeId) {
-            newSubscriptions.push(subscription);
-        }
-    }
+    
+    const newSubscriptions = subscriptions.filter(elem => {
+        return subscribeeId.toString() !== elem.toString();
+    });
+
     console.log("Subscriptions: ", subscriptions);
     console.log("New Subscriptions: ", newSubscriptions);
-    if (newSubscriptions.length == subscriptions.length) {
+    if (newSubscriptions.length === subscriptions.length) {
         return res.status(500).json({
             error: "This user is not subscribed to the given item"
         });
