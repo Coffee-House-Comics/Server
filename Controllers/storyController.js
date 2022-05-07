@@ -1994,7 +1994,7 @@ StoryController.unsubscribe_user = async function (req, res) {
     //Remove the subscription from the list
     console.log("ID of user to unsubscribe from: ", subscribeeId);
     const newSubscriptions = subscriptions.filter(elem => {
-        return subscribeeId != elem;
+        return subscribeeId.toString() !== elem.toString();
     });
 
     // for (subscription of subscriptions) {
