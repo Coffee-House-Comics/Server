@@ -7,11 +7,8 @@ const ObjectId = Schema.Types.ObjectId;
 
 // ---------------------------------------------------
 
-mongoose.ObjectId.get((v) => v == null ? v : v.toString());
-
 // Needs to be separate schema so we can search for it by id
 const CommentSchema = new Schema({
-    _id: String,
     ownerId: ObjectId,
     user: String,
     date: Date,
@@ -24,7 +21,6 @@ const CommentSchema = new Schema({
 
 // Needs to be separate schema so we can search for it by id
 const ForumPostSchema = new Schema({
-    _id: String,
     ownerId: ObjectId,
     title: String,
     body: String,
@@ -62,7 +58,6 @@ const PostMetadata = ({
 });
 
 const ComicPostSchema = new Schema({
-    _id: String,
     ...PostMetadata,
 
     pages: [
@@ -78,7 +73,6 @@ const ComicPostSchema = new Schema({
 });
 
 const StoryPostSchema = new Schema({
-    _id: String,
     ...PostMetadata,
 
     pages: [
@@ -117,7 +111,6 @@ const appMetadata = ({
 });
 
 const AccountSchema = new Schema({
-    _id: String,
     userName: String,
     email: String,
     passwordHash: String,

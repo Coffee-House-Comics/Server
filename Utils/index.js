@@ -12,6 +12,9 @@ utils.verifyValidId = function (req, res, next) {
         });
     } else {
         try {
+            console.log("RECIEVED ID: ->" +  req.params.id.trim() + "<-");
+
+
             req.params.id = mongoose.Types.ObjectId(req.params.id.trim());
 
             // mongoose.Types.ObjectId(req.params.id);
