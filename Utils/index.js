@@ -12,8 +12,8 @@ utils.verifyValidId = function (req, res, next) {
         });
     } else {
         try {
-            req.params.id = mongoose.Types.ObjectId(req.params.id);
-            
+            req.params.id = mongoose.Types.ObjectId(req.params.id.trim());
+
             // mongoose.Types.ObjectId(req.params.id);
             next();
         } catch (err) {

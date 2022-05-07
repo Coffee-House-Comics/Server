@@ -469,7 +469,7 @@ ComicController.published = async function (req, res) {
         }
 
         return ({
-            _id: comment._id,
+            id: comment._id,
             ownerId: comment.ownerId,
             user: comment.user,
             date: comment.date,
