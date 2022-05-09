@@ -147,7 +147,7 @@ ComicController.subscriptions = async function (req, res) {
         Response {
             status 200 OK or 500 ERROR
             body: {
-                content: [ObjectId]
+                content: [[]]]
 
                 //If error
                 error: String
@@ -166,45 +166,16 @@ ComicController.subscriptions = async function (req, res) {
             error: "Server error getting user from ID"
         });
     }
-    // let user = account.user;
 
-    const contentIds = await Promise.all(account.user.comic.subscriptions.map(async userId => {
+    const allcontent = await Promise.all(account.user.comic.subscriptions.map(async userId => {
         // Get that user's posts
-        await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").execFind(function(err, docs) {
-            if (err) {
-                console.log("Error collecting the posts for user with id:", userId);
-                return [];
-            }
-
-            console.log("Docs for userId:", userId, docs); 
-
-            return docs;
-        });
+        return await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").exec();
     }));
 
-
-
-
-
-    //Find all users
-    // let content = await schemas.Account.find({});
-    // if (!content) {
-    //     return res.status(500).json({
-    //         error: "Server error getting user from ID"
-    //     });
-    // }
-
-    // //Filter for subscribed users and only keep their IDs (not the whole object)
-    // let subscriptionsIds = user.comic.subscriptions;
-    // console.log("Subscriptions IDs: ", subscriptionsIds);
-    // let contentIds = content.filter((user) => {
-    //     for (subId of subscriptionsIds) {
-    //         if (deepEqual(subId, user._id)) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }).map((user) => user._id);
+    const contentIds = allcontent.map(usersPosts => {
+        // console.log("UserPosts:", usersPosts);
+        return usersPosts.map( post => { return post._id });
+    })
 
     console.log("ContentIds: ", contentIds);
 
@@ -674,7 +645,8 @@ ComicController.publish = async function (req, res) {
     try {
         await schemas.ComicPost.updateOne({ _id: comicId }, {
             isPublished: true,
-            series: series
+            series: series,
+            publishedDate: new Date()
         });
     } catch (err) {
         return res.status(500).json({

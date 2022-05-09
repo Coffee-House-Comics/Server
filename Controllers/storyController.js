@@ -166,27 +166,16 @@ StoryController.subscriptions = async function (req, res) {
             error: "Server error getting user from ID"
         });
     }
-    let user = account.user;
 
-    //Find all users
-    let content = await schemas.Account.find({});
-    if (!content) {
-        return res.status(500).json({
-            error: "Server error getting user from ID"
-        });
-    }
+    const allcontent = await Promise.all(account.user.comic.subscriptions.map(async userId => {
+        // Get that user's posts
+        return await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").exec();
+    }));
 
-    //Filter for subscribed users and only keep their IDs (not the whole object)
-    let subscriptionsIds = user.story.subscriptions;
-    console.log("Subscriptions IDs: ", subscriptionsIds);
-    let contentIds = content.filter((user) => {
-        for (subId of subscriptionsIds) {
-            if (deepEqual(subId, user._id)) {
-                return true;
-            }
-        }
-        return false;
-    }).map((user) => user._id);
+    const contentIds = allcontent.map(usersPosts => {
+        // console.log("UserPosts:", usersPosts);
+        return usersPosts.map( post => { return post._id });
+    })
 
     console.log("ContentIds: ", contentIds);
 
@@ -683,7 +672,8 @@ StoryController.publish = async function (req, res) {
     try {
         await schemas.StoryPost.updateOne({ _id: storyId }, {
             isPublished: true,
-            series: series
+            series: series,
+            publishedDate: new Date()
         });
     } catch (err) {
         return res.status(500).json({
