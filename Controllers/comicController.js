@@ -166,27 +166,45 @@ ComicController.subscriptions = async function (req, res) {
             error: "Server error getting user from ID"
         });
     }
-    let user = account.user;
+    // let user = account.user;
+
+    const contentIds = await Promise.all(account.user.comic.subscriptions.map(userId => {
+        // Get that user's posts
+        await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").execFind(function(err, docs) {
+            if (err) {
+                console.log("Error collecting the posts for user with id:", userId);
+                return [];
+            }
+
+            console.log("Docs for userId:", userId, docs); 
+
+            return docs;
+        });
+    }));
+
+
+
+
 
     //Find all users
-    let content = await schemas.Account.find({});
-    if (!content) {
-        return res.status(500).json({
-            error: "Server error getting user from ID"
-        });
-    }
+    // let content = await schemas.Account.find({});
+    // if (!content) {
+    //     return res.status(500).json({
+    //         error: "Server error getting user from ID"
+    //     });
+    // }
 
-    //Filter for subscribed users and only keep their IDs (not the whole object)
-    let subscriptionsIds = user.comic.subscriptions;
-    console.log("Subscriptions IDs: ", subscriptionsIds);
-    let contentIds = content.filter((user) => {
-        for (subId of subscriptionsIds) {
-            if (deepEqual(subId, user._id)) {
-                return true;
-            }
-        }
-        return false;
-    }).map((user) => user._id);
+    // //Filter for subscribed users and only keep their IDs (not the whole object)
+    // let subscriptionsIds = user.comic.subscriptions;
+    // console.log("Subscriptions IDs: ", subscriptionsIds);
+    // let contentIds = content.filter((user) => {
+    //     for (subId of subscriptionsIds) {
+    //         if (deepEqual(subId, user._id)) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }).map((user) => user._id);
 
     console.log("ContentIds: ", contentIds);
 
