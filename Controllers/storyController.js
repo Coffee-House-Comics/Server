@@ -179,8 +179,17 @@ StoryController.subscriptions = async function (req, res) {
 
     console.log("allSnaps: ", allSnaps);
 
+    const outObj = allSnaps.map(snapArr => {
+        const name = (snapArr[0]) ? snapArr[0].author : "NIL";
+
+        return {
+            author: name,
+            posts: snapArr
+        };
+    });
+
     return res.status(200).json({
-        content: allSnaps
+        content: outObj
     });
 }
 
