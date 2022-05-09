@@ -168,7 +168,7 @@ ComicController.subscriptions = async function (req, res) {
     }
     // let user = account.user;
 
-    const contentIds = await Promise.all(account.user.comic.subscriptions.map(userId => {
+    const contentIds = await Promise.all(account.user.comic.subscriptions.map(async userId => {
         // Get that user's posts
         await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").execFind(function(err, docs) {
             if (err) {
