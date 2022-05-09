@@ -486,7 +486,7 @@ StoryController.published = async function (req, res) {
     console.log("Comments before: %j", story.comments);
 
     // Handle the comments
-    story.comments = story.comments.map(comment => {
+    const newComments = story.comments.map(comment => {
         let myCommentVote = 0;
 
         if (userID) {
@@ -507,7 +507,7 @@ StoryController.published = async function (req, res) {
         });
     });
 
-    console.log("Comments After: %j", story.comments);
+    console.log("Comments After: %j", newComments);
 
     let myPostVote = 0;
 
@@ -522,6 +522,7 @@ StoryController.published = async function (req, res) {
 
     story = {
         ...story.toObject(),
+        comments: newComments,
         myVote: myPostVote,
         author: profileSnapshot.name,
         authorBio: profileSnapshot.bio,
@@ -1556,8 +1557,10 @@ StoryController.comment = async function (req, res) {
         });
     }
 
+    console.log("Story id:", storyId);
+
     //Get post
-    const story = await schemas.StoryPost.findOne({ _id: storyId });
+    const story = await schemas.StoryPost.findById(storyId);
     if (!story) {
         return res.status(500).json({
             error: "Story could not be found"

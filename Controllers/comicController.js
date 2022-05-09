@@ -455,10 +455,10 @@ ComicController.published = async function (req, res) {
 
     const userID = require('../Auth').verifyUser(req);
 
-    console.log("Comments before: %j", comic.comments);
+    console.log("Comments (pub story) before: %j", comic.comments);
 
     // Handle the comments
-    comic.comments = comic.comments.map(comment => {
+    const newComments = comic.comments.map(comment => {
         let myCommentVote = 0;
 
         if (userID) {
@@ -479,7 +479,7 @@ ComicController.published = async function (req, res) {
         });
     });
 
-    console.log("Comments After: %j", comic.comments);
+    console.log("Comments (pub story) After: %j", newComments);
 
     let myPostVote = 0;
 
@@ -494,6 +494,7 @@ ComicController.published = async function (req, res) {
 
     comic = {
         ...comic.toObject(),
+        comments: newComments,
         myVote: myPostVote,
         author: profileSnapshot.name,
         authorBio: profileSnapshot.bio,
