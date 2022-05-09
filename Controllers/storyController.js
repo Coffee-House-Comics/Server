@@ -172,15 +172,15 @@ StoryController.subscriptions = async function (req, res) {
         return await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").exec();
     }));
 
-    const contentIds = allcontent.map(usersPosts => {
+    const allSnaps = await Promise.all(allcontent.map(async usersPosts => {
         // console.log("UserPosts:", usersPosts);
-        return usersPosts.map( post => { return post._id });
-    })
+        return await Utils.generatePostSnapshot(true, usersPosts, false);
+    }));
 
-    console.log("ContentIds: ", contentIds);
+    console.log("allSnaps: ", allSnaps);
 
     return res.status(200).json({
-        content: contentIds
+        content: allSnaps
     });
 }
 
