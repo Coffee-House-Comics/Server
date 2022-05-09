@@ -167,26 +167,31 @@ StoryController.subscriptions = async function (req, res) {
         });
     }
 
-    const allcontent = await Promise.all(account.user.comic.subscriptions.map(async userId => {
+    const allcontent = await Promise.all(account.user.story.subscriptions.map(async userId => {
         // Get that user's posts
-        return await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").exec();
+        return await schemas.StoryPost.find({ authorID: userId }).sort("-publishedDate").exec();
     }));
 
     const allSnaps = await Promise.all(allcontent.map(async usersPosts => {
         // console.log("UserPosts:", usersPosts);
-        return await Utils.generatePostSnapshot(true, usersPosts, false);
+        return await Utils.generatePostSnapshot(false, usersPosts, false);
     }));
 
-    console.log("allSnaps: ", allSnaps);
+    // console.log("allSnaps: ", allSnaps);
 
     const outObj = allSnaps.map(snapArr => {
-        const name = (snapArr[0]) ? snapArr[0].author : "NIL";
+        // console.log("SNAP ARR: ", snapArr);
+        const name = (snapArr[0][0]) ? snapArr[0][0].author : "NIL";
+
+        // console.log("NAME:", name);
 
         return {
             author: name,
-            posts: snapArr
+            posts: snapArr.map(snap => (snap[0]))
         };
     });
+
+    console.log("outObj: %j", allSnaps);
 
     return res.status(200).json({
         content: outObj

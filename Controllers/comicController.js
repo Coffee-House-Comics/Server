@@ -158,7 +158,7 @@ ComicController.subscriptions = async function (req, res) {
     console.log("Getting subscribed content");
 
     //Get the user that made the request
-    let account = await schemas.Account.findOne({ _id: req.userId });
+    const account = await schemas.Account.findOne({ _id: req.userId });
 
     //Check for error
     if (!account) {
@@ -172,21 +172,28 @@ ComicController.subscriptions = async function (req, res) {
         return await schemas.ComicPost.find({ authorID: userId }).sort("-publishedDate").exec();
     }));
 
+    // console.log("ALL Content:", allcontent);
+
     const allSnaps = await Promise.all(allcontent.map(async usersPosts => {
         // console.log("UserPosts:", usersPosts);
         return await Utils.generatePostSnapshot(true, usersPosts, false);
     }));
 
-    console.log("allSnaps: ", allSnaps);
+    // console.log("allSnaps: ", allSnaps);
 
     const outObj = allSnaps.map(snapArr => {
-        const name = (snapArr[0]) ? snapArr[0].author : "NIL";
+        // console.log("SNAP ARR: ", snapArr);
+        const name = (snapArr[0][0]) ? snapArr[0][0].author : "NIL";
+
+        // console.log("NAME:", name);
 
         return {
             author: name,
-            posts: snapArr
+            posts: snapArr.map(snap => (snap[0]))
         };
     });
+
+    console.log("outObj: %j", allSnaps);
 
     return res.status(200).json({
         content: outObj
