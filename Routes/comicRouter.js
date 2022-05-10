@@ -8,7 +8,7 @@ const CommonController = require('../Controllers/commonController')
 // Get the explore tab
 router.get('/explore', ComicController.explore);
 // Search
-router.get('/search/:crit', ComicController.search);
+router.get('/search/:crit/:sort', ComicController.search);
 // Get the subscriptions tab
 router.get('/subscriptions', auth.verify, ComicController.subscriptions);
 

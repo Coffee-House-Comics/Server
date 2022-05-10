@@ -91,17 +91,19 @@ ComicController.search = async function (req, res) {
             }
         }
     */
-    console.log("Req body for search: ", req.params)
+    console.log("Req params for search: ", req.params)
     let searchCriteria = req.params.crit.toLowerCase().split(",")
-    console.log("Search criteria: ", searchCriteria)
+    let sort = req.params.sort.toLowerCase()
+    console.log("Search criteria: %s    |   Sort: %s", searchCriteria, sort)
 
     console.log("Performing content search");
 
     //Find all posts
-    let posts = await schemas.ComicPost.find({ isPublished: true });
+    let posts = await schemas.StoryPost.find({ isPublished: true }).sort(sort);
 
     //Find all authors
     let authors = await schemas.Account.find({ isPublished: true });
+
 
     console.log("Posts and authors length:", posts.length, authors.length);
 
@@ -1276,7 +1278,7 @@ ComicController.user_saved = async function (req, res) {
     console.log("Getting bookmarked content");
 
     //Get the user that made the request
-    let account = await schemas.Account.findOne({ _id: req.userId });
+    const account = await schemas.Account.findOne({ _id: req.userId });
 
     //Check for error
     if (!account) {
@@ -1284,25 +1286,18 @@ ComicController.user_saved = async function (req, res) {
             error: "Server error getting user from ID"
         });
     }
-    let user = account.user;
 
-    //Find all posts
-    let content = await schemas.ComicPost.find({});
-    if (!content) {
-        return res.status(500).json({
-            error: "Server error getting user from ID"
-        });
-    }
+    console.log("IDS:", account.user.comic.saved);
 
-    //Filter for bookmarked (saved) posts
-    contentIds = content.map((post) => post._id);
-    contentIds = contentIds.filter((post) => {
-        return user.comic.saved.includes(post);
-    });
-    console.log("Bookmarked posts: ", contentIds);
+    const allcontent = await Promise.all(account.user.comic.saved.map(async savedId => {
+        // Get that post
+        return await schemas.ComicPost.findById(savedId);
+    }));
+
+    const allSnaps = await Utils.generatePostSnapshot(true, allcontent, false);
 
     return res.status(200).json({
-        content: contentIds
+        content: allSnaps.map(elem => elem[0])
     });
 }
 
