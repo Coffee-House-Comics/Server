@@ -181,7 +181,11 @@ StoryController.subscriptions = async function (req, res) {
 
     const outObj = allSnaps.map(snapArr => {
         // console.log("SNAP ARR: ", snapArr);
-        const name = (snapArr[0][0]) ? snapArr[0][0].author : "NIL";
+        let name = "NIL";
+        if (snapArr[0] && snapArr[0].author)
+            name = snapArr[0];
+        if (snapArr[0] && snapArr[0][0].author)
+            name = snapArr[0][0].author;
 
         // console.log("NAME:", name);
 
@@ -191,10 +195,12 @@ StoryController.subscriptions = async function (req, res) {
         };
     });
 
-    console.log("outObj: %j", allSnaps);
+    console.log("outObj: %j", outObj);
 
     return res.status(200).json({
-        content: outObj
+        content: outObj.filter(elem => { 
+            return elem.author !== "NIL" 
+        })
     });
 }
 
