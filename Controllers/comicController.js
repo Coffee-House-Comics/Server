@@ -100,6 +100,7 @@ ComicController.search = async function (req, res) {
 
     //Check for errors
     if (!posts || !authors) {
+        console.log("Server error getting all posts and authors to search/sort")
         return res.status(500).json({
             error: "Server error getting all posts & authors to search/sort"
         });
@@ -133,6 +134,9 @@ ComicController.search = async function (req, res) {
     //Get lists of IDs to return
     let postIds = posts.map((post) => post._id);
     let authorIds = authors.map((author) => author.id);
+
+    console.log("Search posts: ", postIds)
+    console.log("Search authors:", authorIds)
 
     return res.status(200).json({
         posts: postIds,
@@ -2057,7 +2061,7 @@ ComicController.vote_forumPost = async function (req, res) {
     const type = body.type;
     const forumOwnerId = body.forumOwnerId;
 
-    if (!type || !forumOwnerId) {
+    if (type === null || type === undefined || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2434,7 +2438,7 @@ ComicController.vote_forumpost_comment = async function (req, res) {
     let forumPostId = body.forumPostId;
     let forumOwnerId = body.forumOwnerId;
 
-    if (!type || !forumPostId || !forumOwnerId) {
+    if (type === null || type === undefined  || !forumPostId || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2983,6 +2987,7 @@ ComicController.getAllForumPosts = async function (req, res) {
         const newUser = await Utils.constructProfileSnapShot(post.ownerId);
 
         return {
+            id: post.id,
             ownerId: post.ownerId,
             title: post.title,
             body: post.body,

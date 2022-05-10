@@ -2232,7 +2232,7 @@ StoryController.vote_forumPost = async function (req, res) {
     const type = body.type;
     const forumOwnerId = body.forumOwnerId;
 
-    if (!type || !forumOwnerId) {
+    if (type === null || type === undefined  || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2609,7 +2609,7 @@ StoryController.vote_forumpost_comment = async function (req, res) {
     let forumPostId = body.forumPostId;
     let forumOwnerId = body.forumOwnerId;
 
-    if (!type || !forumPostId || !forumOwnerId) {
+    if (type === null || type === undefined  || !forumPostId || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2864,6 +2864,7 @@ StoryController.getAllForumPosts = async function (req, res) {
         const newUser = await Utils.constructProfileSnapShot(post.ownerId);
 
         return {
+            id: post.id,
             ownerId: post.ownerId,
             title: post.title,
             body: post.body,
