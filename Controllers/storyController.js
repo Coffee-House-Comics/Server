@@ -57,9 +57,9 @@ StoryController.explore = async function (req, res) {
 
     // Construct all the snapshots
 
-    const recentSnaps = await Utils.generatePostSnapshot(true, recentContent, false);
+    const recentSnaps = await Utils.generatePostSnapshot(false, recentContent, false);
 
-    const likedSnaps = await Utils.generatePostSnapshot(true, likedContent, false);
+    const likedSnaps = await Utils.generatePostSnapshot(false, likedContent, false);
 
     if (recentSnaps && likedSnaps) {
         //Send content in response body

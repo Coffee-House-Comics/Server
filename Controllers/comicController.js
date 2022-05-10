@@ -99,7 +99,8 @@ ComicController.search = async function (req, res) {
     console.log("Performing content search");
 
     //Find all posts
-    let posts = await schemas.StoryPost.find({ isPublished: true }).sort(sort);
+    let posts = await schemas.ComicPost.find({ isPublished: true }).sort(sort);
+    posts.reverse();
 
     //Find all authors
     let authors = await schemas.Account.find({ isPublished: true });
