@@ -153,7 +153,7 @@ utils.constructProfileObjFromAccount = async function (account, isMy) {
 }
 
 utils.findObjInArrayById = function (arr, id) {
-    return arr.find(element => element._id == id)
+    return arr.find(element => element._id.toString() === id.toString())
 }
 
 utils.arrRemove = function (arr, toRemove) {

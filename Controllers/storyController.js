@@ -2062,7 +2062,7 @@ StoryController.vote = async function (req, res) {
 
     const type = body.type;
 
-    if (!type) {
+    if (type === undefined || type === null) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2417,7 +2417,7 @@ StoryController.vote_comment = async function (req, res) {
     const type = body.type;
     const postId = body.postId;
 
-    if (!type || !postId) {
+    if (type === undefined || type === null || !postId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2447,7 +2447,8 @@ StoryController.vote_comment = async function (req, res) {
         let comment = Utils.findObjInArrayById(post.comments, req.params.id);
         let commentIndex = post.comments.indexOf(comment);
 
-        if (!comment) {
+        if (comment === undefined || comment === null) {
+            console.log("Issue finding comment for comic post", comment, commentIndex, post.comments, req.params.id);
             return res.status(500).json({
                 error: "Issue finding comment"
             });
@@ -2642,7 +2643,8 @@ StoryController.vote_forumpost_comment = async function (req, res) {
         let comment = Utils.findObjInArrayById(post.comments, req.params.id);
         let commentIndex = post.comments.indexOf(comment);
 
-        if (!comment) {
+        if (comment === undefined || comment === null) {
+            console.log("Issue finding comment for comic post", comment, commentIndex, post.comments, req.params.id);
             return res.status(500).json({
                 error: "Issue finding comment"
             });

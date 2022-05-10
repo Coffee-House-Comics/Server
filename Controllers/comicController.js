@@ -183,7 +183,7 @@ ComicController.subscriptions = async function (req, res) {
 
     const outObj = allSnaps.map(snapArr => {
         // console.log("SNAP ARR: ", snapArr);
-        const name = (snapArr[0][0]) ? snapArr[0][0].author : "NIL";
+        const name = (snapArr[0] && snapArr[0][0]) ? snapArr[0][0].author : "NIL";
 
         // console.log("NAME:", name);
 
@@ -1886,7 +1886,7 @@ ComicController.vote = async function (req, res) {
 
     const type = body.type;
 
-    if (!type) {
+    if (type === undefined || type === null) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2240,7 +2240,7 @@ ComicController.vote_comment = async function (req, res) {
     const type = body.type;
     const postId = body.postId;
 
-    if (!type || !postId) {
+    if (type === undefined || type === null || !postId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2270,7 +2270,9 @@ ComicController.vote_comment = async function (req, res) {
         let comment = Utils.findObjInArrayById(post.comments, req.params.id);
         let commentIndex = post.comments.indexOf(comment);
 
-        if (!comment) {
+        if (comment === undefined || comment === null) {
+            console.log("Issue finding comment for comic post", comment, commentIndex, post.comments, req.params.id);
+
             return res.status(500).json({
                 error: "Issue finding comment"
             });
@@ -2465,7 +2467,10 @@ ComicController.vote_forumpost_comment = async function (req, res) {
         let comment = Utils.findObjInArrayById(post.comments, req.params.id);
         let commentIndex = post.comments.indexOf(comment);
 
-        if (!comment) {
+        if (comment === undefined || comment === null) {
+            console.log("Issue finding comment for comic post", comment, commentIndex, post.comments, req.params.id);
+
+
             return res.status(500).json({
                 error: "Issue finding comment"
             });
