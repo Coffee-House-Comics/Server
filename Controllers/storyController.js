@@ -47,20 +47,25 @@ StoryController.explore = async function (req, res) {
     let likedContent = [];
 
     //Find most recent posts
-    recentContent = await schemas.StoryPost.find({}).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
+    recentContent = await schemas.StoryPost.find({ isPublished: true }).sort("-publishedDate").limit(NUM_RECENT_POSTS).exec();
 
     //Find most liked posts
-    likedContent = await schemas.StoryPost.find({}).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
+    likedContent = await schemas.StoryPost.find({ isPublished: true }).sort("-beans").limit(NUM_LIKED_POSTS).exec();
 
-    //Convert lists from Post objects to IDs
-    recentIds = recentContent.map((post) => post._id);
-    likedIds = likedContent.map((post) => post._id);
+    console.log("Explore Page lengths (recent, liked)", recentContent.length, likedContent.length);
 
-    if (recentContent && likedContent) {
+
+    // Construct all the snapshots
+
+    const recentSnaps = await Utils.generatePostSnapshot(true, recentContent, false);
+
+    const likedSnaps = await Utils.generatePostSnapshot(true, likedContent, false);
+
+    if (recentSnaps && likedSnaps) {
         //Send content in response body
         return res.status(200).json({
-            mostRecent: recentIds,
-            mostLiked: likedIds
+            mostRecent: recentSnaps.map(elem => { return elem[0] }),
+            mostLiked: likedSnaps.map(elem => { return elem[0] })
         });
     }
 
@@ -72,9 +77,7 @@ StoryController.explore = async function (req, res) {
 
 StoryController.search = async function (req, res) {
     /* Search ------------
-        Request body: {
-            searchCriteria: [String]
-        }
+        Request body: {}
 
         Response {
             status 200 OK or 500 ERROR
@@ -89,54 +92,77 @@ StoryController.search = async function (req, res) {
             }
         }
     */
+    console.log("Req body for search: ", req.params)
+    let searchCriteria = req.params.crit.toLowerCase().split(",")
+    console.log("Search criteria: ", searchCriteria)
 
     console.log("Performing content search");
 
     //Find all posts
-    let posts = await schemas.StoryPost.find({});
+    let posts = await schemas.StoryPost.find({ isPublished: true });
 
     //Find all authors
-    let authors = await schemas.Account.find({});
+    let authors = await schemas.Account.find({ isPublished: true });
+
+    console.log("Posts and authors length:", posts.length, authors.length);
 
     //Check for errors
     if (!posts || !authors) {
+        console.log("Server error getting all posts and authors to search/sort")
         return res.status(500).json({
             error: "Server error getting all posts & authors to search/sort"
         });
     }
 
     //Build custom author objects
-    authors = authors.map((account) => {
-        return {
-            id: account._id,
-            displayName: account.user.displayName,
-            bio: account.user.bio,
-            profileImage: account.user.profileImage
-        }
-    });
+    // authors = authors.map((account) => {
+    //     return {
+    //         id: account._id,
+    //         displayName: account.user.displayName,
+    //         bio: account.user.bio,
+    //         profileImage: account.user.profileImage
+    //     }
+    // });
 
     //Filter results by search
-    if (req.body && req.body.searchCriteria) {
-        for (let query of req.body.searchCriteria) {
-            //Filter posts
-            posts = posts.filter((post) => {
-                return (post.name.includes(query) || post.author.includes(query) || (post.series && post.series.includes(query)));
-            });
+    searchCriteria = searchCriteria ? searchCriteria : ""
+    for (let query of searchCriteria) {
+        console.log("query:", query)
+        //Filter posts
+        posts = posts.filter((post) => {
+            console.log("search post", post)
+            return (post && (post.name.toLowerCase().includes(query) || post.author.toLowerCase().includes(query) || (post.series && post.series.toLowerCase().includes(query))));
+        });
 
-            //Filter authors
-            authors = authors.filter((author) => {
-                return (author.displayName.includes(query));
-            });
-        }
+        //Filter authors
+        authors = authors.filter((author) => {
+            return (author && author.user.displayName.toLowerCase().includes(query));
+        });
     }
 
+
+    console.log("After search applied:", posts.length, authors.length);
+
+    // const postSnaps = await Promise.all(posts.map(async usersPosts => {
+    //     // console.log("UserPosts:", usersPosts);
+    //     return await Utils.generatePostSnapshot(true, usersPosts, false);
+    // }));
+
+    const authorSnaps = authors.map(author => {
+        return Utils.constructProfileSnapShotFromAccount(author)
+    });
+
+    const postSnaps = await Utils.generatePostSnapshot(false, posts, false);
+
+    console.log("Post and author snaps: ", postSnaps, authorSnaps);
+
     //Get lists of IDs to return
-    let postIds = posts.map((post) => post._id);
-    let authorIds = authors.map((author) => author.id);
+    // let postIds = posts.map((post) => post._id);
+    // let authorIds = authors.map((author) => author.id);
 
     return res.status(200).json({
-        posts: postIds,
-        authors: authorIds
+        posts: postSnaps.map(elem => { return elem[0] }),
+        authors: authorSnaps
     });
 }
 
@@ -198,8 +224,8 @@ StoryController.subscriptions = async function (req, res) {
     console.log("outObj: %j", outObj);
 
     return res.status(200).json({
-        content: outObj.filter(elem => { 
-            return elem.author !== "NIL" 
+        content: outObj.filter(elem => {
+            return elem.author !== "NIL"
         })
     });
 }
@@ -2232,7 +2258,7 @@ StoryController.vote_forumPost = async function (req, res) {
     const type = body.type;
     const forumOwnerId = body.forumOwnerId;
 
-    if (type === null || type === undefined  || !forumOwnerId) {
+    if (type === null || type === undefined || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2454,7 +2480,7 @@ StoryController.vote_comment = async function (req, res) {
         let commentIndex = post.comments.indexOf(comment);
 
         if (comment === undefined || comment === null) {
-            console.log("Issue finding comment for comic post", comment, commentIndex, post.comments, req.params.id);
+            console.log("Issue finding comment for story post", comment, commentIndex, post.comments, req.params.id);
             return res.status(500).json({
                 error: "Issue finding comment"
             });
@@ -2609,7 +2635,7 @@ StoryController.vote_forumpost_comment = async function (req, res) {
     let forumPostId = body.forumPostId;
     let forumOwnerId = body.forumOwnerId;
 
-    if (type === null || type === undefined  || !forumPostId || !forumOwnerId) {
+    if (type === null || type === undefined || !forumPostId || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -2650,7 +2676,7 @@ StoryController.vote_forumpost_comment = async function (req, res) {
         let commentIndex = post.comments.indexOf(comment);
 
         if (comment === undefined || comment === null) {
-            console.log("Issue finding comment for comic post", comment, commentIndex, post.comments, req.params.id);
+            console.log("Issue finding comment for story post", comment, commentIndex, post.comments, req.params.id);
             return res.status(500).json({
                 error: "Issue finding comment"
             });
@@ -2852,6 +2878,7 @@ StoryController.getAllForumPosts = async function (req, res) {
             }
 
             return ({
+                id: comment._id,
                 ownerId: comment.ownerId,
                 user: comment.user,
                 date: comment.date,

@@ -57,39 +57,26 @@ ComicController.explore = async function (req, res) {
 
     // Construct all the snapshots
 
-    const recentSnaps = await Promise.all(recentContent.map(async usersPosts => {
-        // console.log("UserPosts:", usersPosts);
-        return await Utils.generatePostSnapshot(true, usersPosts, false);
-    }));
-    
-    const likedSnaps = await Promise.all(likedContent.map(async usersPosts => {
-        // console.log("UserPosts:", usersPosts);
-        return await Utils.generatePostSnapshot(true, usersPosts, false);
-    }));
+    const recentSnaps = await Utils.generatePostSnapshot(true, recentContent, false);
 
-    // //Convert lists from Post objects to IDs
-    // recentIds = recentContent.map((post) => post._id);
-    // likedIds = likedContent.map((post) => post._id);
+    const likedSnaps = await Utils.generatePostSnapshot(true, likedContent, false);
 
     if (recentSnaps && likedSnaps) {
         //Send content in response body
         return res.status(200).json({
-            mostRecent: recentSnaps,
-            mostLiked: likedSnaps
+            mostRecent: recentSnaps.map(elem => { return elem[0] }),
+            mostLiked: likedSnaps.map(elem => { return elem[0] })
         });
     }
 
     return res.status(500).json({
         error: "Server error processing explore request"
     });
-
 }
 
 ComicController.search = async function (req, res) {
     /* Search ------------
-        Request body: {
-            searchCriteria: [String]
-        }
+        Request body: {}
 
         Response {
             status 200 OK or 500 ERROR
@@ -104,6 +91,9 @@ ComicController.search = async function (req, res) {
             }
         }
     */
+    console.log("Req body for search: ", req.params)
+    let searchCriteria = req.params.crit.toLowerCase().split(",")
+    console.log("Search criteria: ", searchCriteria)
 
     console.log("Performing content search");
 
@@ -123,42 +113,34 @@ ComicController.search = async function (req, res) {
         });
     }
 
-    //Build custom author objects
-    authors = authors.map((account) => {
-        return {
-            id: account._id,
-            displayName: account.user.displayName,
-            bio: account.user.bio,
-            profileImage: account.user.profileImage
-        }
-    });
-
     //Filter results by search
-    if (req.body && req.body.searchCriteria) {
-        for (let query of req.body.searchCriteria) {
-            //Filter posts
-            posts = posts.filter((post) => {
-                return (post.name.includes(query) || post.author.includes(query) || (post.series && post.series.includes(query)));
-            });
+    searchCriteria = searchCriteria ? searchCriteria : ""
+    for (let query of searchCriteria) {
+        console.log("query:", query)
+        //Filter posts
+        posts = posts.filter((post) => {
+            console.log("search post", post)
+            return (post && (post.name.toLowerCase().includes(query) || post.author.toLowerCase().includes(query) || (post.series && post.series.toLowerCase().includes(query))));
+        });
 
-            //Filter authors
-            authors = authors.filter((author) => {
-                return (author.displayName.includes(query));
-            });
-        }
+        //Filter authors
+        authors = authors.filter((author) => {
+            return (author && author.user.displayName.toLowerCase().includes(query));
+        });
     }
 
-    
     console.log("After search applied:", posts.length, authors.length);
 
-    const postSnaps = await Promise.all(posts.map(async usersPosts => {
-        // console.log("UserPosts:", usersPosts);
-        return await Utils.generatePostSnapshot(true, usersPosts, false);
-    }));
+    // const postSnaps = await Promise.all(posts.map(async usersPosts => {
+    //     // console.log("UserPosts:", usersPosts);
+    //     return await Utils.generatePostSnapshot(true, usersPosts, false);
+    // }));
 
-    const authorSnaps = authors.map( author => {
+    const authorSnaps = authors.map(author => {
         return Utils.constructProfileSnapShotFromAccount(author)
     });
+
+    const postSnaps = await Utils.generatePostSnapshot(true, posts, false);
 
     console.log("Post and author snaps: ", postSnaps, authorSnaps);
 
@@ -166,11 +148,8 @@ ComicController.search = async function (req, res) {
     // let postIds = posts.map((post) => post._id);
     // let authorIds = authors.map((author) => author.id);
 
-    console.log("Search posts: ", postIds)
-    console.log("Search authors:", authorIds)
-
     return res.status(200).json({
-        posts: postSnaps,
+        posts: postSnaps.map(elem => { return elem[0] }),
         authors: authorSnaps
     });
 }
@@ -236,8 +215,8 @@ ComicController.subscriptions = async function (req, res) {
     console.log("outObj: %j", outObj);
 
     return res.status(200).json({
-        content: outObj.filter(elem => { 
-            return elem.author !== "NIL" 
+        content: outObj.filter(elem => {
+            return elem.author !== "NIL"
         })
     });
 }
@@ -2469,7 +2448,7 @@ ComicController.vote_forumpost_comment = async function (req, res) {
     let forumPostId = body.forumPostId;
     let forumOwnerId = body.forumOwnerId;
 
-    if (type === null || type === undefined  || !forumPostId || !forumOwnerId) {
+    if (type === null || type === undefined || !forumPostId || !forumOwnerId) {
         return res.status(500).json({
             error: "Malformed Body"
         });
@@ -3006,6 +2985,7 @@ ComicController.getAllForumPosts = async function (req, res) {
             }
 
             return ({
+                id: comment._id,
                 ownerId: comment.ownerId,
                 user: comment.user,
                 date: comment.date,

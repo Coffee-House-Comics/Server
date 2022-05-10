@@ -105,10 +105,11 @@ utils.constructProfileSnapShot = async function (accountID) {
 }
 
 utils.constructProfileSnapShotFromAccount = function (account) {
-    if (!account)
+    if (!account || !account.user)
         return null;
 
     return {
+        id: account._id,
         name: account.user.displayName,
         bio: account.user.bio,
         profileImage: account.user.profileImage
