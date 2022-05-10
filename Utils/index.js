@@ -144,7 +144,7 @@ utils.constructProfileObjFromAccount = async function (account, isMy) {
         email: account.email,
 
         storyBeans: account.user.story.beans,
-        comicBeans: account.user.story.beans,
+        comicBeans: account.user.comic.beans,
 
         storySnapshots: utils.constructSeriesRepresentation(storySnaps),
         comicSnapshots: utils.constructSeriesRepresentation(comicSnaps),
