@@ -47,20 +47,35 @@ ComicController.explore = async function (req, res) {
     let likedContent = [];
 
     //Find most recent posts
-    recentContent = await schemas.ComicPost.find({ isPublished: true }).sort({ publishedDate: 'descending' }).limit(NUM_RECENT_POSTS);
+    recentContent = await schemas.ComicPost.find({ isPublished: true }).sort("-publishedDate").limit(NUM_RECENT_POSTS).exec();
 
     //Find most liked posts
-    likedContent = await schemas.ComicPost.find({ isPublished: true }).sort({ beans: 'descending' }).limit(NUM_LIKED_POSTS);
+    likedContent = await schemas.ComicPost.find({ isPublished: true }).sort("-beans").limit(NUM_LIKED_POSTS).exec();
 
-    //Convert lists from Post objects to IDs
-    recentIds = recentContent.map((post) => post._id);
-    likedIds = likedContent.map((post) => post._id);
+    console.log("Explore Page lengths (recent, liked)", recentContent.length, likedContent.length);
 
-    if (recentContent && likedContent) {
+
+    // Construct all the snapshots
+
+    const recentSnaps = await Promise.all(recentContent.map(async usersPosts => {
+        // console.log("UserPosts:", usersPosts);
+        return await Utils.generatePostSnapshot(true, usersPosts, false);
+    }));
+    
+    const likedSnaps = await Promise.all(likedContent.map(async usersPosts => {
+        // console.log("UserPosts:", usersPosts);
+        return await Utils.generatePostSnapshot(true, usersPosts, false);
+    }));
+
+    // //Convert lists from Post objects to IDs
+    // recentIds = recentContent.map((post) => post._id);
+    // likedIds = likedContent.map((post) => post._id);
+
+    if (recentSnaps && likedSnaps) {
         //Send content in response body
         return res.status(200).json({
-            mostRecent: recentIds,
-            mostLiked: likedIds
+            mostRecent: recentSnaps,
+            mostLiked: likedSnaps
         });
     }
 
@@ -93,10 +108,12 @@ ComicController.search = async function (req, res) {
     console.log("Performing content search");
 
     //Find all posts
-    let posts = await schemas.ComicPost.find({});
+    let posts = await schemas.ComicPost.find({ isPublished: true });
 
     //Find all authors
-    let authors = await schemas.Account.find({});
+    let authors = await schemas.Account.find({ isPublished: true });
+
+    console.log("Posts and authors length:", posts.length, authors.length);
 
     //Check for errors
     if (!posts || !authors) {
@@ -131,16 +148,30 @@ ComicController.search = async function (req, res) {
         }
     }
 
+    
+    console.log("After search applied:", posts.length, authors.length);
+
+    const postSnaps = await Promise.all(posts.map(async usersPosts => {
+        // console.log("UserPosts:", usersPosts);
+        return await Utils.generatePostSnapshot(true, usersPosts, false);
+    }));
+
+    const authorSnaps = authors.map( author => {
+        return Utils.constructProfileSnapShotFromAccount(author)
+    });
+
+    console.log("Post and author snaps: ", postSnaps, authorSnaps);
+
     //Get lists of IDs to return
-    let postIds = posts.map((post) => post._id);
-    let authorIds = authors.map((author) => author.id);
+    // let postIds = posts.map((post) => post._id);
+    // let authorIds = authors.map((author) => author.id);
 
     console.log("Search posts: ", postIds)
     console.log("Search authors:", authorIds)
 
     return res.status(200).json({
-        posts: postIds,
-        authors: authorIds
+        posts: postSnaps,
+        authors: authorSnaps
     });
 }
 

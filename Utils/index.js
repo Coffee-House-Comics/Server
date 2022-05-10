@@ -104,6 +104,17 @@ utils.constructProfileSnapShot = async function (accountID) {
     };
 }
 
+utils.constructProfileSnapShotFromAccount = function (account) {
+    if (!account)
+        return null;
+
+    return {
+        name: account.user.displayName,
+        bio: account.user.bio,
+        profileImage: account.user.profileImage
+    };
+}
+
 utils.constructProfileObjFromAccount = async function (account, isMy) {
     if (!account || !account._id || !account.user || !account.user.displayName ||
         (account.user.bio === null) || (account.user.profileImage === null) || (account.user.story.beans === null) ||
