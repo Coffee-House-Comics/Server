@@ -76,7 +76,10 @@ ComicController.explore = async function (req, res) {
 
 ComicController.search = async function (req, res) {
     /* Search ------------
-        Request body: {}
+        Request body: {
+            numResults: Number,
+            pageNumber: Number
+        }
 
         Response {
             status 200 OK or 500 ERROR
@@ -96,15 +99,32 @@ ComicController.search = async function (req, res) {
     let sort = req.params.sort.toLowerCase()
     console.log("Search criteria: %s    |   Sort: %s", searchCriteria, sort)
 
+    //Defaults
+    let numResults = 10;
+    let pageNumber = 0;
+
+    //Get values from body
+    if(body){
+        numResults = body.numResults;
+        pageNumber = body.pageNumber;
+    }
+    let start = numResults * pageNumber;
+    let end = start + numResults;
+
     console.log("Performing content search");
 
     //Find all posts
     let posts = await schemas.ComicPost.find({ isPublished: true }).sort(sort);
     posts.reverse();
 
+    //Paginate
+    posts = posts.slice(start,end)
+
     //Find all authors
     let authors = await schemas.Account.find({ isPublished: true });
 
+    //Paginate
+    authors = authors.slice(start, end)
 
     console.log("Posts and authors length:", posts.length, authors.length);
 
