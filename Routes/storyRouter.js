@@ -9,7 +9,7 @@ const CommonController = require('../Controllers/commonController');
 
 
 router.get('/explore', StoryController.explore);
-router.get('/search/:crit/:sort', StoryController.search);
+router.get('/search/:crit/:sort/:numPerPage/:pageNum', StoryController.search);
 router.get('/subscriptions', auth.verify, StoryController.subscriptions);
 
 router.get('/profile/:id', utils.verifyValidId, CommonController.getProfileById);

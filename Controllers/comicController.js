@@ -25,6 +25,14 @@ const NUM_LIKED_POSTS = 10;
 
 const ComicController = {};
 
+const CACHE = {};
+
+CACHE.EXPLORE = {
+    vals: [],
+    version: 5,
+    version_limiter: 5
+};
+
 ComicController.explore = async function (req, res) {
     /* Explore ------------
         Request body: {}
@@ -46,20 +54,36 @@ ComicController.explore = async function (req, res) {
     let recentContent = [];
     let likedContent = [];
 
-    //Find most recent posts
-    recentContent = await schemas.ComicPost.find({ isPublished: true }).sort("-publishedDate").limit(NUM_RECENT_POSTS).exec();
+    let recentSnaps = null;
+    let likedSnaps = null; 
 
-    //Find most liked posts
-    likedContent = await schemas.ComicPost.find({ isPublished: true }).sort("-beans").limit(NUM_LIKED_POSTS).exec();
+    CACHE.EXPLORE.version = CACHE.EXPLORE.version + 1;
 
-    console.log("Explore Page lengths (recent, liked)", recentContent.length, likedContent.length);
+    if (CACHE.EXPLORE.version < CACHE.EXPLORE.version_limiter) {
+        console.log("Using comic explore cache...");
 
+        recentSnaps = CACHE.EXPLORE.vals[0];
+        likedSnaps = CACHE.EXPLORE.vals[1];
+    }
+    else {
+        CACHE.EXPLORE.version = 0;
 
-    // Construct all the snapshots
+        //Find most recent posts
+        recentContent = await schemas.ComicPost.find({ isPublished: true }).sort("-publishedDate").limit(NUM_RECENT_POSTS).exec();
 
-    const recentSnaps = await Utils.generatePostSnapshot(true, recentContent, false);
+        //Find most liked posts
+        likedContent = await schemas.ComicPost.find({ isPublished: true }).sort("-beans").limit(NUM_LIKED_POSTS).exec();
 
-    const likedSnaps = await Utils.generatePostSnapshot(true, likedContent, false);
+        console.log("Explore Page lengths (recent, liked)", recentContent.length, likedContent.length);
+
+        // Construct all the snapshots
+
+        recentSnaps = await Utils.generatePostSnapshot(true, recentContent, false);
+        likedSnaps = await Utils.generatePostSnapshot(true, likedContent, false);
+
+        CACHE.EXPLORE.vals[0] = recentSnaps;
+        CACHE.EXPLORE.vals[1] = likedSnaps;
+    }
 
     if (recentSnaps && likedSnaps) {
         //Send content in response body
@@ -76,10 +100,7 @@ ComicController.explore = async function (req, res) {
 
 ComicController.search = async function (req, res) {
     /* Search ------------
-        Request body: {
-            numResults: Number,
-            pageNumber: Number
-        }
+        Request body: {}
 
         Response {
             status 200 OK or 500 ERROR
@@ -97,34 +118,24 @@ ComicController.search = async function (req, res) {
     console.log("Req params for search: ", req.params)
     let searchCriteria = req.params.crit.toLowerCase().split(",")
     let sort = req.params.sort.toLowerCase()
+    let numResults = parseInt(req.params.numPerPage)
+    let pageNumber = parseInt(req.params.pageNum)
     console.log("Search criteria: %s    |   Sort: %s", searchCriteria, sort)
 
-    //Defaults
-    let numResults = 10;
-    let pageNumber = 0;
-
-    //Get values from body
-    if(body){
-        numResults = body.numResults;
-        pageNumber = body.pageNumber;
-    }
+    console.log("Num results per page: ", numResults)
+    console.log("Requestion page number: ", pageNumber)
     let start = numResults * pageNumber;
     let end = start + numResults;
 
     console.log("Performing content search");
+    console.log("Start, end:", start, end)
 
     //Find all posts
     let posts = await schemas.ComicPost.find({ isPublished: true }).sort(sort);
     posts.reverse();
 
-    //Paginate
-    posts = posts.slice(start,end)
-
     //Find all authors
     let authors = await schemas.Account.find({ isPublished: true });
-
-    //Paginate
-    authors = authors.slice(start, end)
 
     console.log("Posts and authors length:", posts.length, authors.length);
 
@@ -142,7 +153,7 @@ ComicController.search = async function (req, res) {
         console.log("query:", query)
         //Filter posts
         posts = posts.filter((post) => {
-            console.log("search post", post)
+            // console.log("search post", post)
             return (post && (post.name.toLowerCase().includes(query) || post.author.toLowerCase().includes(query) || (post.series && post.series.toLowerCase().includes(query))));
         });
 
@@ -151,6 +162,12 @@ ComicController.search = async function (req, res) {
             return (author && author.user.displayName.toLowerCase().includes(query));
         });
     }
+
+    //Paginate
+    let numPostResults = posts.length;
+    posts = posts.slice(start,end)
+    let numAuthorResults = authors.length;
+    authors = authors.slice(start, end)
 
     console.log("After search applied:", posts.length, authors.length);
 
@@ -165,7 +182,7 @@ ComicController.search = async function (req, res) {
 
     const postSnaps = await Utils.generatePostSnapshot(true, posts, false);
 
-    console.log("Post and author snaps: ", postSnaps, authorSnaps);
+    // console.log("Post and author snaps: ", postSnaps, authorSnaps);
 
     //Get lists of IDs to return
     // let postIds = posts.map((post) => post._id);
@@ -173,7 +190,9 @@ ComicController.search = async function (req, res) {
 
     return res.status(200).json({
         posts: postSnaps.map(elem => { return elem[0] }),
-        authors: authorSnaps
+        authors: authorSnaps,
+        numPostResults: numPostResults,
+        numAuthorResults: numAuthorResults
     });
 }
 

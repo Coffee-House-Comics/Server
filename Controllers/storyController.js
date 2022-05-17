@@ -25,6 +25,14 @@ const NUM_LIKED_POSTS = 10;
 
 const StoryController = {};
 
+const CACHE = {};
+
+CACHE.EXPLORE = {
+    vals: [],
+    version: 5,
+    version_limiter: 5
+};
+
 StoryController.explore = async function (req, res) {
     /* Explore ------------
         Request body: {}
@@ -46,26 +54,42 @@ StoryController.explore = async function (req, res) {
     let recentContent = [];
     let likedContent = [];
 
-    //Find most recent posts
-    recentContent = await schemas.StoryPost.find({ isPublished: true }).sort("-publishedDate").limit(NUM_RECENT_POSTS).exec();
+    let recentSnaps = null;
+    let likedSnaps = null;
 
-    //Find most liked posts
-    likedContent = await schemas.StoryPost.find({ isPublished: true }).sort("-beans").limit(NUM_LIKED_POSTS).exec();
+    CACHE.EXPLORE.version = CACHE.EXPLORE.version + 1;
+
+    if (CACHE.EXPLORE.version < CACHE.EXPLORE.version_limiter) {
+        console.log("Using story explore cache...");
+
+        recentSnaps = CACHE.EXPLORE.vals[0];
+        likedSnaps = CACHE.EXPLORE.vals[1];
+    }
+    else {
+        CACHE.EXPLORE.version = 0;
+
+        //Find most recent posts
+        recentContent = await schemas.StoryPost.find({ isPublished: true }).sort("-publishedDate").limit(NUM_RECENT_POSTS).exec();
+
+        //Find most liked posts
+        likedContent = await schemas.StoryPost.find({ isPublished: true }).sort("-beans").limit(NUM_LIKED_POSTS).exec();
+        
+        // Construct all the snapshots
+        recentSnaps = await Utils.generatePostSnapshot(false, recentContent, false);
+        likedSnaps = await Utils.generatePostSnapshot(false, likedContent, false);
+
+        CACHE.EXPLORE.vals[0] = recentSnaps;
+        CACHE.EXPLORE.vals[1] = likedSnaps;
+    }
 
     console.log("Explore Page lengths (recent, liked)", recentContent.length, likedContent.length);
-
-
-    // Construct all the snapshots
-
-    const recentSnaps = await Utils.generatePostSnapshot(false, recentContent, false);
-
-    const likedSnaps = await Utils.generatePostSnapshot(false, likedContent, false);
 
     if (recentSnaps && likedSnaps) {
         //Send content in response body
         return res.status(200).json({
             mostRecent: recentSnaps.map(elem => { return elem[0] }),
-            mostLiked: likedSnaps.map(elem => { return elem[0] })
+            mostLiked: likedSnaps.map(elem => { return elem[0] }),
+            version: CACHE.EXPLORE.version
         });
     }
 
@@ -77,52 +101,47 @@ StoryController.explore = async function (req, res) {
 
 StoryController.search = async function (req, res) {
     /* Search ------------
-        Request body: {
-            numResults: Number,
-            pageNumber: Number
-        }
-
-        Response {
-            status 200 OK or 500 ERROR
-            body: {
-                content: {
-                    posts: [ObjectId]
-                    authors: [ObjectId]
-                }
-
-                //If error
-                error: String
-            }
-        }
-    */
+           Request body: {}
+   
+           Response {
+               status 200 OK or 500 ERROR
+               body: {
+                   content: {
+                       posts: [ObjectId]
+                       authors: [ObjectId]
+                   }
+   
+                   //If error
+                   error: String
+               }
+           }
+       */
     console.log("Req params for search: ", req.params)
     let searchCriteria = req.params.crit.toLowerCase().split(",")
     let sort = req.params.sort.toLowerCase()
+    let numResults = parseInt(req.params.numPerPage)
+    let pageNumber = parseInt(req.params.pageNum)
     console.log("Search criteria: %s    |   Sort: %s", searchCriteria, sort)
 
-    //Defaults
-    let numResults = 10;
-    let pageNumber = 0;
-
-    //Get values from body
-    if (body) {
-        numResults = body.numResults;
-        pageNumber = body.pageNumber;
-    }
+    console.log("Num results per page: ", numResults)
+    console.log("Requestion page number: ", pageNumber)
     let start = numResults * pageNumber;
     let end = start + numResults;
 
     console.log("Performing content search");
+    console.log("Start, end:", start, end)
 
     //Find all posts
     let posts = await schemas.StoryPost.find({ isPublished: true }).sort(sort);
     posts.reverse();
+    let numPostResults = posts.length;
 
     //Paginate
     posts = posts.slice(start, end)
 
     //Find all authors
     let authors = await schemas.Account.find({ isPublished: true });
+    let numAuthorResults = authors.length;
 
     //Paginate
     authors = authors.slice(start, end)
@@ -174,7 +193,9 @@ StoryController.search = async function (req, res) {
 
     return res.status(200).json({
         posts: postSnaps.map(elem => { return elem[0] }),
-        authors: authorSnaps
+        authors: authorSnaps,
+        numPostResults: numPostResults,
+        numAuthorResults: numAuthorResults
     });
 }
 
