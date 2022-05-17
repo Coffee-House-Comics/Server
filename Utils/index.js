@@ -101,9 +101,10 @@ utils.constructProfileSnapShot = async function (accountID) {
 
     return {
         name: account.user.displayName,
+        userName: account.userName,
         bio: account.user.bio,
-        storyBeans: account.user.comic.beans,
-        comicBeans:account.user.story.beans,
+        storyBeans: account.user.story.beans,
+        comicBeans:account.user.comic.beans,
         profileImage: account.user.profileImage
     };
 }

@@ -564,7 +564,7 @@ ComicController.published = async function (req, res) {
         ...comic.toObject(),
         comments: newComments,
         myVote: myPostVote,
-        author: profileSnapshot.name,
+        author: profileSnapshot.userName,
         authorBio: profileSnapshot.bio,
         authorImage: profileSnapshot.profileImage,
         authorStoryBeans: profileSnapshot.storyBeans,
