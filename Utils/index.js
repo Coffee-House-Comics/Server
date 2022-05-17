@@ -45,6 +45,8 @@ utils.generatePostSnapshot = async function (isComic, posts, isMy) {
             author: authorSnapshot.name,
             authorImage: authorSnapshot.profileImage,
             authorBio: authorSnapshot.bio,
+            authorStoryBeans: authorSnapshot.storyBeans,
+            authorComicBeans: authorSnapshot.comicBeans,
             series: post.series,
             beans: post.beans,
             coverPhoto: post.coverPhoto,
@@ -100,6 +102,8 @@ utils.constructProfileSnapShot = async function (accountID) {
     return {
         name: account.user.displayName,
         bio: account.user.bio,
+        storyBeans: account.user.comic.beans,
+        comicBeans:account.user.story.beans,
         profileImage: account.user.profileImage
     };
 }

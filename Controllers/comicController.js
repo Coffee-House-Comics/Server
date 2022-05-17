@@ -327,7 +327,7 @@ ComicController.create = async function (req, res) {
             isPublished: false,
             publishedDate: null,
             beans: 0,
-            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.jpg",
+            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.png",
             series: "",
             comments: [],
             authorID: userId,
@@ -566,7 +566,9 @@ ComicController.published = async function (req, res) {
         myVote: myPostVote,
         author: profileSnapshot.name,
         authorBio: profileSnapshot.bio,
-        authorImage: profileSnapshot.profileImage
+        authorImage: profileSnapshot.profileImage,
+        authorStoryBeans: profileSnapshot.storyBeans,
+        authorComicBeans: profileSnapshot.comicBeans,
     };
 
     comic.whoDisliked = undefined;
@@ -1621,7 +1623,8 @@ ComicController.content_save = async function (req, res) {
 ComicController.content_saveSticker = async function (req, res) {
     /* Save a Sticker ------------
         Request body: {
-            sticker: String
+            sticker: String,
+            isUploadedSticker: Boolean
         }
  
         Response {
@@ -1656,8 +1659,10 @@ ComicController.content_saveSticker = async function (req, res) {
         });
     }
 
-    let sticker = req.body.sticker;
-
+    let sticker = {
+        src: req.body.sticker,
+        isUploadedSticker: req.body.isUploadedSticker
+    };
     //Get user
     let account = await schemas.Account.findOne({ _id: userId });
     if (!account) {

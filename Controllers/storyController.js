@@ -325,7 +325,7 @@ StoryController.create = async function (req, res) {
             isPublished: false,
             publishedDate: null,
             beans: 0,
-            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.jpg",
+            coverPhoto: "https://coffeehousecomics.com/images/fetch/default_comic.png",
             series: null,
             comments: [],
             authorID: userId,
@@ -592,7 +592,9 @@ StoryController.published = async function (req, res) {
         myVote: myPostVote,
         author: profileSnapshot.name,
         authorBio: profileSnapshot.bio,
-        authorImage: profileSnapshot.profileImage
+        authorImage: profileSnapshot.profileImage,
+        authorStoryBeans: profileSnapshot.storyBeans,
+        authorComicBeans: profileSnapshot.comicBeans,
     };
 
     story.whoDisliked = undefined;
