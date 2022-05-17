@@ -69,7 +69,7 @@ app.use(express.static(dirPath));
 
 // Handle 404
 app.use(function (req, res) {
-    res.status(404).sendFile(dirPath + '/404.html')
+    res.status(303).sendFile(dirPath + '/404.html')
 })
 console.log("Now serving custom 404 for slick routing stuff");
 
