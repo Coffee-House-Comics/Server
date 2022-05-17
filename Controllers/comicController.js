@@ -526,7 +526,7 @@ ComicController.published = async function (req, res) {
     console.log("Comments (pub story) before: %j", comic.comments);
 
     // Handle the comments
-    const newComments = comic.comments.map(comment => {
+    const newComments = await Promise.all(comic.comments.map(async comment => {
         let myCommentVote = 0;
 
         if (userID) {
@@ -536,16 +536,19 @@ ComicController.published = async function (req, res) {
                 myCommentVote = -1;
         }
 
+        const dynam_user = await schemas.Account.findById(comment.ownerId);
+
         return ({
             id: comment._id,
             ownerId: comment.ownerId,
-            user: comment.user,
+            user: dynam_user.user.displayName,
+            userProfileImage: dynam_user.user.profileImage,
             date: comment.date,
             text: comment.text,
             beans: comment.beans,
             myVote: myCommentVote
         });
-    });
+    }));
 
     console.log("Comments (pub story) After: %j", newComments);
 
@@ -3014,7 +3017,7 @@ ComicController.getAllForumPosts = async function (req, res) {
 
         // Now resolve all the comments
 
-        const newComments = post.comments.map(comment => {
+        const newComments = await Promise.all(post.comments.map(async comment => {
             let myCommentVote = 0;
 
             if (userID) {
@@ -3024,16 +3027,19 @@ ComicController.getAllForumPosts = async function (req, res) {
                     myCommentVote = -1;
             }
 
+            const dynam_user = await schemas.Account.findById(comment.ownerId);
+
             return ({
                 id: comment._id,
                 ownerId: comment.ownerId,
-                user: comment.user,
+                user: dynam_user.user.displayName,
+                userProfileImage: dynam_user.user.profileImage,
                 date: comment.date,
                 text: comment.text,
                 beans: comment.beans,
                 myVote: myCommentVote
             });
-        });
+        }));
 
         const newUser = await Utils.constructProfileSnapShot(post.ownerId);
 

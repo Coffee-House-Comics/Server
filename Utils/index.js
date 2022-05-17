@@ -45,6 +45,7 @@ utils.generatePostSnapshot = async function (isComic, posts, isMy) {
             author: authorSnapshot.name,
             authorImage: authorSnapshot.profileImage,
             authorBio: authorSnapshot.bio,
+            authorId: post.authorID,
             authorStoryBeans: authorSnapshot.storyBeans,
             authorComicBeans: authorSnapshot.comicBeans,
             series: post.series,
