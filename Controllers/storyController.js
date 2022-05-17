@@ -100,103 +100,101 @@ StoryController.explore = async function (req, res) {
 }
 
 StoryController.search = async function (req, res) {
-    /* Search ------------
-           Request body: {}
-   
-           Response {
-               status 200 OK or 500 ERROR
-               body: {
-                   content: {
-                       posts: [ObjectId]
-                       authors: [ObjectId]
-                   }
-   
-                   //If error
-                   error: String
-               }
-           }
-       */
-    console.log("Req params for search: ", req.params)
-    let searchCriteria = req.params.crit.toLowerCase().split(",")
-    let sort = req.params.sort.toLowerCase()
-    let numResults = parseInt(req.params.numPerPage)
-    let pageNumber = parseInt(req.params.pageNum)
-    console.log("Search criteria: %s    |   Sort: %s", searchCriteria, sort)
+ /* Search ------------
+        Request body: {}
 
-    console.log("Num results per page: ", numResults)
-    console.log("Requestion page number: ", pageNumber)
-    let start = numResults * pageNumber;
-    let end = start + numResults;
+        Response {
+            status 200 OK or 500 ERROR
+            body: {
+                content: {
+                    posts: [ObjectId]
+                    authors: [ObjectId]
+                }
 
-    console.log("Performing content search");
-    console.log("Start, end:", start, end)
-
-    //Find all posts
-    let posts = await schemas.StoryPost.find({ isPublished: true }).sort(sort);
-    posts.reverse();
-    let numPostResults = posts.length;
-
-    //Paginate
-    posts = posts.slice(start, end)
-
-    //Find all authors
-    let authors = await schemas.Account.find({ isPublished: true });
-    let numAuthorResults = authors.length;
-
-    //Paginate
-    authors = authors.slice(start, end)
-
-    console.log("Posts and authors length:", posts.length, authors.length);
-
-    //Check for errors
-    if (!posts || !authors) {
-        console.log("Server error getting all posts and authors to search/sort")
-        return res.status(500).json({
-            error: "Server error getting all posts & authors to search/sort"
+                //If error
+                error: String
+            }
+        }
+    */
+        console.log("Req params for search: ", req.params)
+        let searchCriteria = req.params.crit.toLowerCase().split(",")
+        let sort = req.params.sort.toLowerCase()
+        let numResults = parseInt(req.params.numPerPage)
+        let pageNumber = parseInt(req.params.pageNum)
+        console.log("Search criteria: %s    |   Sort: %s", searchCriteria, sort)
+    
+        console.log("Num results per page: ", numResults)
+        console.log("Requestion page number: ", pageNumber)
+        let start = numResults * pageNumber;
+        let end = start + numResults;
+    
+        console.log("Performing content search");
+        console.log("Start, end:", start, end)
+    
+        //Find all posts
+        let posts = await schemas.StoryPost.find({ isPublished: true }).sort(sort);
+        posts.reverse();
+    
+        //Find all authors
+        let authors = await schemas.Account.find({ isPublished: true });
+    
+        console.log("Posts and authors length:", posts.length, authors.length);
+    
+        //Check for errors
+        if (!posts || !authors) {
+            console.log("Server error getting all posts and authors to search/sort")
+            return res.status(500).json({
+                error: "Server error getting all posts & authors to search/sort"
+            });
+        }
+    
+        //Filter results by search
+        searchCriteria = searchCriteria ? searchCriteria : ""
+        for (let query of searchCriteria) {
+            console.log("query:", query)
+            //Filter posts
+            posts = posts.filter((post) => {
+                // console.log("search post", post)
+                return (post && (post.name.toLowerCase().includes(query) || post.author.toLowerCase().includes(query) || (post.series && post.series.toLowerCase().includes(query))));
+            });
+    
+            //Filter authors
+            authors = authors.filter((author) => {
+                return (author && author.user.displayName.toLowerCase().includes(query));
+            });
+        }
+    
+        //Paginate
+        let numPostResults = posts.length;
+        posts = posts.slice(start,end)
+        let numAuthorResults = authors.length;
+        authors = authors.slice(start, end)
+    
+        console.log("After search applied:", posts.length, authors.length);
+    
+        // const postSnaps = await Promise.all(posts.map(async usersPosts => {
+        //     // console.log("UserPosts:", usersPosts);
+        //     return await Utils.generatePostSnapshot(true, usersPosts, false);
+        // }));
+    
+        const authorSnaps = authors.map(author => {
+            return Utils.constructProfileSnapShotFromAccount(author)
         });
-    }
-
-    //Filter results by search
-    searchCriteria = searchCriteria ? searchCriteria : ""
-    for (let query of searchCriteria) {
-        console.log("query:", query)
-        //Filter posts
-        posts = posts.filter((post) => {
-            console.log("search post", post)
-            return (post && (post.name.toLowerCase().includes(query) || post.author.toLowerCase().includes(query) || (post.series && post.series.toLowerCase().includes(query))));
+    
+        const postSnaps = await Utils.generatePostSnapshot(false, posts, false);
+    
+        // console.log("Post and author snaps: ", postSnaps, authorSnaps);
+    
+        //Get lists of IDs to return
+        // let postIds = posts.map((post) => post._id);
+        // let authorIds = authors.map((author) => author.id);
+    
+        return res.status(200).json({
+            posts: postSnaps.map(elem => { return elem[0] }),
+            authors: authorSnaps,
+            numPostResults: numPostResults,
+            numAuthorResults: numAuthorResults
         });
-
-        //Filter authors
-        authors = authors.filter((author) => {
-            return (author && author.user.displayName.toLowerCase().includes(query));
-        });
-    }
-
-    console.log("After search applied:", posts.length, authors.length);
-
-    // const postSnaps = await Promise.all(posts.map(async usersPosts => {
-    //     // console.log("UserPosts:", usersPosts);
-    //     return await Utils.generatePostSnapshot(true, usersPosts, false);
-    // }));
-
-    const authorSnaps = authors.map(author => {
-        return Utils.constructProfileSnapShotFromAccount(author)
-    });
-
-    const postSnaps = await Utils.generatePostSnapshot(true, posts, false);
-
-    console.log("Post and author snaps: ", postSnaps, authorSnaps);
-
-    //Get lists of IDs to return
-    // let postIds = posts.map((post) => post._id);
-    // let authorIds = authors.map((author) => author.id);
-
-    return res.status(200).json({
-        posts: postSnaps.map(elem => { return elem[0] }),
-        authors: authorSnaps,
-        numPostResults: numPostResults,
-        numAuthorResults: numAuthorResults
-    });
 }
 
 StoryController.subscriptions = async function (req, res) {
